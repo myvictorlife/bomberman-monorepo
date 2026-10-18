@@ -1,0 +1,122 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - main
+  # Kept manual as well: a rollback should not require an empty commit.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Never two deploys at once, and never cancel one mid-flight — an interrupted
+# `firebase deploy` can leave the live channel half-updated.
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Build and deploy to Firebase Hosting
+    runs-on: ubuntu-latest
+    # No `url` on purpose: it would hardcode one deployment's domain into a
+    # template. The deploy step's log prints the Hosting URL of whichever
+    # project is actually deploying.
+    environment:
+      name: production
+    steps:
+      # First, so a missing secret costs seconds instead of a full install and
+      # build. Without this the run dies inside the deploy action with a Node stack
+      # trace reading `Input required and not supplied: firebaseServiceAccount`,
+      # which says nothing about which secret to create or where.
+      #
+      # An unset secret interpolates to an empty string rather than failing, so
+      # emptiness is the only signal available here.
+      - name: Check deploy credentials
+        env:
+          SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+        run: |
+          missing=0
+          if [ -z "$SERVICE_ACCOUNT" ]; then
+            echo "::error title=Missing secret::FIREBASE_SERVICE_ACCOUNT is not set. Create it under Settings -> Secrets and variables -> Actions, with the full service account JSON as its value. See .claude/skills/firebase-deploy/SKILL.md section 6."
+            missing=1
+          fi
+          if [ -z "$PROJECT_ID" ]; then
+            echo "::error title=Missing secret::FIREBASE_PROJECT_ID is not set. Its value is the projectId from your config/firebase.json."
+            missing=1
+          fi
+          if [ "$missing" -eq 1 ]; then
+            echo "::notice::Repository secrets currently visible to this job are listed at Settings -> Secrets and variables -> Actions."
+            exit 1
+          fi
+          echo "Deploy credentials present."
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - run: npm ci
+
+      # `tools/generate-config.mjs` reads these and writes the git-ignored
+      # `libs/environment/src/lib/generated/firebase.config.ts`. They are repository
+      # secrets rather than committed values so that a fork never reports analytics
+      # into this project — not because a Firebase web config is confidential. It is
+      # not: it ships inside the client bundle, and access is governed by Security
+      # Rules, API key restrictions and App Check.
+      #
+      # The one genuine secret here is FIREBASE_SERVICE_ACCOUNT.
+      - name: Build
+        env:
+          FIREBASE_API_KEY: ${{ secrets.FIREBASE_API_KEY }}
+          FIREBASE_AUTH_DOMAIN: ${{ secrets.FIREBASE_AUTH_DOMAIN }}
+          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+          FIREBASE_STORAGE_BUCKET: ${{ secrets.FIREBASE_STORAGE_BUCKET }}
+          FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.FIREBASE_MESSAGING_SENDER_ID }}
+          FIREBASE_APP_ID: ${{ secrets.FIREBASE_APP_ID }}
+          FIREBASE_MEASUREMENT_ID: ${{ secrets.FIREBASE_MEASUREMENT_ID }}
+          # Not a secret: the repository that is building. Derived rather than
+          # committed so a fork's deploy links to the fork, never to the template.
+          SITE_REPO_URL: ${{ github.server_url }}/${{ github.repository }}
+          # Maps the `storybook` hosting target in the generated .firebaserc.
+          # A repository *variable*, not a secret — it is only a site id.
+          FIREBASE_STORYBOOK_SITE: ${{ vars.FIREBASE_STORYBOOK_SITE }}
+        run: npx nx build demo-app --configuration=production
+
+      # The design-system Storybook ships as a second Hosting site. Both steps
+      # are skipped entirely until the FIREBASE_STORYBOOK_SITE repository
+      # variable exists — a fork without the site deploys the app alone.
+      - name: Build Storybook
+        if: vars.FIREBASE_STORYBOOK_SITE != ''
+        run: npx nx build-storybook ui
+
+      # `firebase.json` lives in `hosting/` and resolves `public` relative to itself,
+      # which is why the build output is copied in rather than deployed from `dist/`.
+      # Same step the local `build:deploy:firebase` script runs.
+      - name: Stage the build for Hosting
+        run: npm run utils:copy:dist
+
+      - name: Deploy to the live channel
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          projectId: ${{ secrets.FIREBASE_PROJECT_ID }}
+          channelId: live
+          target: app
+          entryPoint: ./hosting
+
+      - name: Deploy Storybook to its live channel
+        if: vars.FIREBASE_STORYBOOK_SITE != ''
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          projectId: ${{ secrets.FIREBASE_PROJECT_ID }}
+          channelId: live
+          target: storybook
+          entryPoint: ./hosting

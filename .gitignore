@@ -1,0 +1,69 @@
+# See https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files for more about ignoring files.
+
+# compiled output
+dist
+tmp
+out-tsc
+
+# dependencies
+node_modules
+
+# IDEs and editors
+/.idea
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+
+# IDE - VSCode
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# misc
+/.sass-cache
+/connect.lock
+/coverage
+/libpeerconnection.log
+npm-debug.log
+yarn-error.log
+testem.log
+/typings
+
+# System Files
+.DS_Store
+Thumbs.db
+
+.nx/cache
+.nx/workspace-data
+
+.angular
+
+__screenshots__/
+
+# Credentials and everything generated from them. This repo is a public
+# template: only the *.example.* files are committed.
+# See config/README.md and tools/generate-config.mjs.
+config/*.json
+!config/*.example.json
+libs/environment/src/lib/generated/
+hosting/.firebaserc
+.env
+.env.local
+
+# Firebase
+.firebase/
+hosting/dist/
+
+# Claude Code. `.claude/skills/` and `.claude/settings.json` are shared on purpose;
+# `settings.local.json` is per-machine and holds absolute paths to whatever else is
+# on that developer's disk — not something a public template should carry.
+.claude/worktrees
+.claude/settings.local.json
+.nx/polygraph
+.nx/self-healing
+.nx/migrate-runs

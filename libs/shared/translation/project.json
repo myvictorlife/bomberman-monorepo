@@ -1,0 +1,27 @@
+{
+  "name": "translation",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/shared/translation/src",
+  "prefix": "lib",
+  "projectType": "library",
+  "tags": ["scope:translate"],
+  "targets": {
+    "test": {
+      "executor": "@angular/build:unit-test",
+      "options": {
+        "coverageInclude": ["libs/shared/translation/src/**/*.ts"],
+        "coverageExclude": [
+          "libs/shared/translation/src/**/index.ts",
+          "libs/shared/translation/src/**/*.routes.ts",
+          "libs/shared/translation/src/**/*.spec.ts"
+        ],
+        "coverageThresholds": {
+          "statements": 55,
+          "branches": 70,
+          "functions": 45,
+          "lines": 50
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "name": "environment",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/environment/src",
+  "prefix": "lib",
+  "projectType": "library",
+  "tags": ["scope:environment-lib"],
+  "targets": {
+    "generate-config": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "options": {
+        "command": "node tools/generate-config.mjs"
+      }
+    }
+  }
+}

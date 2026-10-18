@@ -1,0 +1,33 @@
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "moduleResolution": "bundler",
+    "emitDecoratorMetadata": false,
+    "target": "es2022",
+    "module": "preserve",
+    "lib": ["es2020", "dom"],
+    "baseUrl": ".",
+    "paths": {
+      "@libs/package": ["./package.json"],
+      "@libs/environment": ["libs/environment/src/index.ts"],
+      "@libs/entity": ["libs/shared/entity/src/index.ts"],
+      "@libs/ui": ["libs/shared/ui/src/index.ts"],
+      "@libs/profile": ["libs/profile/src/index.ts"],
+      "@libs/theme": ["libs/theme/src/index.ts"],
+      "@libs/translation": ["libs/shared/translation/src/index.ts"],
+      "@libs/analytics": ["./libs/shared/analytics/src/index.ts"],
+      "@libs/analytics-firebase": [
+        "./libs/shared/analytics-firebase/src/index.ts"
+      ],
+      "@libs/settings": ["./libs/settings/src/index.ts"],
+      "@app/workspace-plugin": ["tools/workspace-plugin/src/index.ts"]
+    },
+    "strict": true,
+    "noUncheckedSideEffectImports": false,
+    "types": ["*"],
+    "esModuleInterop": false,
+    "ignoreDeprecations": "6.0",
+    "skipLibCheck": true
+  },
+  "exclude": ["node_modules", "tmp"]
+}

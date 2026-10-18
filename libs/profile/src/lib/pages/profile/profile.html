@@ -1,0 +1,41 @@
+<main class="profile">
+  <div class="profile__head">
+    <button
+      libButton
+      variant="ghost"
+      size="sm"
+      type="button"
+      (click)="goHome()"
+    >
+      <lib-icon name="chevron-left" size="sm" />
+      {{ 'PROFILE.BACK_HOME' | translate }}
+    </button>
+  </div>
+
+  <lib-card [elevated]="true" padding="lg">
+    <h1 class="profile__title">{{ 'PROFILE.TITLE' | translate }}</h1>
+
+    @if (loading()) {
+    <div class="profile__state" role="status" aria-live="polite">
+      <lib-spinner size="md" [label]="'PROFILE.LOADING' | translate" />
+      <p class="profile__state-text">{{ 'PROFILE.LOADING' | translate }}</p>
+    </div>
+    } @else if (errorMessage(); as message) {
+    <lib-alert tone="danger" [heading]="'PROFILE.ERROR' | translate">
+      {{ message }}
+      <button
+        alert-actions
+        libButton
+        variant="danger"
+        size="sm"
+        type="button"
+        (click)="loadProfile()"
+      >
+        {{ 'PROFILE.RETRY' | translate }}
+      </button>
+    </lib-alert>
+    } @else if (profile(); as profileData) {
+    <lib-user-info [user]="profileData" />
+    }
+  </lib-card>
+</main>

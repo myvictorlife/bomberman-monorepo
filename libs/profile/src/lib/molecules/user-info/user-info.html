@@ -1,0 +1,10 @@
+<div class="user-info">
+  <div class="user-info__avatar" aria-hidden="true">
+    {{ user()?.name?.charAt(0) || '?' }}
+  </div>
+  <h2 class="user-info__name">{{ user()?.name }}</h2>
+  <p class="user-info__meta">
+    {{ 'USER_INFO.USER_ID' | translate }}:
+    <span class="user-info__id">{{ user()?.id }}</span>
+  </p>
+</div>

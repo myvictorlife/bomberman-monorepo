@@ -1,0 +1,40 @@
+<section class="settings">
+  <lib-page-header titleKey="SETTINGS.TITLE" leadKey="SETTINGS.LEAD" />
+
+  <div class="settings__panel">
+    <lib-setting-row
+      labelKey="SETTINGS.THEME"
+      descriptionKey="SETTINGS.THEME_DESC"
+    >
+      <lib-segmented-control
+        [options]="themeOptions"
+        [value]="themePreference()"
+        [label]="'SETTINGS.THEME' | translate"
+        (valueChange)="setTheme($event)"
+      />
+    </lib-setting-row>
+
+    <lib-setting-row
+      labelKey="SETTINGS.LANGUAGE"
+      descriptionKey="SETTINGS.LANGUAGE_DESC"
+    >
+      <lib-segmented-control
+        [options]="languageOptions"
+        [value]="currentLanguage()"
+        [label]="'SETTINGS.LANGUAGE' | translate"
+        (valueChange)="setLanguage($event)"
+      />
+    </lib-setting-row>
+
+    <lib-setting-row
+      labelKey="SETTINGS.REDUCE_MOTION"
+      descriptionKey="SETTINGS.REDUCE_MOTION_DESC"
+    >
+      <lib-switch
+        [checked]="reduceMotion()"
+        [label]="'SETTINGS.REDUCE_MOTION' | translate"
+        (checkedChange)="setReduceMotion($event)"
+      />
+    </lib-setting-row>
+  </div>
+</section>

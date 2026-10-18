@@ -1,0 +1,27 @@
+{
+  "name": "analytics-firebase",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/shared/analytics-firebase/src",
+  "prefix": "lib",
+  "projectType": "library",
+  "tags": ["scope:analytics-firebase-lib"],
+  "targets": {
+    "test": {
+      "executor": "@angular/build:unit-test",
+      "options": {
+        "coverageInclude": ["libs/shared/analytics-firebase/src/**/*.ts"],
+        "coverageExclude": [
+          "libs/shared/analytics-firebase/src/**/index.ts",
+          "libs/shared/analytics-firebase/src/**/*.routes.ts",
+          "libs/shared/analytics-firebase/src/**/*.spec.ts"
+        ],
+        "coverageThresholds": {
+          "statements": 95,
+          "branches": 90,
+          "functions": 95,
+          "lines": 95
+        }
+      }
+    }
+  }
+}

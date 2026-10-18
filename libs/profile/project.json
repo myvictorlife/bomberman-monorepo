@@ -1,0 +1,27 @@
+{
+  "name": "profile",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/profile/src",
+  "prefix": "lib",
+  "projectType": "library",
+  "tags": ["scope:profile"],
+  "targets": {
+    "test": {
+      "executor": "@angular/build:unit-test",
+      "options": {
+        "coverageInclude": ["libs/profile/src/**/*.ts"],
+        "coverageExclude": [
+          "libs/profile/src/**/index.ts",
+          "libs/profile/src/**/*.routes.ts",
+          "libs/profile/src/**/*.spec.ts"
+        ],
+        "coverageThresholds": {
+          "statements": 90,
+          "branches": 90,
+          "functions": 80,
+          "lines": 90
+        }
+      }
+    }
+  }
+}

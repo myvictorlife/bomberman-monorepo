@@ -1,0 +1,113 @@
+<header class="header">
+  <div class="header__inner">
+    <a
+      routerLink="/"
+      class="header__brand"
+      aria-label="{{ 'HEADER.HOME' | translate }}"
+    >
+      <svg
+        class="header__logo"
+        width="32"
+        height="32"
+        viewBox="0 0 32 32"
+        fill="none"
+        aria-hidden="true"
+      >
+        <rect width="32" height="32" rx="8" fill="currentColor" />
+        <path
+          d="M9 22V10h3.2l7.6 7.4V10H23v12h-3.2L12.2 14.6V22H9z"
+          fill="#fff"
+        />
+      </svg>
+      <span class="header__title">App</span>
+    </a>
+
+    <nav class="header__nav">
+      <a routerLink="/" class="header__link">
+        {{ 'HEADER.HOME' | translate }}
+      </a>
+
+      <a routerLink="/settings" class="header__link">
+        {{ 'HEADER.SETTINGS' | translate }}
+      </a>
+
+      <lib-language-select (opened)="onLanguageOpened()" />
+
+      <span class="header__divider" aria-hidden="true"></span>
+
+      <lib-theme-toggle />
+
+      @if (repoUrl(); as url) {
+      <a
+        [href]="url"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="header__github"
+        [attr.aria-label]="'HEADER.GITHUB_ARIA' | translate"
+      >
+        <lib-icon name="github" size="md" />
+      </a>
+      }
+
+      <a routerLink="/profile" class="header__cta">
+        {{ 'HEADER.START' | translate }}
+      </a>
+
+      <button
+        type="button"
+        class="header__menu-btn"
+        (click)="toggleMobileMenu()"
+        [attr.aria-expanded]="mobileMenuOpen()"
+        [attr.aria-controls]="'header-mobile-menu'"
+        [attr.aria-label]="'HEADER.MENU_ARIA' | translate"
+      >
+        <lib-icon [name]="mobileMenuOpen() ? 'close' : 'menu'" size="lg" />
+      </button>
+    </nav>
+  </div>
+
+  @if (mobileMenuOpen()) {
+  <div
+    class="header__mobile-backdrop"
+    (click)="closeMobileMenu()"
+    aria-hidden="true"
+  ></div>
+  <div id="header-mobile-menu" class="header__mobile-menu">
+    <a routerLink="/" class="header__mobile-link" (click)="closeMobileMenu()">
+      {{ 'HEADER.HOME' | translate }}
+    </a>
+    <a
+      routerLink="/settings"
+      class="header__mobile-link"
+      (click)="closeMobileMenu()"
+    >
+      {{ 'HEADER.SETTINGS' | translate }}
+    </a>
+    <a
+      routerLink="/design"
+      class="header__mobile-link"
+      (click)="closeMobileMenu()"
+    >
+      {{ 'HEADER.DESIGN' | translate }}
+    </a>
+    @if (repoUrl(); as url) {
+    <a
+      [href]="url"
+      target="_blank"
+      rel="noopener noreferrer"
+      class="header__mobile-link"
+      (click)="closeMobileMenu()"
+    >
+      {{ 'HEADER.GITHUB' | translate }}
+    </a>
+    }
+    <a
+      routerLink="/profile"
+      class="header__mobile-cta"
+      (click)="closeMobileMenu()"
+    >
+      {{ 'HEADER.START' | translate }}
+    </a>
+  </div>
+  }
+</header>

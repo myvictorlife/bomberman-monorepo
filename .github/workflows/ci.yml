@@ -1,0 +1,112 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  actions: read
+  contents: read
+
+# A second push to the same PR makes the first run irrelevant. Cancelling it frees
+# a runner instead of paying for an answer nobody will read.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  verify:
+    name: Lint, test and build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          filter: tree:0
+          fetch-depth: 0
+
+      # Task distribution via Nx Cloud. Run before dependencies are installed.
+      # https://nx.dev/ci/reference/nx-cloud-cli#npx-nxcloud-startcirun
+      # - run: npx nx start-ci-run --distribute-on="3 linux-medium-js" --stop-agents-after="build"
+
+      - uses: actions/setup-node@v4
+        with:
+          # Angular 22 requires ^22.22.3, ^24.15.0 or >=26.
+          node-version: 22
+          cache: 'npm'
+
+      - run: npm ci
+
+      # No secrets here on purpose. Without them the generator produces an empty
+      # config and `firebaseEnabled` is false — so this job also proves that a fresh
+      # clone, with no Firebase project, still lints, tests and builds.
+      # One invocation per target on purpose: `--coverage` only exists on the
+      # unit-test builder and
+      # `--configuration=production` only exists on build. Nx forwards extra args to
+      # every target in a `run-many`, so a single combined command makes eslint fail
+      # with "Invalid option '--coverage'" and build with "'coverage' is not found in
+      # schema" — failures that look like lint errors but are only bad plumbing.
+      - name: Lint
+        run: npx nx run-many -t lint
+
+      - name: Test with coverage
+        if: always()
+        run: npx nx run-many -t test --coverage
+
+      - name: Build
+        if: always()
+        run: npx nx run-many -t build --configuration=production
+
+      # A broken story should fail the PR, not the deploy after merge.
+      - name: Build Storybook
+        if: always()
+        run: npx nx build-storybook ui
+
+      - name: Upload coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage/
+          retention-days: 7
+
+      - run: npx nx fix-ci
+        if: always()
+
+  e2e:
+    name: End-to-end
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          filter: tree:0
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - run: npm ci
+
+      # Only chromium: the firefox/webkit matrix belongs on a nightly schedule, not
+      # in front of every pull request. `mobile-chrome` costs no extra download —
+      # the Pixel 5 descriptor drives the same chromium binary — and it is the only
+      # project that exercises the header's burger-menu path.
+      - name: Install Playwright browser
+        run: npx playwright install chromium --with-deps
+
+      # The `--` matters. Without it Nx swallows `--project` as its own flag and
+      # never forwards it, so Playwright runs all four projects and the two whose
+      # browsers were not installed fail.
+      - name: Run end-to-end tests
+        run: npx nx e2e demo-app -- --project=chromium --project=mobile-chrome
+
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: dist/.playwright/
+          retention-days: 7

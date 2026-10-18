@@ -1,0 +1,244 @@
+// Every value resolves through @libs/theme, so the bar rethemes with the rest of
+// the page — no literal colours, spacing or radii.
+@use 'breakpoints' as bp;
+
+// The bar and the mobile panel render the same two affordances at two sizes.
+// Sharing the declarations keeps the component under its 4 kB style budget
+// instead of shipping each rule twice.
+%header-focus-ring {
+  &:focus-visible {
+    outline: 2px solid var(--color-brand);
+    outline-offset: 2px;
+  }
+}
+
+%header-nav-link {
+  @extend %header-focus-ring;
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-medium);
+  text-decoration: none;
+  border-radius: var(--radius-md);
+  transition:
+    color var(--transition-fast),
+    background var(--transition-fast);
+
+  &:hover {
+    color: var(--color-text-primary);
+    background: var(--color-bg-hover);
+  }
+}
+
+// Click-catcher behind an open overlay: transparent, but above the page.
+%header-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-dropdown);
+  background: transparent;
+}
+
+%header-overlay-panel {
+  z-index: var(--z-sticky);
+  background: var(--color-bg-elevated);
+  box-shadow: var(--shadow-dropdown);
+}
+
+%header-cta {
+  padding: var(--space-2) var(--space-4);
+  background: var(--color-brand);
+  color: var(--color-text-on-brand);
+  font-weight: var(--font-weight-medium);
+  text-decoration: none;
+  border-radius: var(--radius-md);
+  transition: background var(--transition-fast);
+
+  &:hover {
+    background: var(--color-brand-hover);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-brand);
+    outline-offset: 2px;
+  }
+}
+
+.header {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-sticky);
+  width: 100%;
+  // color-mix keeps the translucent bar tinted by whichever surface the theme
+  // resolves to, instead of pinning it to white.
+  background: color-mix(in srgb, var(--color-bg-base) 85%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--color-border);
+  box-shadow: var(--shadow-sm);
+}
+
+.header__inner {
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: var(--space-3) var(--space-6);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.header__brand {
+  @extend %header-focus-ring;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: -0.02em;
+  text-decoration: none;
+  border-radius: var(--radius-md);
+  padding: var(--space-1) 0;
+  transition: color var(--transition-fast);
+
+  &:hover {
+    color: var(--color-text-secondary);
+  }
+}
+
+.header__logo {
+  width: 2rem;
+  height: 2rem;
+  flex-shrink: 0;
+}
+
+.header__title {
+  white-space: nowrap;
+}
+
+.header__nav {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.header__link {
+  @extend %header-nav-link;
+  display: none;
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--font-size-sm);
+
+  @media #{bp.$sm} {
+    display: inline-flex;
+  }
+}
+
+// Separates the nav from the utility-icon cluster (theme, GitHub), the way
+// open-source landing pages group their meta controls. Hidden on mobile with
+// the rest of the desktop-only affordances.
+.header__divider {
+  display: none;
+  width: 1px;
+  height: 1.5rem;
+  margin: 0 var(--space-2);
+  background: var(--color-border);
+
+  @media #{bp.$sm} {
+    display: block;
+  }
+}
+
+.header__github {
+  @extend %header-nav-link;
+  // Same breakpoint story as .header__link: below it the mobile menu carries a
+  // text link instead, so the bar never shows two GitHub affordances at once.
+  display: none;
+  align-items: center;
+  justify-content: center;
+  // Mirrors .theme-toggle exactly, so the two read as one icon cluster.
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+
+  @media #{bp.$sm} {
+    display: inline-flex;
+  }
+}
+
+.header__cta {
+  @extend %header-cta;
+  // Below the breakpoint this lives inside the mobile menu instead, so the bar
+  // does not have to fit a link, a language picker and a CTA at once.
+  display: none;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-sm);
+  // A step of air between the icon cluster and the one filled control.
+  margin-left: var(--space-2);
+
+  @media #{bp.$sm} {
+    display: inline-flex;
+  }
+}
+
+.header__menu-btn {
+  @extend %header-focus-ring;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-md);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition:
+    color var(--transition-fast),
+    background var(--transition-fast);
+
+  &:hover {
+    color: var(--color-text-primary);
+    background: var(--color-bg-hover);
+  }
+
+  @media #{bp.$sm} {
+    display: none;
+  }
+}
+
+.header__mobile-backdrop {
+  @extend %header-backdrop;
+
+  @media #{bp.$sm} {
+    display: none;
+  }
+}
+
+.header__mobile-menu {
+  @extend %header-overlay-panel;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-6) var(--space-4);
+  border-top: 1px solid var(--color-border);
+
+  // The trigger is hidden from this width up, so the panel must never outlive it —
+  // otherwise resizing while open would strand an unclosable menu on screen.
+  @media #{bp.$sm} {
+    display: none;
+  }
+}
+
+.header__mobile-link {
+  @extend %header-nav-link;
+  padding: var(--space-3);
+  font-size: var(--font-size-base);
+}
+
+.header__mobile-cta {
+  @extend %header-cta;
+  padding: var(--space-3);
+  font-size: var(--font-size-base);
+  text-align: center;
+}
