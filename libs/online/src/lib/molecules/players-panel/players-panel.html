@@ -8,7 +8,7 @@
       class="players__item"
       [class.players__item--out]="!player.alive"
       [class.players__item--me]="player.id === myId()"
-      [style.--player-color]="colors()[player.slot]"
+      [style.--player-color]="colors()[player.colorSlot]"
       data-testid="players-item"
     >
       <div class="players__head">

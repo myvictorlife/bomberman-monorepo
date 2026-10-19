@@ -4,14 +4,18 @@ import {
   GameState,
   isClosing,
   MountId,
+  playerColor,
   secondsUntilClosing,
   TICK_RATE,
 } from '@libs/game-core';
+import { colorSlot } from './characters/cartoon/ink';
 
 /** What the page around the canvas shows — a small, comparable snapshot. */
 export interface HudPlayer {
   id: string;
   slot: number;
+  /** Where their colour is in the skin's `playerColors`: their picked colour, else their slot's. */
+  colorSlot: number;
   name: string;
   alive: boolean;
   bombs: number;
@@ -55,6 +59,7 @@ export function toHud(state: GameState): HudSnapshot {
     players: state.players.map((p) => ({
       id: p.id,
       slot: p.slot,
+      colorSlot: colorSlot(playerColor(p)),
       name: p.name,
       alive: p.alive,
       bombs: p.maxBombs,

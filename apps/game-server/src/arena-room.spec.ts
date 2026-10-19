@@ -339,6 +339,33 @@ describe('ArenaRoom', () => {
     ana.room.send(CLIENT_MESSAGE.input, { direction: 'sideways' });
   });
 
+  it('plays each player in the colour on their profile, first in line first', async () => {
+    const gil = await signedIn('gil');
+    const hal = await signedIn('hal');
+    for (const id of ['gil', 'hal']) {
+      const record = records.get(id);
+      if (record) records.put({ ...record, color: 'purple' });
+    }
+
+    gil.room.send(CLIENT_MESSAGE.joinQueue, {});
+    await gil.next<LobbySnapshot>(
+      SERVER_MESSAGE.lobby,
+      (l) => l.queue.length === 1,
+    );
+    hal.room.send(CLIENT_MESSAGE.joinQueue, {});
+    const first = await hal.next<FrameMessage>(
+      SERVER_MESSAGE.frame,
+      (f) => f.state.players.length === 2,
+    );
+
+    // Gil was first and keeps purple; Hal gets the closest free colour
+    // (blue and pink are as close: palette order picks blue).
+    expect(first.state.players.map((p) => [p.id, p.color])).toEqual([
+      ['gil', 'purple'],
+      ['hal', 'blue'],
+    ]);
+  });
+
   it('records the result, updates the ranking and puts the players back in line', async () => {
     const cai = await signedIn('cai');
     const dan = await signedIn('dan');

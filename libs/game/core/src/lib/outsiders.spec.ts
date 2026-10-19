@@ -294,6 +294,7 @@ describe('a kill from outside', () => {
     expect(state.outsiders).toHaveLength(0);
     expect(entrant).toMatchObject({
       slot: victim.slot,
+      color: victim.color,
       x: 3,
       y: 5,
       alive: true,

@@ -498,6 +498,7 @@ describe('Online', () => {
         {
           id: 'a',
           slot: 0,
+          colorSlot: 0,
           name: 'Ana',
           alive: true,
           bombs: 3,
@@ -656,6 +657,9 @@ describe('Online', () => {
     expect(() => spectator.component.paintFace(ctx, 'lia', 1)).not.toThrow();
     expect(() =>
       spectator.component.paintFace(ctx, undefined, 2),
+    ).not.toThrow();
+    expect(() =>
+      spectator.component.paintFace(ctx, 'tiao', 3, 'pink'),
     ).not.toThrow();
   });
 

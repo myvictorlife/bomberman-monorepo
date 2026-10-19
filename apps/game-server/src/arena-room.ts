@@ -377,10 +377,13 @@ export function createArenaRoom(deps: ArenaRoomDeps) {
         return this.fail(client, 'email-not-verified');
 
       const { characterId } = parseJoinQueue(message);
+      // The colour is the profile's, never the message's: it is the server's record.
+      const color = deps.records.get(account.id)?.color;
       const result = this.lobby.join({
         id: account.id,
         name: account.name,
         characterId,
+        ...(color ? { color } : {}),
       });
       if (result !== 'queued') return this.fail(client, result);
       this.refreshLobby();
@@ -467,10 +470,11 @@ export function createArenaRoom(deps: ArenaRoomDeps) {
         this.game = createGame({
           seed: Math.floor(random() * 2 ** 31) + 1,
           mapId: MAPS[Math.floor(random() * MAPS.length)]?.id,
-          players: start.players.map(({ id, name, characterId }) => ({
+          players: start.players.map(({ id, name, characterId, color }) => ({
             id,
             name,
             characterId,
+            color,
           })),
           roundTicks:
             rules.roundTimerMs > 0

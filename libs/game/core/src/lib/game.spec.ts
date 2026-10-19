@@ -25,6 +25,7 @@ import {
   mergeFlameShapes,
   tick,
 } from './game';
+import { PlayerColorId } from './colors';
 import { speedOf } from './movement';
 import { input, openArena, player, run, setBlock } from './testing.spec-helper';
 
@@ -1079,5 +1080,30 @@ describe('eliminatePlayer', () => {
     expect(eliminatePlayer(state, 'b')).toBeNull();
     state.phase = 'over';
     expect(eliminatePlayer(state, 'a')).toBeNull();
+  });
+});
+
+describe('player colours in a round', () => {
+  const setup = (colors: (PlayerColorId | undefined)[]) =>
+    createGame({
+      seed: 1,
+      players: colors.map((color, i) => ({
+        id: `p${i}`,
+        name: `P${i}`,
+        ...(color ? { color } : {}),
+      })),
+    });
+
+  it('gives each player their slot colour when nobody picked one', () => {
+    expect(setup([undefined, undefined]).players.map((p) => p.color)).toEqual([
+      'blue',
+      'graphite',
+    ]);
+  });
+
+  it('gives the picked colours, first in line first', () => {
+    expect(
+      setup(['pink', 'pink', undefined]).players.map((p) => p.color),
+    ).toEqual(['pink', 'red', 'blue']);
   });
 });

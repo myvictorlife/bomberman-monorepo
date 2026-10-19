@@ -8,8 +8,12 @@ import {
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { environment } from '@libs/environment';
-import { paintCartoonCharacter } from '@libs/game-client';
-import { DEFAULT_CHARACTER_ID, isCharacterId } from '@libs/game-core';
+import { colorSlot, paintCartoonCharacter } from '@libs/game-client';
+import {
+  DEFAULT_CHARACTER_ID,
+  isCharacterId,
+  isPlayerColorId,
+} from '@libs/game-core';
 import {
   ButtonComponent,
   PodiumComponent as PodiumBoard,
@@ -23,8 +27,13 @@ const FETCH_TIMEOUT_MS = 4_000;
 
 export type PodiumStatus = 'off' | 'loading' | 'ready' | 'empty';
 
-/** The game's own faces on the podium: the character they last played, in the place's team colour. */
-export const paintPodiumFace: PodiumPainter = (ctx, characterId, place) => {
+/** The game's own faces on the podium: their character, in their colour or else the place's. */
+export const paintPodiumFace: PodiumPainter = (
+  ctx,
+  characterId,
+  place,
+  color,
+) => {
   paintCartoonCharacter(ctx, {
     characterId:
       characterId && isCharacterId(characterId)
@@ -32,7 +41,7 @@ export const paintPodiumFace: PodiumPainter = (ctx, characterId, place) => {
         : DEFAULT_CHARACTER_ID,
     facing: 'down',
     frame: 0,
-    slot: place - 1,
+    slot: isPlayerColorId(color) ? colorSlot(color) : place - 1,
   });
 };
 

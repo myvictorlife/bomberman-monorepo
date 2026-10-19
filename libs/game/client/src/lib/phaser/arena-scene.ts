@@ -9,6 +9,7 @@ import {
   isDashing,
   Outsider,
   Player,
+  playerColor,
   ThrownBomb,
 } from '@libs/game-core';
 import * as Phaser from 'phaser';
@@ -97,6 +98,7 @@ export class ArenaScene extends Phaser.Scene {
     this.config.skin.load(
       this,
       this.config.session.state.players.map((p) => p.characterId),
+      this.config.session.state.players.map(playerColor),
     );
     // The arena's look comes from the map's theme; pixel skins keep their own tiles.
     if (!this.config.skin.pixelArt)
@@ -722,6 +724,7 @@ export class ArenaScene extends Phaser.Scene {
               this,
               entrant.characterId,
               entrant.slot,
+              playerColor(entrant),
             );
             this.burst(entrant.x, entrant.y, TEXTURE.spark, 16, true);
           }

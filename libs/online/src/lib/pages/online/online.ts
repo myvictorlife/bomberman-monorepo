@@ -17,6 +17,7 @@ import { environment } from '@libs/environment';
 import {
   ARROW_KEYS,
   ArenaHandle,
+  colorSlot,
   ControlScheme,
   formatClock,
   hdSkin,
@@ -28,6 +29,7 @@ import {
   DEFAULT_CHARACTER_ID,
   GameState,
   isCharacterId,
+  isPlayerColorId,
 } from '@libs/game-core';
 import {
   FrameMessage,
@@ -140,8 +142,8 @@ export class Online {
   });
   readonly roundClosing = computed(() => this.store.hud()?.closing ?? false);
   readonly colors = hdSkin.playerColors;
-  /** A podium face: the player's last character, in the colour of the place. */
-  readonly paintFace: PodiumPainter = (ctx, characterId, place) =>
+  /** A podium face: the player's character, in their colour or else the place's. */
+  readonly paintFace: PodiumPainter = (ctx, characterId, place, color) =>
     paintCartoonCharacter(ctx, {
       characterId:
         characterId && isCharacterId(characterId)
@@ -149,7 +151,7 @@ export class Online {
           : DEFAULT_CHARACTER_ID,
       facing: 'down',
       frame: 0,
-      slot: place - 1,
+      slot: isPlayerColorId(color) ? colorSlot(color) : place - 1,
     });
   readonly user = this.auth.user;
   readonly characterId = this.selection.selectedId;

@@ -5,9 +5,10 @@ import {
   Direction,
   FlameShape,
   PowerUpKind,
+  PlayerColorId,
 } from '@libs/game-core';
 import { paintCartoonCharacter } from '../../characters/cartoon/cartoon';
-import { MOUNTED_HEADROOM } from '../../characters/cartoon/ink';
+import { colorSlot, MOUNTED_HEADROOM } from '../../characters/cartoon/ink';
 import {
   BOMB_FRAMES,
   FACINGS,
@@ -38,6 +39,7 @@ const TAU = Math.PI * 2;
 export function paintHdTextures(
   doc: Document,
   characters: readonly CharacterId[] = [],
+  colors: readonly PlayerColorId[] = [],
 ): Map<string, HTMLCanvasElement> {
   const textures = new Map<string, HTMLCanvasElement>();
   const paint = painter(doc, textures);
@@ -61,7 +63,13 @@ export function paintHdTextures(
   for (let stage = 1; stage < EGG_STAGES; stage++)
     paint(TEXTURE.egg(stage), (ctx) => paintEgg(ctx, { stage }));
   for (let slot = 0; slot < PLAYER_SLOTS; slot++) {
-    paintCharacterTextures(doc, characters[slot] ?? null, slot, textures);
+    paintCharacterTextures(
+      doc,
+      characters[slot] ?? null,
+      slot,
+      textures,
+      colors[slot],
+    );
   }
   return textures;
 }
@@ -80,6 +88,8 @@ export function paintCharacterTextures(
   characterId: CharacterId | null,
   slot: number | 'outsider',
   textures = new Map<string, HTMLCanvasElement>(),
+  /** The colour to paint the slot in; its own slot colour when absent. */
+  color?: PlayerColorId,
 ): Map<string, HTMLCanvasElement> {
   const paint = painter(doc, textures);
   if (slot === 'outsider') {
@@ -98,14 +108,21 @@ export function paintCharacterTextures(
     }
     return textures;
   }
+  // Texture keys stay per slot; the paint is the player's colour.
+  const team = color ? colorSlot(color) : slot;
   const colors = HD_PLAYER_COLORS[
-    slot % HD_PLAYER_COLORS.length
+    team % HD_PLAYER_COLORS.length
   ] as HdPlayerColors;
   for (const facing of FACINGS) {
     for (let f = 0; f < PLAYER_FRAMES; f++) {
       paint(TEXTURE.player(slot, facing, f), (ctx) =>
         characterId
-          ? paintCartoonCharacter(ctx, { characterId, facing, frame: f, slot })
+          ? paintCartoonCharacter(ctx, {
+              characterId,
+              facing,
+              frame: f,
+              slot: team,
+            })
           : paintHdPlayer(ctx, colors, facing, f),
       );
       for (const mountId of MOUNT_IDS) {
@@ -116,7 +133,7 @@ export function paintCharacterTextures(
               characterId: characterId ?? DEFAULT_CHARACTER_ID,
               facing,
               frame: f,
-              slot,
+              slot: team,
               mountId,
             }),
           MOUNTED_HEADROOM,

@@ -91,3 +91,11 @@ export function assignColors(
     return result;
   });
 }
+
+/** The colour a player is drawn in: the one the round gave them, else their slot's. */
+export function playerColor(player: {
+  slot: number;
+  color?: PlayerColorId;
+}): PlayerColorId {
+  return player.color ?? slotColor(player.slot);
+}

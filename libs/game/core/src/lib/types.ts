@@ -1,4 +1,5 @@
 import type { CharacterId, MountId } from './characters';
+import type { PlayerColorId } from './colors';
 import type { MapId } from './maps';
 
 /**
@@ -60,8 +61,14 @@ export interface Jump {
 
 export interface Player {
   id: string;
-  /** 0–4: decides the spawn cell and the colour. */
+  /** 0–4: decides the spawn cell, and the colour when {@link Player.color} is absent. */
   slot: number;
+  /**
+   * The colour the round gave them (`assignColors`): the one they picked, or
+   * the closest free one. Absent in rounds from before colours were picked —
+   * read it with `playerColor`.
+   */
+  color?: PlayerColorId;
   name: string;
   /** Who this player looks like; see `characters.ts`. */
   characterId: CharacterId;
@@ -274,6 +281,8 @@ export interface PlayerSetup {
   name: string;
   /** Defaults to the first character of the roster. */
   characterId?: CharacterId;
+  /** The colour they asked for; the round may give the closest free one. */
+  color?: PlayerColorId;
 }
 
 export interface GameOptions {

@@ -1,5 +1,5 @@
 import type * as Phaser from 'phaser';
-import type { CharacterId } from '@libs/game-core';
+import type { CharacterId, PlayerColorId } from '@libs/game-core';
 
 /**
  * A complete set of art for the arena. `load` runs in the scene's `preload` and
@@ -13,14 +13,22 @@ export interface ArenaSkin {
   readonly tileSize: number;
   /** `true` for pixel art: nearest-neighbour scaling and no additive glow. */
   readonly pixelArt: boolean;
-  /** CSS colour per player slot — used by the HUD outside the canvas. */
+  /**
+   * CSS colour per colour index (`colorSlot`) — the HUD outside the canvas.
+   * Indexed like `PLAYER_COLOR_IDS`, so the first five are the slot colours.
+   */
   readonly playerColors: readonly string[];
   /**
-   * `characters[slot]` is who sits in each player slot, so the skin can paint
-   * that character's frames under the slot's texture keys. A skin without
-   * per-character art may ignore it.
+   * `characters[slot]` is who sits in each player slot and `colors[slot]` the
+   * colour the round gave them, so the skin can paint that character, in that
+   * colour, under the slot's texture keys. A skin without per-character art
+   * or picked colours may ignore them.
    */
-  load(scene: Phaser.Scene, characters: readonly CharacterId[]): void;
+  load(
+    scene: Phaser.Scene,
+    characters: readonly CharacterId[],
+    colors?: readonly PlayerColorId[],
+  ): void;
   /**
    * Paints one character mid-round: as `TEXTURE.outsider(characterId, …)` when
    * `slot` is `'outsider'` (someone stepped onto the border), or over the
@@ -31,5 +39,6 @@ export interface ArenaSkin {
     scene: Phaser.Scene,
     characterId: CharacterId,
     slot: number | 'outsider',
+    color?: PlayerColorId,
   ): void;
 }

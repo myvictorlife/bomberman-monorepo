@@ -173,6 +173,8 @@ export interface Seat {
   id: string;
   name: string;
   characterId: CharacterId;
+  /** The colour on their profile when they joined; the round may give the closest free one. */
+  color?: PlayerColorId;
 }
 
 /** Connected but neither playing nor queued: the audience. */

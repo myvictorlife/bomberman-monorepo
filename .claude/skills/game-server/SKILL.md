@@ -183,6 +183,11 @@ The ranking's face is `favoriteCharacterId ?? characterId` (last played), and
 it carries the player's `color`. Names compare by `nameKey` (no case, accents
 or spaces) — that is the uniqueness rule.
 
+**Colours.** A seat takes the colour on the player's record when they join
+the queue (never from the message); `createGame` hands out colours with
+`assignColors` — first in line keeps theirs, a later one gets the closest
+free colour. A colour changed while queued applies from the next join.
+
 ## Auth
 
 The client sends `hello { token }` with a fresh Firebase ID token

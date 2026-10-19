@@ -154,6 +154,7 @@ describe('hud', () => {
     expect(hud.players[0]).toEqual({
       id: 'p1',
       slot: 0,
+      colorSlot: 0,
       name: 'P1',
       alive: true,
       bombs: 1,

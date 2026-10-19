@@ -6,6 +6,7 @@ import { PlayersPanelComponent } from './players-panel';
 const player = (over: Partial<HudPlayer> = {}): HudPlayer => ({
   id: 'a',
   slot: 0,
+  colorSlot: 0,
   name: 'Ana',
   alive: true,
   bombs: 1,

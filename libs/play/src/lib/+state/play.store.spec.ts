@@ -12,6 +12,7 @@ const hud = (over: Partial<HudSnapshot> = {}): HudSnapshot => ({
     {
       id: 'p1',
       slot: 0,
+      colorSlot: 0,
       name: 'P1',
       alive: true,
       bombs: 1,
@@ -29,6 +30,7 @@ const hud = (over: Partial<HudSnapshot> = {}): HudSnapshot => ({
     {
       id: 'p2',
       slot: 1,
+      colorSlot: 1,
       name: 'P2',
       alive: true,
       bombs: 1,

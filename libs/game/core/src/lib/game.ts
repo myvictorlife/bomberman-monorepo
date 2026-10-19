@@ -34,6 +34,7 @@ import {
 } from './outsiders';
 import { landThrownBombs, launchBomb } from './throw';
 import { closeArena } from './closing';
+import { assignColors, PlayerColorId } from './colors';
 import {
   carryAlong,
   grabPlayer,
@@ -62,9 +63,10 @@ export function createGame(options: GameOptions): GameState {
   }
   const map = findMap(options.mapId ?? DEFAULT_MAP_ID);
   const arena = generateArena(options.seed, map);
+  const colors = assignColors(options.players.map((p) => p.color));
   const players: Player[] = options.players.map((setup, slot) => {
     const [x, y] = SPAWN_CELLS[slot] as readonly [number, number];
-    return newPlayer(setup, slot, x, y);
+    return newPlayer(setup, slot, x, y, colors[slot]);
   });
 
   const state: GameState = {
@@ -103,10 +105,12 @@ function newPlayer(
   slot: number,
   x: number,
   y: number,
+  color: PlayerColorId | undefined,
 ): Player {
   return {
     id: setup.id,
     slot,
+    ...(color ? { color } : {}),
     name: setup.name,
     characterId: setup.characterId ?? DEFAULT_CHARACTER_ID,
     mountId: null,
@@ -807,7 +811,8 @@ function killPlayersInFlames(state: GameState): void {
 function enterArena(state: GameState, thrower: Outsider, victim: Player): void {
   removeOutsider(state, thrower.id);
   const [col, row] = playerCell(victim);
-  const entrant = newPlayer(thrower, victim.slot, col, row);
+  // The victim's slot and colour: the arena repaints that slot with the entrant's look.
+  const entrant = newPlayer(thrower, victim.slot, col, row, victim.color);
   entrant.shieldedUntilTick = state.tick + ENTRY_SHIELD_TICKS;
   state.players.push(entrant);
   state.events.push({

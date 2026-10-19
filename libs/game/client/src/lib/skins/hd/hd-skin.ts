@@ -15,16 +15,18 @@ export const hdSkin: ArenaSkin = {
   tileSize: HD_TILE,
   pixelArt: false,
   playerColors: TEAM_COLORS.map((c) => c.suit),
-  load(scene, characters) {
-    for (const [key, canvas] of paintHdTextures(document, characters)) {
+  load(scene, characters, colors) {
+    for (const [key, canvas] of paintHdTextures(document, characters, colors)) {
       if (!scene.textures.exists(key)) scene.textures.addCanvas(key, canvas);
     }
   },
-  loadCharacter(scene, characterId, slot) {
+  loadCharacter(scene, characterId, slot, color) {
     for (const [key, canvas] of paintCharacterTextures(
       document,
       characterId,
       slot,
+      undefined,
+      color,
     )) {
       if (!scene.textures.exists(key)) {
         scene.textures.addCanvas(key, canvas);

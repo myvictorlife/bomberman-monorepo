@@ -16,6 +16,8 @@ export interface PodiumLine {
   wins: number;
   matches: number;
   characterId?: string;
+  /** The colour they picked, by the game's id; absent paints the place's colour. */
+  color?: string;
 }
 
 /**
@@ -26,6 +28,7 @@ export type PodiumPainter = (
   ctx: CanvasRenderingContext2D,
   characterId: string | undefined,
   place: number,
+  color?: string,
 ) => void;
 
 export interface PodiumStep extends PodiumLine {
@@ -102,7 +105,7 @@ export class PodiumComponent {
       const paint = this.paint();
       for (const sprite of this.sprites()) {
         const canvas = sprite.nativeElement;
-        const key = `${canvas.dataset['character'] ?? ''}@${canvas.dataset['place']}`;
+        const key = `${canvas.dataset['character'] ?? ''}:${canvas.dataset['color'] ?? ''}@${canvas.dataset['place']}`;
         if (canvas.dataset['painted'] === key) continue;
         const ctx = canvas.getContext('2d');
         if (!ctx) continue;
@@ -116,6 +119,7 @@ export class PodiumComponent {
           ctx,
           canvas.dataset['character'] || undefined,
           Number(canvas.dataset['place'] ?? 1),
+          canvas.dataset['color'] || undefined,
         );
         canvas.dataset['painted'] = key;
       }

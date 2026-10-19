@@ -86,6 +86,7 @@ class FakeLauncher {
         {
           id: 'p1',
           slot: 0,
+          colorSlot: 0,
           name: 'P1',
           alive: true,
           bombs: 1,
@@ -103,6 +104,7 @@ class FakeLauncher {
         {
           id: 'p2',
           slot: 1,
+          colorSlot: 1,
           name: 'P2',
           alive: false,
           bombs: 3,
@@ -220,6 +222,7 @@ describe('Play', () => {
     const cpu = {
       id: 'cpu1',
       slot: 1,
+      colorSlot: 1,
       name: 'CPU 1',
       alive: true,
       bombs: 1,
@@ -305,6 +308,7 @@ describe('Play', () => {
         {
           id: 'p1',
           slot: 0,
+          colorSlot: 0,
           name: 'P1',
           alive: true,
           bombs: 1,

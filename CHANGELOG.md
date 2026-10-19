@@ -33,6 +33,16 @@ config file. Ordinary app-level additions are minor.
   unavailable; signed out, it links to `/online` to sign in. The template's
   stub `ProfileService` (`John Doe`) and `lib-user-info` are gone.
 
+- **Players wear their colour.** A round gives each player a colour
+  (`Player.color`, `assignColors` in `createGame`): the one on their profile,
+  or the closest free one when someone ahead in line has it, or their slot's
+  colour. An outsider who gets in takes the victim's colour with their slot.
+  The arena paints each slot in its player's colour (`ArenaSkin.load` and
+  `loadCharacter` take the colours), the HUD carries `colorSlot`, and the
+  podium on `/online` and the title screen paints each face in the player's
+  colour (`PodiumLine.color`, a fourth `PodiumPainter` argument). Offline
+  rounds keep the slot colours.
+
 - **Chat beside the arena, and a full-screen mode.** On `/online` the chat
   is the first card of the right column, next to the arena, with the queue
   under it. A button in the stage's corner expands the page: the arena

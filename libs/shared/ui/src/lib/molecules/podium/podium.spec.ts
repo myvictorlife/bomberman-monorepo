@@ -78,7 +78,7 @@ describe('PodiumComponent', () => {
   it('puts the winner in the middle and paints each face once, with its place', async () => {
     spectator.component.entries.set([
       line('a', 5, 6, 'faisca'),
-      line('b', 2, 6, 'lia'),
+      { ...line('b', 2, 6, 'lia'), color: 'purple' },
       line('c', 1, 6),
     ]);
     spectator.detectChanges();
@@ -101,11 +101,20 @@ describe('PodiumComponent', () => {
       fakeCtx,
       'faisca',
       1,
+      undefined,
+    );
+    // A picked colour reaches the painter; without one it paints the place's.
+    expect(spectator.component.paint).toHaveBeenCalledWith(
+      fakeCtx,
+      'lia',
+      2,
+      'purple',
     );
     expect(spectator.component.paint).toHaveBeenCalledWith(
       fakeCtx,
       undefined,
       3,
+      undefined,
     );
     expect(fakeCtx.scale).toHaveBeenCalledWith(1, 1);
 
