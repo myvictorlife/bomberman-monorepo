@@ -1,6 +1,7 @@
 export * from './lib/arena';
 export * from './lib/characters';
 export * from './lib/closing';
+export * from './lib/colors';
 export * from './lib/constants';
 export * from './lib/game';
 export * from './lib/bonk';

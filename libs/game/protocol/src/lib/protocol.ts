@@ -5,7 +5,10 @@ import {
   Direction,
   GameEvent,
   GameState,
+  isCharacterId,
+  isPlayerColorId,
   MAX_PLAYERS,
+  PlayerColorId,
   TICK_RATE,
 } from '@libs/game-core';
 
@@ -227,12 +230,21 @@ export interface RankingEntry {
   name: string;
   wins: number;
   matches: number;
-  /** Who they last played as; absent for a record from before faces were kept. */
+  /**
+   * The face on the podium: their favourite character, or who they last
+   * played as; absent for a record from before faces were kept.
+   */
   characterId?: CharacterId;
+  /** The colour they picked; absent means none, and the podium uses its own. */
+  color?: PlayerColorId;
 }
 
 /** What the server knows about the signed-in account. */
 export interface PlayerProfile extends RankingEntry {
+  /** `true` once they picked the name themselves; until then it follows the sign-in. */
+  nameChosen: boolean;
+  /** The character they play as, kept on the account so it follows them across devices. */
+  favoriteCharacterId?: CharacterId;
   /** Distinct visits, counted when someone comes back after a while away. */
   visits: number;
   firstSeenAt: number;
@@ -268,6 +280,22 @@ export type ServerErrorCode =
   | 'chat-slow-down'
   /** An admin silenced this account in the chat until the server restarts. */
   | 'chat-muted';
+
+/** A player's name on the ranking, in characters (an emoji is one). */
+export const PLAYER_NAME_LENGTH = { min: 2, max: 20 } as const;
+
+/**
+ * What a signed-in player may change about themselves (`PUT /me`). Every field
+ * is optional; `color: null` clears the colour.
+ */
+export interface ProfileUpdate {
+  name?: string;
+  favoriteCharacterId?: CharacterId;
+  color?: PlayerColorId | null;
+}
+
+/** Why `PUT /me` refused: the body was not a {@link ProfileUpdate}, or someone else has the name. */
+export type ProfileUpdateError = 'bad-request' | 'name-taken';
 
 /** The longest chat message, in characters. */
 export const CHAT_MAX_LENGTH = 140;
@@ -437,6 +465,56 @@ export function parseInput(value: unknown): InputMessage | null {
 }
 
 /**
+ * Text a player wrote, as it may be kept: control and invisible characters
+ * become spaces, and runs of spaces collapse.
+ */
+function cleanText(raw: string): string {
+  return raw
+    .replace(
+      // eslint-disable-next-line no-control-regex
+      /[\u0000-\u001f\u007f-\u009f\u200b-\u200f\u2028-\u202e\u2060-\u206f\ufeff]/g,
+      ' ',
+    )
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/** A name cleaned like a chat line, within {@link PLAYER_NAME_LENGTH}; `null` otherwise. */
+export function parsePlayerName(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const name = cleanText(value);
+  const length = [...name].length;
+  return length >= PLAYER_NAME_LENGTH.min && length <= PLAYER_NAME_LENGTH.max
+    ? name
+    : null;
+}
+
+/**
+ * A {@link ProfileUpdate} with every field checked; `null` when anything sent
+ * is wrong, or nothing was sent — a bad field never half-applies.
+ */
+export function parseProfileUpdate(value: unknown): ProfileUpdate | null {
+  if (!isRecord(value)) return null;
+  const update: ProfileUpdate = {};
+  if ('name' in value) {
+    const name = parsePlayerName(value['name']);
+    if (name === null) return null;
+    update.name = name;
+  }
+  if ('favoriteCharacterId' in value) {
+    const id = value['favoriteCharacterId'];
+    if (typeof id !== 'string' || !isCharacterId(id)) return null;
+    update.favoriteCharacterId = id;
+  }
+  if ('color' in value) {
+    const color = value['color'];
+    if (color !== null && !isPlayerColorId(color)) return null;
+    update.color = color;
+  }
+  return Object.keys(update).length > 0 ? update : null;
+}
+
+/**
  * A chat line as it may be kept: control characters and line breaks become
  * spaces, runs of spaces collapse, and it must fit {@link CHAT_MAX_LENGTH}
  * (counted in characters, so an emoji is one). `null` when nothing is left
@@ -445,14 +523,7 @@ export function parseInput(value: unknown): InputMessage | null {
 export function parseChatText(value: unknown): string | null {
   const raw = isRecord(value) ? value['text'] : undefined;
   if (typeof raw !== 'string') return null;
-  const text = raw
-    .replace(
-      // eslint-disable-next-line no-control-regex
-      /[\u0000-\u001f\u007f-\u009f\u200b-\u200f\u2028-\u202e\u2060-\u206f\ufeff]/g,
-      ' ',
-    )
-    .replace(/\s+/g, ' ')
-    .trim();
+  const text = cleanText(raw);
   return text && [...text].length <= CHAT_MAX_LENGTH ? text : null;
 }
 

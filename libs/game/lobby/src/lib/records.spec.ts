@@ -1,9 +1,12 @@
 import {
+  cleanRecord,
+  nameKey,
   PlayerRecord,
   ranking,
   recordRound,
   recordVisit,
   toProfile,
+  updateProfile,
   VISIT_GAP_MS,
 } from './records';
 
@@ -58,6 +61,82 @@ describe('recordVisit', () => {
 
     expect(recordVisit(first, { id: 'u1', name: '' }, 1).name).toBe('Ana');
     expect(recordVisit(first, { id: 'u1', name: 'Bia' }, 1).name).toBe('Bia');
+  });
+
+  it('keeps a name the player chose over the account name', () => {
+    const chosen = { ...record('u1', 0, 0, 'Dev Cansado'), nameChosen: true };
+
+    expect(
+      recordVisit(chosen, { id: 'u1', name: 'Victor César (myvict' }, 1).name,
+    ).toBe('Dev Cansado');
+  });
+
+  it('keeps only record fields, never the e-mail of a verified account', () => {
+    const account = { id: 'u1', name: 'Ana', email: 'ana@example.com' };
+    const first = recordVisit(undefined, account, 0);
+    // A record saved before this was fixed still carries it.
+    const old = { ...first, email: 'ana@example.com' } as PlayerRecord;
+
+    expect(first).not.toHaveProperty('email');
+    expect(recordVisit(old, account, 1)).not.toHaveProperty('email');
+  });
+});
+
+describe('cleanRecord', () => {
+  it('drops empty optional fields', () => {
+    const r = { ...record('a', 0, 0), nameChosen: false };
+
+    expect(cleanRecord(r)).toEqual(record('a', 0, 0));
+  });
+});
+
+describe('updateProfile', () => {
+  const ana = record('a', 1, 1, 'Ana');
+  const bia = record('b', 1, 1, 'Bia');
+
+  it('sets a chosen name, favourite character and colour', () => {
+    expect(
+      updateProfile(
+        ana,
+        { name: 'Ana Maria', favoriteCharacterId: 'lia', color: 'pink' },
+        [ana, bia],
+      ),
+    ).toEqual({
+      ...ana,
+      name: 'Ana Maria',
+      nameChosen: true,
+      favoriteCharacterId: 'lia',
+      color: 'pink',
+    });
+  });
+
+  it('refuses a name someone else has, ignoring case, accents and spaces', () => {
+    expect(updateProfile(ana, { name: 'bía' }, [ana, bia])).toBe('name-taken');
+    expect(updateProfile(ana, { name: 'B ia' }, [ana, bia])).toBe('name-taken');
+  });
+
+  it('lets a player keep or re-case their own name', () => {
+    expect(updateProfile(ana, { name: 'ANA' }, [ana, bia])).toMatchObject({
+      name: 'ANA',
+      nameChosen: true,
+    });
+  });
+
+  it('clears the colour with null and leaves untouched fields alone', () => {
+    const pink = {
+      ...ana,
+      color: 'pink' as const,
+      favoriteCharacterId: 'lia' as const,
+    };
+
+    expect(updateProfile(pink, { color: null }, [pink])).toEqual({
+      ...ana,
+      favoriteCharacterId: 'lia',
+    });
+  });
+
+  it('compares names by key', () => {
+    expect(nameKey(' Jo  ão ')).toBe(nameKey('joao'));
   });
 });
 
@@ -126,6 +205,26 @@ describe('ranking', () => {
     expect(list.map((r) => r.id)).toEqual(['b', 'e', 'c', 'a']);
   });
 
+  it('shows the favourite character over the last one played, and the colour', () => {
+    const [entry] = ranking([
+      {
+        ...record('a', 1, 1),
+        characterId: 'faisca',
+        favoriteCharacterId: 'lia',
+        color: 'purple',
+      },
+    ]);
+
+    expect(entry).toEqual({
+      id: 'a',
+      name: 'a',
+      wins: 1,
+      matches: 1,
+      characterId: 'lia',
+      color: 'purple',
+    });
+  });
+
   it('respects the limit', () => {
     expect(ranking([record('a', 1, 1), record('b', 2, 2)], 1)).toHaveLength(1);
   });
@@ -143,6 +242,25 @@ describe('toProfile', () => {
     expect(toProfile(record('z', 0, 0), all)).toMatchObject({
       returning: false,
       rank: null,
+    });
+  });
+
+  it('tells whether the name was chosen, and carries the favourite and colour', () => {
+    const r = {
+      ...record('a', 0, 0),
+      nameChosen: true,
+      favoriteCharacterId: 'tiao' as const,
+      color: 'orange' as const,
+    };
+
+    expect(toProfile(r, [r])).toMatchObject({
+      nameChosen: true,
+      characterId: 'tiao',
+      favoriteCharacterId: 'tiao',
+      color: 'orange',
+    });
+    expect(toProfile(record('b', 0, 0), [])).toMatchObject({
+      nameChosen: false,
     });
   });
 });

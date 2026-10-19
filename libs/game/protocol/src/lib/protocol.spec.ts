@@ -7,8 +7,11 @@ import {
   parseHello,
   parseInput,
   parseJoinQueue,
+  parsePlayerName,
+  parseProfileUpdate,
   parseReaction,
   parseRules,
+  PLAYER_NAME_LENGTH,
   PUBLIC_ROOM_RULES,
   REACTIONS,
   RULE_FIELDS,
@@ -194,5 +197,49 @@ describe('parseChatDelete and parseChatMute', () => {
     expect(parseChatMute({ accountId: '' })).toBeNull();
     expect(parseChatMute({ accountId: 'x'.repeat(129) })).toBeNull();
     expect(parseChatMute(undefined)).toBeNull();
+  });
+});
+
+describe('parsePlayerName', () => {
+  it('cleans a name like a chat line', () => {
+    expect(parsePlayerName('  Dev\n Cansado\u200b ')).toBe('Dev Cansado');
+  });
+
+  it('counts characters, so an emoji is one', () => {
+    expect(parsePlayerName('💣'.repeat(PLAYER_NAME_LENGTH.max))).not.toBeNull();
+    expect(parsePlayerName('a'.repeat(PLAYER_NAME_LENGTH.max + 1))).toBeNull();
+  });
+
+  it('refuses a name too short once cleaned, or not a string', () => {
+    expect(parsePlayerName(' a \u0007 ')).toBeNull();
+    expect(parsePlayerName(42)).toBeNull();
+  });
+});
+
+describe('parseProfileUpdate', () => {
+  it('keeps every valid field', () => {
+    expect(
+      parseProfileUpdate({
+        name: ' Ana ',
+        favoriteCharacterId: 'lia',
+        color: 'purple',
+      }),
+    ).toEqual({ name: 'Ana', favoriteCharacterId: 'lia', color: 'purple' });
+  });
+
+  it('takes a null colour as "clear it"', () => {
+    expect(parseProfileUpdate({ color: null })).toEqual({ color: null });
+  });
+
+  it('refuses the whole update when one field is wrong', () => {
+    expect(parseProfileUpdate({ name: 'Ana', color: 'teal' })).toBeNull();
+    expect(parseProfileUpdate({ favoriteCharacterId: 'mario' })).toBeNull();
+    expect(parseProfileUpdate({ name: 'x' })).toBeNull();
+  });
+
+  it('refuses an empty update or something that is not an object', () => {
+    expect(parseProfileUpdate({})).toBeNull();
+    expect(parseProfileUpdate({ email: 'a@b.c' })).toBeNull();
+    expect(parseProfileUpdate('Ana')).toBeNull();
   });
 });
