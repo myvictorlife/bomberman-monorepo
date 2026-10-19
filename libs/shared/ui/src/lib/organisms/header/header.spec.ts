@@ -14,7 +14,8 @@ class StubTranslateLoader implements TranslateLoader {
   getTranslation(lang: string): Observable<TranslationObject> {
     return of({
       HEADER: {
-        HOME: lang === Language.Portuguese ? 'Início' : 'Home',
+        HOME: 'Home',
+        PLAY: lang === Language.Portuguese ? 'Jogar' : 'Play',
         START: 'Get started',
         MENU_ARIA: 'Open menu',
         GITHUB: 'GitHub',
@@ -34,7 +35,7 @@ describe('HeaderComponent', () => {
   const createComponent = createComponentFactory({
     component: HeaderComponent,
     providers: [
-      provideRouter([]),
+      provideRouter([{ path: '**', children: [] }]),
       provideTranslateService({
         loader: [{ provide: TranslateLoader, useClass: StubTranslateLoader }],
         lang: Language.English,
@@ -61,12 +62,12 @@ describe('HeaderComponent', () => {
   });
 
   it('re-renders translated labels when the language changes', () => {
-    expect(spectator.query('.header__link')?.textContent).toContain('Home');
+    expect(spectator.query('.header__link')?.textContent).toContain('Play');
 
     spectator.inject(TranslateService).use(Language.Portuguese);
     spectator.detectChanges();
 
-    expect(spectator.query('.header__link')?.textContent).toContain('Início');
+    expect(spectator.query('.header__link')?.textContent).toContain('Jogar');
   });
 
   describe('repository link', () => {
@@ -113,7 +114,7 @@ describe('HeaderComponent', () => {
 
       const menu = spectator.query('#header-mobile-menu');
       expect(menu).not.toBeNull();
-      expect(menu?.textContent).toContain('Home');
+      expect(menu?.textContent).toContain('Play');
       expect(menu?.textContent).toContain('Get started');
       expect(spectator.query('.header__menu-btn')).toHaveAttribute(
         'aria-expanded',

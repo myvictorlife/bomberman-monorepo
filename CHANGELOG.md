@@ -142,6 +142,13 @@ config file. Ordinary app-level additions are minor.
   hands drive player 1, as online. `PLAY.CONTROLS_P1/P2` became
   `PLAY.KEYS_WASD_HINT/KEYS_ARROWS_HINT`.
 
+- **One way in: "Jogar".** The home hero has a single button, Jogar, to
+  the online room (the offline and guest buttons are gone), and so does the
+  closing band; the header's first link is Jogar, to /online, the Início
+  and Online links are gone and its button says Jogar too. `/play` stays
+  reachable from the arenas and by its address. `HOME.CTA_ONLINE/GUEST/LOCAL`
+  and `HEADER.ONLINE` are gone from the bundles.
+
 - **Analytics events for what players do.** Beyond the automatic
   `page_view`, the app now logs `play_click` (`mode`, `from`: hero, band
   or header), `match_start` on `/play` (`map`, `bots`, `level`,

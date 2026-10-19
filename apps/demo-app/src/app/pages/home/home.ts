@@ -81,7 +81,7 @@ export class HomePage {
   readonly facts = ['HOME.FACT_1', 'HOME.FACT_2', 'HOME.FACT_3'];
 
   /** A "play" button was pressed: which mode, and which of the page's buttons. */
-  trackPlay(mode: 'local' | 'online' | 'guest', from: 'hero' | 'band'): void {
+  trackPlay(mode: 'online', from: 'hero' | 'band'): void {
     this.analytics.logEvent('play_click', { mode, from });
   }
   readonly ticker = [

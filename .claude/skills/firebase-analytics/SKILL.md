@@ -79,7 +79,7 @@ snake_case (`user_signed_up`, `file_downloaded`), no spaces or special character
 | Event                         | Where                               | Params                                                                                               |
 | ----------------------------- | ----------------------------------- | ---------------------------------------------------------------------------------------------------- |
 | `page_view`                   | every navigation (app initializer)  | `page_path`, `page_title`                                                                            |
-| `play_click`                  | home hero/band, header "play now"   | `mode` (`local`/`online`/`guest`), `from` (`hero`/`band`/`header`)                                   |
+| `play_click`  | home hero/band, header "Jogar"     | `mode` (`online` — every button leads to the room), `from` (`hero`/`band`/`header`) |
 | `match_start`                 | `/play` once the arena is up        | `map`, `bots`, `level`, `second_human`, `touch`                                                      |
 | `guest_start`                 | `/online` "play as a guest"         | —                                                                                                    |
 | `queue_join`                  | `/online` join button               | `character`                                                                                          |

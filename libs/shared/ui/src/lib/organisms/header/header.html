@@ -24,16 +24,8 @@
     </a>
 
     <nav class="header__nav">
-      <a routerLink="/" class="header__link">
-        {{ 'HEADER.HOME' | translate }}
-      </a>
-
-      <a routerLink="/play" class="header__link">
-        {{ 'HEADER.PLAY' | translate }}
-      </a>
-
       <a routerLink="/online" class="header__link">
-        {{ 'HEADER.ONLINE' | translate }}
+        {{ 'HEADER.PLAY' | translate }}
       </a>
 
       <a routerLink="/characters" class="header__link">
@@ -78,7 +70,7 @@
       </a>
       }
 
-      <a routerLink="/play" class="header__cta" (click)="trackPlay()">
+      <a routerLink="/online" class="header__cta" (click)="trackPlay()">
         {{ 'HEADER.START' | translate }}
       </a>
 
@@ -102,22 +94,12 @@
     aria-hidden="true"
   ></div>
   <div id="header-mobile-menu" class="header__mobile-menu">
-    <a routerLink="/" class="header__mobile-link" (click)="closeMobileMenu()">
-      {{ 'HEADER.HOME' | translate }}
-    </a>
-    <a
-      routerLink="/play"
-      class="header__mobile-link"
-      (click)="closeMobileMenu()"
-    >
-      {{ 'HEADER.PLAY' | translate }}
-    </a>
     <a
       routerLink="/online"
       class="header__mobile-link"
       (click)="closeMobileMenu()"
     >
-      {{ 'HEADER.ONLINE' | translate }}
+      {{ 'HEADER.PLAY' | translate }}
     </a>
     <a
       routerLink="/characters"

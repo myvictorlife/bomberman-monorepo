@@ -36,7 +36,7 @@ export class HeaderComponent {
 
   /** The header's "play now" was pressed. */
   trackPlay(): void {
-    this.analytics.logEvent('play_click', { mode: 'local', from: 'header' });
+    this.analytics.logEvent('play_click', { mode: 'online', from: 'header' });
   }
 
   /**
