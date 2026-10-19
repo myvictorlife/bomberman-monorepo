@@ -131,6 +131,16 @@ config file. Ordinary app-level additions are minor.
   hands drive player 1, as online. `PLAY.CONTROLS_P1/P2` became
   `PLAY.KEYS_WASD_HINT/KEYS_ARROWS_HINT`.
 
+- **The arena is painted at the screen's density.** The HD skin's tiles,
+  characters, bombs, flames and items were always painted at 64 px and
+  scaled up to the page — twice over on a dense screen — and went soft.
+  `ArenaSkin.resolution` (`HD_RESOLUTION`: the device's pixels per CSS
+  pixel, whole, 1 to 2) now paints every texture that many times finer in
+  the same 64-unit art (`paintHdTextures`, `paintCharacterTextures`, the
+  themes' `tilePainter`, cached per resolution), the game canvas grows with
+  `tileSize`, and the page scales it down instead of up. The rain scales
+  with it. Previews outside the arena still paint at 1.
+
 ### Fixed
 
 - **Bots use the remote bomb.** A bot that picked up the remote laid one
