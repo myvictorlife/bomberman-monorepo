@@ -198,6 +198,8 @@ export class ArenaScene extends Phaser.Scene {
   ): void {
     if (typeof document === 'undefined') return;
     const sync = () => {
+      // A focus change can land after the game is gone: nothing to sync then.
+      if (!keyboard.manager) return;
       const typing = isTextField(document.activeElement);
       keyboard.enabled = !typing;
       if (typing) {
@@ -209,7 +211,13 @@ export class ArenaScene extends Phaser.Scene {
       }
     };
     // `focusout` fires before the next element has focus: check once it has.
-    const later = () => setTimeout(sync);
+    let pending: ReturnType<typeof setTimeout> | null = null;
+    const later = () => {
+      pending = setTimeout(() => {
+        pending = null;
+        sync();
+      });
+    };
     // A click or tap on the arena takes the keys back. Phaser cancels the
     // pointer's default action on its canvas, which is what would have moved
     // focus off the text field — so do that part here.
@@ -222,6 +230,7 @@ export class ArenaScene extends Phaser.Scene {
     document.addEventListener('focusout', later);
     canvas?.addEventListener('pointerdown', takeBack);
     this.events.once(Phaser.Scenes.Events.DESTROY, () => {
+      if (pending !== null) clearTimeout(pending);
       document.removeEventListener('focusin', sync);
       document.removeEventListener('focusout', later);
       canvas?.removeEventListener('pointerdown', takeBack);

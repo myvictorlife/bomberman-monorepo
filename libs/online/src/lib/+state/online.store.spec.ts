@@ -227,6 +227,22 @@ describe('OnlineStore', () => {
     expect(store.status()).toBe('idle');
   });
 
+  it('holds one connection: connecting again leaves the first, and frames come only from the new one', async () => {
+    const store = setup();
+    await store.connect('http://server');
+    const frames: number[] = [];
+    store.onFrame((frame) => frames.push(frame.state.tick));
+
+    // The page came back: the store the router kept connects once more.
+    await store.connect('http://server');
+    expect(connections).toHaveLength(2);
+    expect(connections[0]?.left).toBe(true);
+
+    connections[0]?.push(SERVER_MESSAGE.frame, { round: 1, state: { tick: 9 } });
+    connections[1]?.push(SERVER_MESSAGE.frame, { round: 1, state: { tick: 10 } });
+    expect(frames).toEqual([10]);
+  });
+
   it('leaves the room when the route is left', async () => {
     const store = setup();
     await store.connect('http://server');

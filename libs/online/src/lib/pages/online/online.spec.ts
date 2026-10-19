@@ -346,6 +346,13 @@ describe('Online', () => {
     expect(connection.left).toBe(false);
   });
 
+  it('leaves the room when the page is destroyed, so coming back opens a fresh connection', async () => {
+    await render();
+    expect(connection.left).toBe(false);
+    spectator.fixture.destroy();
+    expect(connection.left).toBe(true);
+  });
+
   it('hands the keys back to a reloaded page once it signs in, without a second arena', async () => {
     await render();
     connection.push(SERVER_MESSAGE.frame, frame(['me', 'b']));

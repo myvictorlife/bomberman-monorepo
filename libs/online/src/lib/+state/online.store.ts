@@ -141,6 +141,13 @@ export const OnlineStore = signalStore(
 
     const open = async (): Promise<void> => {
       if (!url) return;
+      // One connection per store. The router keeps a route's providers — and
+      // so this store — alive across visits, so coming back to the page must
+      // not open a second socket beside the first: both would feed the same
+      // frame listeners, ticks would run backwards and the arena would be
+      // rebuilt on every frame.
+      const previous = connection;
+      connection = null;
       patchState(store, {
         status: 'connecting',
         serverError: null,
@@ -150,28 +157,38 @@ export const OnlineStore = signalStore(
         chat: [],
         chatError: null,
       });
+      await previous?.leave().catch(() => undefined);
       try {
         const opened = await connect(url);
         connection = opened;
-        opened.on<LobbySnapshot>(SERVER_MESSAGE.lobby, (lobby) =>
+        // A connection the store let go of may still deliver what was in
+        // flight: only the current one speaks for the room.
+        const on = <T>(
+          type: string,
+          listener: (payload: T) => void,
+        ): (() => void) =>
+          opened.on<T>(type, (payload) => {
+            if (connection === opened) listener(payload);
+          });
+        on<LobbySnapshot>(SERVER_MESSAGE.lobby, (lobby) =>
           patchState(store, {
             lobby,
             clockOffset: serverOffset(lobby, Date.now()),
           }),
         );
-        opened.on<RankingEntry[]>(SERVER_MESSAGE.ranking, (ranking) =>
+        on<RankingEntry[]>(SERVER_MESSAGE.ranking, (ranking) =>
           patchState(store, { ranking }),
         );
-        opened.on<PlayerProfile>(SERVER_MESSAGE.profile, (profile) =>
+        on<PlayerProfile>(SERVER_MESSAGE.profile, (profile) =>
           patchState(store, { profile }),
         );
-        opened.on<GuestIdentity>(SERVER_MESSAGE.guest, (guest) =>
+        on<GuestIdentity>(SERVER_MESSAGE.guest, (guest) =>
           patchState(store, { guest }),
         );
-        opened.on<AdminMessage>(SERVER_MESSAGE.admin, ({ admin }) =>
+        on<AdminMessage>(SERVER_MESSAGE.admin, ({ admin }) =>
           patchState(store, { admin }),
         );
-        opened.on<ErrorMessage>(SERVER_MESSAGE.error, ({ code }) =>
+        on<ErrorMessage>(SERVER_MESSAGE.error, ({ code }) =>
           patchState(
             store,
             CHAT_ERRORS.includes(code)
@@ -179,23 +196,23 @@ export const OnlineStore = signalStore(
               : { serverError: code },
           ),
         );
-        opened.on<ChatMessage[]>(SERVER_MESSAGE.chatHistory, (chat) =>
+        on<ChatMessage[]>(SERVER_MESSAGE.chatHistory, (chat) =>
           patchState(store, { chat }),
         );
-        opened.on<ChatMessage>(SERVER_MESSAGE.chat, (message) =>
+        on<ChatMessage>(SERVER_MESSAGE.chat, (message) =>
           patchState(store, {
             chat: [...store.chat(), message].slice(-CHAT_HISTORY),
           }),
         );
-        opened.on<ChatRemovedMessage>(SERVER_MESSAGE.chatRemoved, ({ ids }) =>
+        on<ChatRemovedMessage>(SERVER_MESSAGE.chatRemoved, ({ ids }) =>
           patchState(store, {
             chat: store.chat().filter((m) => !ids.includes(m.id)),
           }),
         );
-        opened.on<ReactionMessage>(SERVER_MESSAGE.reaction, ({ emoji }) =>
+        on<ReactionMessage>(SERVER_MESSAGE.reaction, ({ emoji }) =>
           float(emoji),
         );
-        opened.on<FrameMessage>(SERVER_MESSAGE.frame, (frame) =>
+        on<FrameMessage>(SERVER_MESSAGE.frame, (frame) =>
           frameListeners.forEach((l) => l(frame)),
         );
         opened.onClose(() => {

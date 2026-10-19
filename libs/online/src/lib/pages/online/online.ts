@@ -348,6 +348,9 @@ export class Online {
       clearInterval(timer);
       globalThis.removeEventListener?.('focus', onFocus);
       this.handle?.destroy();
+      // Leave the room with the page: the store outlives it (route providers
+      // are kept by the router), and a watcher who left should not count.
+      this.store.disconnect();
     });
   }
 

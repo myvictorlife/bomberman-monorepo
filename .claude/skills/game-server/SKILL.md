@@ -175,6 +175,13 @@ forgets all of it, along with who was silenced.
   arrows). The keyboard choice in `@libs/controls-settings` only matters
   on `/play`, where player 1 takes the chosen hand and a second player the
   other — alone, both.
+- `OnlineStore` is provided on the route, but Angular keeps a route's
+  providers — the store and its socket — alive across visits. So `connect`
+  always leaves the store's previous connection first, and the page calls
+  `store.disconnect()` in its `DestroyRef` hook: one socket per store, and
+  no watcher counted after leaving. (Two sockets on one store fed the same
+  frame listeners, ticks ran backwards and the arena remounted on every
+  frame — the "flicker on return" bug.)
 - On the page the chat is the first card beside the arena. The stage's
   corner button (`online-expand`) sets `expanded`: the layout goes
   `position: fixed` with the arena filling the screen and the chat docked

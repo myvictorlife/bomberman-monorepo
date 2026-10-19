@@ -184,6 +184,15 @@ config file. Ordinary app-level additions are minor.
 
 ### Fixed
 
+- **`/online` flickered after leaving and coming back.** The router keeps a
+  route's providers alive across visits, so the online store — and its
+  socket — survived the page. Coming back opened a second connection beside
+  the first; both fed the same frame listeners, ticks ran backwards and the
+  arena was rebuilt on every frame. The store now leaves its previous
+  connection before opening another, and the page leaves the room when it
+  is destroyed, so a watcher who left no longer counts. The arena's
+  text-field focus sync also no longer runs on a destroyed game.
+
 - **The online scoreboard no longer covers the arena.** The round's clock
   and players sat over the top of the board, and a full round wrapped onto
   its first playable row. They now have a strip of their own above the
