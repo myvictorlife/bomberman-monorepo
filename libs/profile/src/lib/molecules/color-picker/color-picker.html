@@ -1,0 +1,32 @@
+<div
+  class="colors"
+  role="radiogroup"
+  [attr.aria-label]="'PROFILE.COLOR' | translate"
+  data-testid="profile-colors"
+>
+  <button
+    type="button"
+    role="radio"
+    class="colors__swatch colors__swatch--auto"
+    [attr.aria-checked]="value() === null"
+    [disabled]="disabled()"
+    (click)="choose(null)"
+    data-testid="profile-color-auto"
+  >
+    <span class="colors__label">{{ 'PROFILE.COLOR_AUTO' | translate }}</span>
+  </button>
+  @for (color of colors; track color) {
+  <button
+    type="button"
+    role="radio"
+    class="colors__swatch"
+    [style.--swatch]="hex(color)"
+    [attr.aria-checked]="value() === color"
+    [attr.aria-label]="labelKey(color) | translate"
+    [attr.title]="labelKey(color) | translate"
+    [disabled]="disabled()"
+    (click)="choose(color)"
+    [attr.data-testid]="'profile-color-' + color"
+  ></button>
+  }
+</div>

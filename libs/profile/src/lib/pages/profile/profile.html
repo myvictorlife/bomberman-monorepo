@@ -1,41 +1,151 @@
 <main class="profile">
   <div class="profile__head">
-    <button
-      libButton
-      variant="ghost"
-      size="sm"
-      type="button"
-      (click)="goHome()"
-    >
+    <a libButton variant="ghost" size="sm" routerLink="/">
       <lib-icon name="chevron-left" size="sm" />
       {{ 'PROFILE.BACK_HOME' | translate }}
-    </button>
+    </a>
   </div>
 
-  <lib-card [elevated]="true" padding="lg">
-    <h1 class="profile__title">{{ 'PROFILE.TITLE' | translate }}</h1>
+  <h1 class="profile__title">{{ 'PROFILE.TITLE' | translate }}</h1>
+  <p class="profile__lead">{{ 'PROFILE.LEAD' | translate }}</p>
 
-    @if (loading()) {
-    <div class="profile__state" role="status" aria-live="polite">
-      <lib-spinner size="md" [label]="'PROFILE.LOADING' | translate" />
-      <p class="profile__state-text">{{ 'PROFILE.LOADING' | translate }}</p>
-    </div>
-    } @else if (errorMessage(); as message) {
-    <lib-alert tone="danger" [heading]="'PROFILE.ERROR' | translate">
-      {{ message }}
-      <button
-        alert-actions
-        libButton
-        variant="danger"
-        size="sm"
-        type="button"
-        (click)="loadProfile()"
-      >
-        {{ 'PROFILE.RETRY' | translate }}
-      </button>
-    </lib-alert>
-    } @else if (profile(); as profileData) {
-    <lib-user-info [user]="profileData" />
-    }
+  @switch (view()) { @case ('unavailable') {
+  <lib-alert tone="info" data-testid="profile-unavailable">
+    {{ 'PROFILE.UNAVAILABLE' | translate }}
+  </lib-alert>
+  } @case ('signed-out') {
+  <lib-card padding="lg" data-testid="profile-signed-out">
+    <p class="profile__text">{{ 'PROFILE.SIGNED_OUT' | translate }}</p>
+    <a libButton variant="primary" routerLink="/online">
+      {{ 'PROFILE.SIGN_IN' | translate }}
+    </a>
   </lib-card>
+  } @case ('error') {
+  <lib-alert
+    tone="danger"
+    [heading]="'PROFILE.ERROR' | translate"
+    data-testid="profile-error"
+  >
+    <button
+      alert-actions
+      libButton
+      variant="danger"
+      size="sm"
+      type="button"
+      (click)="retry()"
+    >
+      {{ 'PROFILE.RETRY' | translate }}
+    </button>
+  </lib-alert>
+  } @case ('ready') { @if (profile(); as p) {
+  <lib-card padding="lg">
+    <div class="profile__summary" data-testid="profile-summary">
+      <lib-sprite-tile [paint]="paintFace()" [size]="96" />
+      <div>
+        <p class="profile__name" data-testid="profile-name">{{ p.name }}</p>
+        <dl class="profile__stats">
+          <div>
+            <dt>{{ 'PROFILE.WINS' | translate }}</dt>
+            <dd data-testid="profile-wins">{{ p.wins }}</dd>
+          </div>
+          <div>
+            <dt>{{ 'PROFILE.MATCHES' | translate }}</dt>
+            <dd>{{ p.matches }}</dd>
+          </div>
+          <div>
+            <dt>{{ 'PROFILE.RANK' | translate }}</dt>
+            <dd data-testid="profile-rank">
+              {{ p.rank ? '#' + p.rank : ('PROFILE.NO_RANK' | translate) }}
+            </dd>
+          </div>
+        </dl>
+      </div>
+    </div>
+  </lib-card>
+
+  @if (saveError(); as code) {
+  <lib-alert tone="danger" data-testid="profile-save-error">
+    {{ 'PROFILE.SAVE_ERROR.' + code | translate: nameLength }}
+  </lib-alert>
+  }
+
+  <lib-card padding="lg">
+    <form
+      class="profile__section"
+      (submit)="$event.preventDefault(); saveName()"
+    >
+      <label class="profile__label" for="profile-name-input">
+        {{ 'PROFILE.NAME' | translate }}
+      </label>
+      @if (!p.nameChosen) {
+      <p
+        class="profile__hint profile__hint--accent"
+        data-testid="profile-name-suggest"
+      >
+        {{ 'PROFILE.NAME_SUGGEST' | translate }}
+      </p>
+      }
+      <div class="profile__row">
+        <input
+          id="profile-name-input"
+          class="profile__input"
+          type="text"
+          autocomplete="nickname"
+          maxlength="40"
+          [value]="nameDraft()"
+          (input)="setName($any($event.target).value)"
+          [attr.aria-invalid]="cleanName() === null"
+          aria-describedby="profile-name-hint"
+          data-testid="profile-name-input"
+        />
+        <button
+          libButton
+          variant="primary"
+          type="submit"
+          [disabled]="!nameChanged() || saving()"
+          data-testid="profile-name-save"
+        >
+          {{ 'PROFILE.SAVE' | translate }}
+        </button>
+      </div>
+      <p id="profile-name-hint" class="profile__hint">
+        {{ 'PROFILE.NAME_HINT' | translate: nameLength }}
+      </p>
+    </form>
+  </lib-card>
+
+  <lib-card padding="lg">
+    <section class="profile__section" aria-labelledby="profile-character-title">
+      <h2 id="profile-character-title" class="profile__label">
+        {{ 'PROFILE.CHARACTER' | translate }}
+      </h2>
+      <p class="profile__hint">{{ 'PROFILE.CHARACTER_HINT' | translate }}</p>
+      <lib-character-picker
+        [value]="p.favoriteCharacterId ?? null"
+        [color]="color()"
+        [disabled]="saving()"
+        (pick)="pickCharacter($event)"
+      />
+    </section>
+  </lib-card>
+
+  <lib-card padding="lg">
+    <section class="profile__section" aria-labelledby="profile-color-title">
+      <h2 id="profile-color-title" class="profile__label">
+        {{ 'PROFILE.COLOR' | translate }}
+      </h2>
+      <p class="profile__hint">{{ 'PROFILE.COLOR_HINT' | translate }}</p>
+      <lib-color-picker
+        [value]="color()"
+        [disabled]="saving()"
+        (pick)="pickColor($event)"
+      />
+    </section>
+  </lib-card>
+  } } @default {
+  <div class="profile__state" role="status" aria-live="polite">
+    <lib-spinner size="md" [label]="'PROFILE.LOADING' | translate" />
+    <p class="profile__hint">{{ 'PROFILE.LOADING' | translate }}</p>
+  </div>
+  } }
 </main>

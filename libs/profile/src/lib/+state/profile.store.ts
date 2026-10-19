@@ -1,5 +1,6 @@
 import { computed, inject } from '@angular/core';
-import { IGenericError, User } from '@libs/entity';
+import { CharacterSelectionService } from '@libs/character-select';
+import { PlayerProfile, ProfileUpdate } from '@libs/game-protocol';
 import { tapResponse } from '@ngrx/operators';
 import {
   patchState,
@@ -9,55 +10,100 @@ import {
   withState,
 } from '@ngrx/signals';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { pipe, switchMap, tap } from 'rxjs';
-import { ProfileService } from '../services/profile/profile.service';
+import { concatMap, pipe, switchMap, tap } from 'rxjs';
+import {
+  ProfileFailure,
+  ProfileService,
+} from '../services/profile/profile.service';
 
 export interface ProfileState {
-  profile: User | null;
+  profile: PlayerProfile | null;
   loading: boolean;
-  error: IGenericError | null;
+  /** Why loading failed; the page offers to try again. */
+  error: ProfileFailure | null;
+  /** A change is on its way to the server. */
+  saving: boolean;
+  /** Why the last change was refused — a taken name, above all. */
+  saveError: ProfileFailure | null;
 }
 
 export const initialProfileState: ProfileState = {
   profile: null,
   loading: false,
   error: null,
+  saving: false,
+  saveError: null,
 };
 
 /**
- * Feature state for the profile page.
+ * Feature state for the profile page: the signed-in player's record on the
+ * game server — the name on the ranking, the favourite character, the colour.
  *
- * Provided on the profile route (see `user.routes.ts`), never in root: the store
- * is created when the feature is entered and torn down when it is left. The
- * profile is a single object, so it is a plain state field — `withEntities` is
- * for collections and would only add indirection here.
+ * Provided on the profile route (see `user.routes.ts`), never in root. The
+ * favourite character also becomes the one this browser plays with, so the
+ * account and the roster page never disagree.
  */
 export const ProfileStore = signalStore(
   withState(initialProfileState),
-  withComputed(({ profile, error }) => ({
+  withComputed(({ profile }) => ({
     hasProfile: computed(() => profile() !== null),
-    errorMessage: computed(() => error()?.message ?? null),
   })),
-  withMethods((store, profileService = inject(ProfileService)) => ({
-    /**
-     * `switchMap` cancels an in-flight request when a newer one starts, so a slow
-     * response can never overwrite a fresher one. `tapResponse` keeps the stream
-     * alive after a failure — without it the first error would kill the rxMethod
-     * and every later call would be silently ignored.
-     */
-    fetchProfile: rxMethod<void>(
-      pipe(
-        tap(() => patchState(store, { loading: true, error: null })),
-        switchMap(() =>
-          profileService.fetchProfile().pipe(
-            tapResponse({
-              next: (profile) => patchState(store, { profile, loading: false }),
-              error: (error: IGenericError) =>
-                patchState(store, { error, loading: false }),
-            }),
+  withMethods(
+    (
+      store,
+      profileService = inject(ProfileService),
+      selection = inject(CharacterSelectionService),
+    ) => {
+      const received = (profile: PlayerProfile) => {
+        patchState(store, { profile });
+        if (profile.favoriteCharacterId)
+          selection.select(profile.favoriteCharacterId);
+      };
+      return {
+        /**
+         * `switchMap`: a newer load cancels a slower one. `tapResponse` keeps the
+         * stream alive after a failure, so "try again" still works.
+         */
+        fetchProfile: rxMethod<void>(
+          pipe(
+            tap(() => patchState(store, { loading: true, error: null })),
+            switchMap(() =>
+              profileService.fetchProfile().pipe(
+                tapResponse({
+                  next: (profile) => {
+                    received(profile);
+                    patchState(store, { loading: false });
+                  },
+                  error: (error: ProfileFailure) =>
+                    patchState(store, { error, loading: false }),
+                }),
+              ),
+            ),
           ),
         ),
-      ),
-    ),
-  })),
+        /** `concatMap`: changes reach the server in the order they were made. */
+        save: rxMethod<ProfileUpdate>(
+          pipe(
+            tap(() => patchState(store, { saving: true, saveError: null })),
+            concatMap((update) =>
+              profileService.updateProfile(update).pipe(
+                tapResponse({
+                  next: (profile) => {
+                    received(profile);
+                    patchState(store, { saving: false });
+                  },
+                  error: (saveError: ProfileFailure) =>
+                    patchState(store, { saveError, saving: false }),
+                }),
+              ),
+            ),
+          ),
+        ),
+        /** Signed out: nothing of the last account stays on the page. */
+        clear(): void {
+          patchState(store, initialProfileState);
+        },
+      };
+    },
+  ),
 );

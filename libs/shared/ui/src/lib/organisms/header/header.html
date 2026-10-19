@@ -52,6 +52,10 @@
         {{ 'HEADER.ITEMS' | translate }}
       </a>
 
+      <a routerLink="/profile" class="header__link">
+        {{ 'HEADER.PROFILE' | translate }}
+      </a>
+
       <a routerLink="/settings" class="header__link">
         {{ 'HEADER.SETTINGS' | translate }}
       </a>
@@ -142,6 +146,13 @@
       (click)="closeMobileMenu()"
     >
       {{ 'HEADER.ITEMS' | translate }}
+    </a>
+    <a
+      routerLink="/profile"
+      class="header__mobile-link"
+      (click)="closeMobileMenu()"
+    >
+      {{ 'HEADER.PROFILE' | translate }}
     </a>
     <a
       routerLink="/settings"

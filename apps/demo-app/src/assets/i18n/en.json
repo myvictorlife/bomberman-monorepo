@@ -14,7 +14,8 @@
     "CHARACTERS": "Characters",
     "ARENAS": "Arenas",
     "ITEMS": "Items",
-    "MOUNTS": "Mounts"
+    "MOUNTS": "Mounts",
+    "PROFILE": "Profile"
   },
   "LANGUAGE_SELECT": {
     "TRIGGER_ARIA": "Change language",
@@ -105,13 +106,44 @@
   },
   "PROFILE": {
     "TITLE": "Profile",
-    "BACK_HOME": "Back to Home",
+    "BACK_HOME": "Back to home",
     "LOADING": "Loading profile...",
     "ERROR": "Could not load the profile",
-    "RETRY": "Try again"
-  },
-  "USER_INFO": {
-    "USER_ID": "User ID"
+    "RETRY": "Try again",
+    "LEAD": "How you show up on the ranking, and who you play as — on any device.",
+    "UNAVAILABLE": "Profiles live on the online server, which is not available here.",
+    "SIGNED_OUT": "Sign in to have a profile: your name on the ranking, your character and your colour.",
+    "SIGN_IN": "Sign in",
+    "WINS": "Wins",
+    "MATCHES": "Matches",
+    "RANK": "Ranking",
+    "NO_RANK": "—",
+    "NAME": "Name on the ranking",
+    "NAME_SUGGEST": "This is still your account's name. Choose how you show up on the ranking.",
+    "NAME_HINT": "{{min}} to {{max}} characters. Nobody else can have the same name.",
+    "SAVE": "Save",
+    "CHARACTER": "Your character",
+    "CHARACTER_HINT": "You play as them here and online, on any device you sign in on.",
+    "COLOR": "Your colour",
+    "COLOR_HINT": "In a round, if someone ahead of you in line picked the same colour, you get the closest free one.",
+    "COLOR_AUTO": "Automatic",
+    "COLOR_NAMES": {
+      "BLUE": "Blue",
+      "GRAPHITE": "Graphite",
+      "RED": "Red",
+      "YELLOW": "Yellow",
+      "GREEN": "Green",
+      "PURPLE": "Purple",
+      "ORANGE": "Orange",
+      "PINK": "Pink"
+    },
+    "SAVE_ERROR": {
+      "name-taken": "Someone already has that name. Try another one.",
+      "bad-request": "That name cannot be used. Use {{min}} to {{max}} characters.",
+      "email-not-verified": "Confirm your e-mail before changing your profile — the link is in your inbox.",
+      "auth-required": "Your sign-in expired. Sign in again on the online page.",
+      "network": "Could not reach the server. Try again in a moment."
+    }
   },
   "NOT_FOUND": {
     "TITLE": "Page not found",

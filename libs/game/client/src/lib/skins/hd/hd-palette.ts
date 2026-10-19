@@ -47,6 +47,27 @@ export const HD_PLAYER_COLORS: readonly HdPlayerColors[] = [
     suit: '#eef0f4',
     suitDark: '#a3a9b8',
   },
+  {
+    helmet: '#8b5cf6',
+    helmetLight: '#c4adff',
+    helmetDark: '#4c2a96',
+    suit: '#eef0f4',
+    suitDark: '#a3a9b8',
+  },
+  {
+    helmet: '#f08a3c',
+    helmetLight: '#ffc192',
+    helmetDark: '#94481a',
+    suit: '#eef0f4',
+    suitDark: '#a3a9b8',
+  },
+  {
+    helmet: '#e86aa6',
+    helmetLight: '#ffb3d6',
+    helmetDark: '#8f2c5e',
+    suit: '#eef0f4',
+    suitDark: '#a3a9b8',
+  },
 ];
 
 /**

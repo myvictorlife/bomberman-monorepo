@@ -37,9 +37,15 @@ const depConstraints = [
   {
     sourceTag: 'scope:profile',
     onlyDependOnLibsWithTags: [
+      'scope:auth-lib',
+      'scope:character-select-lib',
       'scope:entity-lib',
       'scope:environment-lib',
+      'scope:game-client-lib',
+      'scope:game-core-lib',
+      'scope:game-protocol-lib',
       'scope:theme-lib',
+      'scope:translate',
       'scope:ui-lib',
     ],
   },

@@ -1,22 +1,39 @@
 import { TestBed } from '@angular/core/testing';
-import { IGenericError, User } from '@libs/entity';
+import { CharacterSelectionService } from '@libs/character-select';
+import { PlayerProfile } from '@libs/game-protocol';
 import { Subject, of, throwError } from 'rxjs';
 import type { Mock } from 'vitest';
 import { ProfileService } from '../services/profile/profile.service';
 import { ProfileStore, initialProfileState } from './profile.store';
 
-const user: User = { id: '1', name: 'Ada Lovelace' };
-const error: IGenericError = { message: 'boom', code: 'E_BOOM', status: 500 };
+const profile: PlayerProfile = {
+  id: 'u1',
+  name: 'Ana',
+  nameChosen: false,
+  wins: 2,
+  matches: 3,
+  visits: 1,
+  firstSeenAt: 0,
+  lastSeenAt: 0,
+  returning: false,
+  rank: 4,
+};
 
 describe('ProfileStore', () => {
-  let profileService: { fetchProfile: Mock };
+  let profileService: { fetchProfile: Mock; updateProfile: Mock };
+  let selection: { select: Mock };
 
   const setup = () => {
-    profileService = { fetchProfile: vi.fn().mockReturnValue(of(user)) };
+    profileService = {
+      fetchProfile: vi.fn().mockReturnValue(of(profile)),
+      updateProfile: vi.fn(),
+    };
+    selection = { select: vi.fn() };
     TestBed.configureTestingModule({
       providers: [
         ProfileStore,
         { provide: ProfileService, useValue: profileService },
+        { provide: CharacterSelectionService, useValue: selection },
       ],
     });
     return TestBed.inject(ProfileStore);
@@ -27,84 +44,86 @@ describe('ProfileStore', () => {
 
     expect(store.profile()).toBe(initialProfileState.profile);
     expect(store.loading()).toBe(false);
+    expect(store.saving()).toBe(false);
     expect(store.error()).toBeNull();
     expect(store.hasProfile()).toBe(false);
-    expect(store.errorMessage()).toBeNull();
   });
 
-  it('stores the profile on a successful fetch', () => {
+  it('loads the profile, flagging loading while it is on its way', () => {
     const store = setup();
-
-    store.fetchProfile();
-
-    expect(store.profile()).toEqual(user);
-    expect(store.hasProfile()).toBe(true);
-    expect(store.loading()).toBe(false);
-    expect(store.error()).toBeNull();
-  });
-
-  it('flags loading while the request is in flight', () => {
-    const store = setup();
-    const response = new Subject<User>();
+    const response = new Subject<PlayerProfile>();
     profileService.fetchProfile.mockReturnValue(response);
 
     store.fetchProfile();
     expect(store.loading()).toBe(true);
 
-    response.next(user);
+    response.next(profile);
+    expect(store.profile()).toEqual(profile);
+    expect(store.hasProfile()).toBe(true);
     expect(store.loading()).toBe(false);
   });
 
-  it('stores the error and clears loading on a failed fetch', () => {
+  it('keeps the failure, and loads again after one', () => {
     const store = setup();
-    profileService.fetchProfile.mockReturnValue(throwError(() => error));
+    profileService.fetchProfile.mockReturnValueOnce(
+      throwError(() => 'network'),
+    );
 
     store.fetchProfile();
-
-    expect(store.error()).toEqual(error);
-    expect(store.errorMessage()).toBe('boom');
+    expect(store.error()).toBe('network');
     expect(store.loading()).toBe(false);
-    expect(store.profile()).toBeNull();
-  });
-
-  it('stays usable after a failure so a retry can succeed', () => {
-    const store = setup();
-    profileService.fetchProfile.mockReturnValueOnce(throwError(() => error));
 
     store.fetchProfile();
-    store.fetchProfile();
-
-    expect(profileService.fetchProfile).toHaveBeenCalledTimes(2);
-    expect(store.profile()).toEqual(user);
     expect(store.error()).toBeNull();
+    expect(store.profile()).toEqual(profile);
   });
 
-  it('replaces a previously loaded profile on refetch', () => {
+  it('plays the favourite character in this browser too', () => {
+    const store = setup();
+    profileService.fetchProfile.mockReturnValue(
+      of({ ...profile, favoriteCharacterId: 'lia' }),
+    );
+
+    store.fetchProfile();
+    expect(selection.select).toHaveBeenCalledWith('lia');
+  });
+
+  it('saves a change and takes the answer as the profile', () => {
+    const store = setup();
+    const saved = { ...profile, favoriteCharacterId: 'tiao' as const };
+    profileService.updateProfile.mockReturnValue(of(saved));
+
+    store.save({ favoriteCharacterId: 'tiao' });
+
+    expect(profileService.updateProfile).toHaveBeenCalledWith({
+      favoriteCharacterId: 'tiao',
+    });
+    expect(store.profile()).toEqual(saved);
+    expect(store.saving()).toBe(false);
+    expect(selection.select).toHaveBeenCalledWith('tiao');
+  });
+
+  it('keeps why a change was refused, until the next one', () => {
+    const store = setup();
+    profileService.updateProfile.mockReturnValueOnce(
+      throwError(() => 'name-taken'),
+    );
+    store.fetchProfile();
+
+    store.save({ name: 'Bia' });
+    expect(store.saveError()).toBe('name-taken');
+    expect(store.profile()?.name).toBe('Ana');
+
+    profileService.updateProfile.mockReturnValue(of(profile));
+    store.save({ color: 'pink' });
+    expect(store.saveError()).toBeNull();
+  });
+
+  it('forgets everything on clear', () => {
     const store = setup();
     store.fetchProfile();
 
-    const updated: User = { id: '1', name: 'Ada L.' };
-    profileService.fetchProfile.mockReturnValue(of(updated));
-    store.fetchProfile();
-
-    expect(store.profile()).toEqual(updated);
-  });
-
-  it('keeps only the latest response when requests overlap', () => {
-    const store = setup();
-    const first = new Subject<User>();
-    const second = new Subject<User>();
-
-    profileService.fetchProfile
-      .mockReturnValueOnce(first)
-      .mockReturnValueOnce(second);
-    store.fetchProfile();
-    store.fetchProfile();
-
-    // switchMap unsubscribed from the first request, so a late answer is ignored.
-    first.next({ id: '9', name: 'Stale' });
-    second.next(user);
-
-    expect(store.profile()).toEqual(user);
+    store.clear();
+    expect(store.profile()).toBeNull();
   });
 });

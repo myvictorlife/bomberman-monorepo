@@ -1,38 +1,117 @@
-/* Tokens only. The page previously carried a hand-rolled indigo/gray palette
-   that matched nothing else in the app and ignored the theme entirely. */
-
 .profile {
-  display: block;
-  max-width: 32rem;
+  display: grid;
+  gap: var(--space-4);
+  max-width: 44rem;
   margin: 0 auto;
-  padding: var(--space-10) var(--space-4) var(--space-16);
-}
-
-.profile__head {
-  margin-bottom: var(--space-4);
+  padding: var(--space-8) var(--space-4) var(--space-16);
 }
 
 .profile__title {
-  margin: 0 0 var(--space-6);
+  margin: 0;
   font-size: var(--font-size-3xl);
   font-weight: var(--font-weight-bold);
   line-height: var(--leading-snug);
   color: var(--color-text-primary);
-  text-align: center;
 }
 
-/* Gives the loading state the same vertical footprint as the loaded content, so
-   the card does not jump when the request resolves. */
+.profile__lead,
+.profile__text {
+  margin: 0;
+  color: var(--color-text-secondary);
+}
+
+.profile__text {
+  margin-bottom: var(--space-4);
+}
+
+.profile__summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.profile__name {
+  margin: 0 0 var(--space-2);
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+  overflow-wrap: anywhere;
+}
+
+.profile__stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-5);
+  margin: 0;
+
+  dt {
+    font-size: var(--font-size-xs);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+  }
+
+  dd {
+    margin: 0;
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-primary);
+  }
+}
+
+.profile__section {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.profile__label {
+  margin: 0;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.profile__hint {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.profile__hint--accent {
+  color: var(--color-brand);
+}
+
+.profile__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.profile__input {
+  flex: 1 1 14rem;
+  min-width: 0;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-surface);
+  color: var(--color-text-primary);
+  font: inherit;
+
+  &:focus-visible {
+    outline: 2px solid var(--color-brand);
+    outline-offset: 1px;
+  }
+
+  &[aria-invalid='true'] {
+    border-color: var(--color-danger);
+  }
+}
+
 .profile__state {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: var(--space-3);
   padding: var(--space-6) 0;
-}
-
-.profile__state-text {
-  margin: 0;
-  font-size: var(--font-size-sm);
-  color: var(--color-text-secondary);
 }

@@ -1,4 +1,4 @@
-import { Direction } from '@libs/game-core';
+import { Direction, PLAYER_COLOR_IDS, PlayerColorId } from '@libs/game-core';
 
 /**
  * The cartoon style every character and mount is drawn in: thick ink outline,
@@ -23,7 +23,11 @@ export const RIDER_SCALE = 0.92;
 export const MOUNTED_HEADROOM = 18;
 export const INK = '#1c1511';
 
-/** Team colours by player slot: the suit panel and the light. */
+/**
+ * Team colours: the suit panel and the light. Indexed like `PLAYER_COLOR_IDS`
+ * — the first five are the slot colours of a round where nobody picked one —
+ * so the `slot` a painter receives is a colour index ({@link colorSlot}).
+ */
 export interface TeamColors {
   readonly suit: string;
   readonly suitDark: string;
@@ -62,7 +66,30 @@ export const TEAM_COLORS: readonly TeamColors[] = [
     suitLight: '#7fe0aa',
     glow: '#ffd34d',
   },
+  {
+    suit: '#8b5cf6',
+    suitDark: '#4c2a96',
+    suitLight: '#b99cff',
+    glow: '#7df0ff',
+  },
+  {
+    suit: '#f08a3c',
+    suitDark: '#94481a',
+    suitLight: '#ffb67d',
+    glow: '#fff1c2',
+  },
+  {
+    suit: '#e86aa6',
+    suitDark: '#8f2c5e',
+    suitLight: '#ff9fcb',
+    glow: '#ffe066',
+  },
 ];
+
+/** The painter's `slot` for a colour: its place in `PLAYER_COLOR_IDS`. */
+export function colorSlot(color: PlayerColorId): number {
+  return PLAYER_COLOR_IDS.indexOf(color);
+}
 
 export function teamFor(slot: number): TeamColors {
   return TEAM_COLORS[

@@ -24,6 +24,15 @@ config file. Ordinary app-level additions are minor.
   `assignColors`, first in line first. The room re-sends the ranking and the
   profile after a change. Changing anything takes a confirmed e-mail.
 
+- **A real profile page.** `/profile` (now in the header) shows the signed-in
+  player's name, wins, matches and place on the ranking, and lets them
+  change the name on the ranking, pick their favourite character and their
+  colour, all saved through `PUT /me`. A player still on their account's
+  name is invited to choose one. Picking a favourite also selects it in
+  this browser. Without a game server the page says profiles are
+  unavailable; signed out, it links to `/online` to sign in. The template's
+  stub `ProfileService` (`John Doe`) and `lib-user-info` are gone.
+
 - **Chat beside the arena, and a full-screen mode.** On `/online` the chat
   is the first card of the right column, next to the arena, with the queue
   under it. A button in the stage's corner expands the page: the arena

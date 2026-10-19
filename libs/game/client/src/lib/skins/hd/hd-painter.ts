@@ -98,7 +98,9 @@ export function paintCharacterTextures(
     }
     return textures;
   }
-  const colors = HD_PLAYER_COLORS[slot] as HdPlayerColors;
+  const colors = HD_PLAYER_COLORS[
+    slot % HD_PLAYER_COLORS.length
+  ] as HdPlayerColors;
   for (const facing of FACINGS) {
     for (let f = 0; f < PLAYER_FRAMES; f++) {
       paint(TEXTURE.player(slot, facing, f), (ctx) =>

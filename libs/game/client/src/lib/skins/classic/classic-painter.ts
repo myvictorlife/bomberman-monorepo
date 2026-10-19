@@ -82,7 +82,7 @@ export function paintClassicTextures(
   for (const kind of POWER_UP_KINDS)
     paint(TEXTURE.powerUp(kind), (ctx) => paintPowerUp(ctx, kind));
   for (let slot = 0; slot < PLAYER_SLOTS; slot++) {
-    const palette = PLAYER_PALETTES[slot] as Palette;
+    const palette = PLAYER_PALETTES[slot % PLAYER_PALETTES.length] as Palette;
     for (const facing of FACINGS) {
       for (let f = 0; f < PLAYER_FRAMES; f++) {
         const pose = facing === 'left' || facing === 'right' ? 'side' : facing;

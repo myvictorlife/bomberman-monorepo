@@ -1,134 +1,190 @@
-import { Router } from '@angular/router';
-import { IGenericError, User } from '@libs/entity';
+import { signal } from '@angular/core';
+import { provideRouter } from '@angular/router';
+import { AUTH, AuthUser } from '@libs/auth';
+import { CharacterSelectionService } from '@libs/character-select';
+import { PlayerProfile } from '@libs/game-protocol';
 import { createComponentFactory, Spectator } from '@ngneat/spectator/vitest';
-import {
-  TranslateLoader,
-  TranslationObject,
-  provideTranslateService,
-} from '@ngx-translate/core';
-import { Observable, Subject, of, throwError } from 'rxjs';
+import { provideTranslateService } from '@ngx-translate/core';
+import { of, Subject, throwError } from 'rxjs';
+import type { Mock } from 'vitest';
 import { ProfileStore } from '../../+state/profile.store';
 import { ProfileService } from '../../services/profile/profile.service';
 import { Profile } from './profile';
 
-const user: User = { id: '123', name: 'John Doe' };
-const error: IGenericError = {
-  message: 'network down',
-  code: 'E_NET',
-  status: 503,
+const ana: AuthUser = {
+  id: 'u1',
+  email: 'ana@example.com',
+  displayName: 'Ana',
+  emailVerified: true,
 };
 
-/** Serves the strings the template needs without touching HTTP. */
-class StubTranslateLoader implements TranslateLoader {
-  getTranslation(): Observable<TranslationObject> {
-    return of({
-      PROFILE: {
-        TITLE: 'Profile',
-        BACK_HOME: 'Back to Home',
-        LOADING: 'Loading profile...',
-        ERROR: 'Could not load the profile',
-        RETRY: 'Try again',
-      },
-      USER_INFO: { USER_ID: 'User ID' },
-    });
-  }
-}
+const profile: PlayerProfile = {
+  id: 'u1',
+  name: 'Ana',
+  nameChosen: false,
+  wins: 3,
+  matches: 5,
+  visits: 2,
+  firstSeenAt: 0,
+  lastSeenAt: 0,
+  returning: true,
+  rank: 2,
+};
 
 describe('Profile', () => {
   let spectator: Spectator<Profile>;
-  let router: Router;
-  // Shared so a test can decide what the service answers before the component
-  // is created — the component fetches in its constructor.
-  const profileService = { fetchProfile: vi.fn() };
+  const user = signal<AuthUser | null>(ana);
+  const ready = signal(true);
+  const auth = {
+    available: true,
+    user,
+    ready,
+    initialize: vi.fn(async () => undefined),
+  };
+  const service: {
+    available: boolean;
+    fetchProfile: Mock;
+    updateProfile: Mock;
+  } = { available: true, fetchProfile: vi.fn(), updateProfile: vi.fn() };
 
   const createComponent = createComponentFactory({
     component: Profile,
+    detectChanges: false,
     providers: [
-      { provide: Router, useValue: { navigate: vi.fn() } },
-      { provide: ProfileService, useValue: profileService },
-      // The store is normally provided by the profile route, so a component-level
-      // test has to register it explicitly. No root store, no effects runner.
+      provideRouter([]),
+      { provide: AUTH, useValue: auth },
+      { provide: ProfileService, useValue: service },
+      { provide: CharacterSelectionService, useValue: { select: vi.fn() } },
       ProfileStore,
-      provideTranslateService({
-        loader: [{ provide: TranslateLoader, useClass: StubTranslateLoader }],
-        lang: 'en',
-        fallbackLang: 'en',
-      }),
+      // No bundles: the page shows keys, and the tests find things by test id.
+      provideTranslateService({ lang: 'en' }),
     ],
   });
 
-  /** Creates the component after the service stub has been configured. */
   const render = () => {
     spectator = createComponent();
-    router = spectator.inject(Router);
     spectator.detectChanges();
     return spectator;
   };
+  const byId = (id: string) => spectator.query(`[data-testid="${id}"]`);
 
   beforeEach(() => {
-    profileService.fetchProfile.mockReset();
-    profileService.fetchProfile.mockReturnValue(of(user));
+    user.set(ana);
+    ready.set(true);
+    service.available = true;
+    service.fetchProfile.mockReset().mockReturnValue(of(profile));
+    service.updateProfile.mockReset();
   });
 
-  it('should create', () => {
-    expect(render().component).toBeTruthy();
-  });
-
-  it('should render Back to Home button', () => {
-    const button = render().query('button');
-    expect(button).toBeTruthy();
-    expect(button?.textContent).toContain('Back to Home');
-  });
-
-  it('should call goHome when Back to Home button is clicked', () => {
-    render();
-    const spy = vi.spyOn(spectator.component, 'goHome');
-    spectator.click('button');
-    expect(spy).toHaveBeenCalled();
-  });
-
-  it('should navigate to home when goHome is called', () => {
-    render();
-    spectator.component.goHome();
-    expect(router.navigate).toHaveBeenCalledWith(['/']);
-  });
-
-  it('fetches the profile on creation and renders it', () => {
+  it('says so when there is no game server, and never asks for a profile', () => {
+    service.available = false;
     render();
 
-    expect(profileService.fetchProfile).toHaveBeenCalledTimes(1);
-    expect(spectator.query('lib-user-info')).toBeTruthy();
-    expect(spectator.query('lib-user-info')?.textContent).toContain('John Doe');
+    expect(byId('profile-unavailable')).toBeTruthy();
+    expect(service.fetchProfile).not.toHaveBeenCalled();
   });
 
-  it('shows the loading state while the request is in flight', () => {
-    profileService.fetchProfile.mockReturnValue(new Subject<User>());
+  it('waits for the sign-in to settle, then loads the profile', () => {
+    ready.set(false);
+    service.fetchProfile.mockReturnValue(new Subject());
     render();
 
-    expect(spectator.query('[role="status"]')?.textContent).toContain(
-      'Loading profile...',
+    expect(auth.initialize).toHaveBeenCalled();
+    expect(spectator.query('[role="status"]')).toBeTruthy();
+  });
+
+  it('sends a signed-out visitor to sign in', () => {
+    user.set(null);
+    render();
+
+    expect(
+      byId('profile-signed-out')?.querySelector('a')?.getAttribute('href'),
+    ).toBe('/online');
+    expect(service.fetchProfile).not.toHaveBeenCalled();
+  });
+
+  it('shows the name, the numbers and a hint to choose a name', () => {
+    render();
+
+    expect(byId('profile-name')?.textContent).toContain('Ana');
+    expect(byId('profile-wins')?.textContent).toContain('3');
+    expect(byId('profile-rank')?.textContent).toContain('#2');
+    expect(byId('profile-name-suggest')).toBeTruthy();
+  });
+
+  it('offers a retry when loading fails', () => {
+    service.fetchProfile.mockReturnValueOnce(throwError(() => 'network'));
+    render();
+    expect(byId('profile-error')).toBeTruthy();
+
+    spectator.click('[data-testid="profile-error"] button');
+    spectator.detectChanges();
+    expect(byId('profile-summary')).toBeTruthy();
+  });
+
+  it('saves a new name, and only a valid, changed one', () => {
+    service.updateProfile.mockReturnValue(
+      of({ ...profile, name: 'Dev Cansado', nameChosen: true }),
     );
-    expect(spectator.query('lib-user-info')).toBeFalsy();
-  });
-
-  it('shows the error message and a retry button when the fetch fails', () => {
-    profileService.fetchProfile.mockReturnValue(throwError(() => error));
     render();
+    const save = () => byId('profile-name-save') as HTMLButtonElement | null;
 
-    const alert = spectator.query('[role="alert"]');
-    expect(alert?.textContent).toContain('Could not load the profile');
-    expect(alert?.textContent).toContain('network down');
-    expect(spectator.query('lib-user-info')).toBeFalsy();
-  });
+    expect(save()?.disabled).toBe(true);
+    spectator.typeInElement('x', '[data-testid="profile-name-input"]');
+    expect(save()?.disabled).toBe(true);
 
-  it('refetches when the retry button is clicked', () => {
-    profileService.fetchProfile.mockReturnValueOnce(throwError(() => error));
-    render();
-
-    spectator.click('[role="alert"] button');
+    spectator.typeInElement(
+      '  Dev   Cansado ',
+      '[data-testid="profile-name-input"]',
+    );
+    spectator.click('[data-testid="profile-name-save"]');
     spectator.detectChanges();
 
-    expect(profileService.fetchProfile).toHaveBeenCalledTimes(2);
-    expect(spectator.query('lib-user-info')?.textContent).toContain('John Doe');
+    expect(service.updateProfile).toHaveBeenCalledWith({ name: 'Dev Cansado' });
+    expect(byId('profile-name')?.textContent).toContain('Dev Cansado');
+    expect(byId('profile-name-suggest')).toBeFalsy();
+  });
+
+  it('shows why a name was refused', () => {
+    service.updateProfile.mockReturnValue(throwError(() => 'name-taken'));
+    render();
+
+    spectator.typeInElement('Bia', '[data-testid="profile-name-input"]');
+    spectator.component.saveName();
+    spectator.detectChanges();
+
+    expect(byId('profile-save-error')?.textContent).toContain(
+      'PROFILE.SAVE_ERROR.name-taken',
+    );
+  });
+
+  it('saves the favourite character and the colour when picked', () => {
+    service.updateProfile.mockImplementation((update) =>
+      of({ ...profile, ...update }),
+    );
+    render();
+
+    spectator.click('[data-testid="profile-character-tiao"]');
+    spectator.click('[data-testid="profile-color-purple"]');
+    spectator.detectChanges();
+
+    expect(service.updateProfile).toHaveBeenCalledWith({
+      favoriteCharacterId: 'tiao',
+    });
+    expect(service.updateProfile).toHaveBeenCalledWith({ color: 'purple' });
+    expect(byId('profile-color-purple')?.getAttribute('aria-checked')).toBe(
+      'true',
+    );
+
+    spectator.click('[data-testid="profile-color-auto"]');
+    expect(service.updateProfile).toHaveBeenLastCalledWith({ color: null });
+  });
+
+  it('forgets the profile when the player signs out', () => {
+    render();
+    user.set(null);
+    spectator.detectChanges();
+
+    expect(byId('profile-signed-out')).toBeTruthy();
   });
 });

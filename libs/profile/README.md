@@ -4,7 +4,12 @@ Profile feature library. **This is the reference implementation** for a feature 
 copy its shape when adding a new one. See
 [`.claude/skills/feature-lib/SKILL.md`](../../.claude/skills/feature-lib/SKILL.md).
 
-**Tag:** `scope:profile` — may depend on `scope:entity-lib` and `scope:environment-lib`.
+The signed-in player's profile on the game server: the name on the ranking, the
+favourite character and the colour. They live in the server's player record, so they
+follow the account to any device. Signing in happens on `/online`; this page links there.
+
+**Tag:** `scope:profile` — may depend on auth, character-select, entity, environment,
+game-client, game-core, game-protocol, theme, translate and ui.
 
 ## Import
 
@@ -23,25 +28,33 @@ The app lazy-loads it:
 ```
 src/lib/
 ├── +state/profile.store.ts        # signalStore: state, computed, methods
-├── molecules/user-info/           # presentational card (Atomic Design)
+├── molecules/
+│   ├── character-picker/          # the roster as portraits, in the player's colour
+│   └── color-picker/              # eight swatches + "automatic"
 ├── pages/
 │   ├── profile/                   # route-level component
 │   └── user.routes.ts             # provides ProfileStore + ProfileService
-└── services/profile/              # HTTP boundary
+└── services/profile/              # GET / PUT {gameServerUrl}/me, bearer ID token
 ```
 
 ## State — `ProfileStore`
 
 A `signalStore` from `@ngrx/signals`. No actions, no reducers, no effects, no selectors.
 
-| Member           | Kind     |                                            |
-| ---------------- | -------- | ------------------------------------------ |
-| `profile`        | state    | `User \| null`                             |
-| `loading`        | state    | `boolean`                                  |
-| `error`          | state    | `IGenericError \| null`                    |
-| `hasProfile`     | computed | `profile() !== null`                       |
-| `errorMessage`   | computed | `error()?.message ?? null`                 |
-| `fetchProfile()` | rxMethod | loads the profile; safe to call repeatedly |
+| Member           | Kind     |                                                      |
+| ---------------- | -------- | ---------------------------------------------------- |
+| `profile`        | state    | `PlayerProfile \| null` (from `@libs/game-protocol`) |
+| `loading`        | state    | `boolean`                                            |
+| `error`          | state    | `ProfileFailure \| null` — why loading failed        |
+| `saving`         | state    | `boolean`                                            |
+| `saveError`      | state    | `ProfileFailure \| null` — e.g. `name-taken`         |
+| `hasProfile`     | computed | `profile() !== null`                                 |
+| `fetchProfile()` | rxMethod | loads the profile; safe to call repeatedly           |
+| `save(update)`   | rxMethod | `PUT /me`; changes go out in order (`concatMap`)     |
+| `clear()`        | method   | signed out: forget the last account                  |
+
+A profile with a favourite character also selects it in `CharacterSelectionService`,
+so this browser plays with it.
 
 Everything is a signal, so components read it directly — no `select`, no `async` pipe,
 nothing to unsubscribe:
@@ -75,9 +88,12 @@ own state registration and makes it untestable in isolation.
 
 ## Service
 
-`ProfileService.fetchProfile()` currently returns a stubbed `of({...})`. To hit a real
-backend, use `environment.baseUrl` + `commonPaths.profile.fetchProfile` from
-`@libs/environment` — the doc comment on the method spells it out.
+`ProfileService` calls `GET` / `PUT {gameServerUrl}/me` with
+`Authorization: Bearer <Firebase ID token>`, and fails with a `ProfileFailure` code
+(the server's `ProfileUpdateError`, or `network`), never a raw HTTP error. The server
+origin comes from the `PROFILE_SERVER_URL` token, which defaults to
+`environment.gameServerUrl`; `available` is `false` without a server or a way to sign
+in, and the page then says profiles are unavailable instead of failing.
 
 ## Testing
 
@@ -85,11 +101,12 @@ The route provides the store, so a component-level test must register it explici
 
 ```ts
 providers: [
+  { provide: AUTH, useValue: fakeAuth },
   { provide: ProfileService, useValue: profileServiceStub },
   ProfileStore,
-  provideTranslateService({ loader: [...], lang: 'en', fallbackLang: 'en' }),
-]
+  provideTranslateService({ lang: 'en' }),
+];
 ```
 
 No root store and no effects runner — that is the point of the SignalStore pattern.
-`profile.spec.ts` covers the loading, error and retry paths.
+`profile.spec.ts` covers unavailable, signed-out, loading, error, retry and every save.

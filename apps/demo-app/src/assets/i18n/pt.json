@@ -14,7 +14,8 @@
     "CHARACTERS": "Personagens",
     "ARENAS": "Arenas",
     "ITEMS": "Itens",
-    "MOUNTS": "Montarias"
+    "MOUNTS": "Montarias",
+    "PROFILE": "Perfil"
   },
   "LANGUAGE_SELECT": {
     "TRIGGER_ARIA": "Alterar idioma",
@@ -108,10 +109,41 @@
     "BACK_HOME": "Voltar ao início",
     "LOADING": "Carregando perfil...",
     "ERROR": "Não foi possível carregar o perfil",
-    "RETRY": "Tentar novamente"
-  },
-  "USER_INFO": {
-    "USER_ID": "ID do usuário"
+    "RETRY": "Tentar novamente",
+    "LEAD": "Como você aparece no ranking e com quem você joga — em qualquer aparelho.",
+    "UNAVAILABLE": "O perfil fica no servidor online, que não está disponível aqui.",
+    "SIGNED_OUT": "Entre na sua conta para ter um perfil: seu nome no ranking, seu personagem e sua cor.",
+    "SIGN_IN": "Entrar",
+    "WINS": "Vitórias",
+    "MATCHES": "Partidas",
+    "RANK": "Ranking",
+    "NO_RANK": "—",
+    "NAME": "Nome no ranking",
+    "NAME_SUGGEST": "Este ainda é o nome da sua conta. Escolha como você aparece no ranking.",
+    "NAME_HINT": "De {{min}} a {{max}} caracteres. Ninguém mais pode ter o mesmo nome.",
+    "SAVE": "Salvar",
+    "CHARACTER": "Seu personagem",
+    "CHARACTER_HINT": "Você joga com ele aqui e no online, em qualquer aparelho em que entrar.",
+    "COLOR": "Sua cor",
+    "COLOR_HINT": "Na rodada, se alguém à sua frente na fila escolheu a mesma cor, você fica com a cor livre mais parecida.",
+    "COLOR_AUTO": "Automática",
+    "COLOR_NAMES": {
+      "BLUE": "Azul",
+      "GRAPHITE": "Grafite",
+      "RED": "Vermelho",
+      "YELLOW": "Amarelo",
+      "GREEN": "Verde",
+      "PURPLE": "Roxo",
+      "ORANGE": "Laranja",
+      "PINK": "Rosa"
+    },
+    "SAVE_ERROR": {
+      "name-taken": "Alguém já tem esse nome. Tente outro.",
+      "bad-request": "Esse nome não pode ser usado. Use de {{min}} a {{max}} caracteres.",
+      "email-not-verified": "Confirme seu e-mail antes de mudar o perfil — o link está na sua caixa de entrada.",
+      "auth-required": "Sua sessão expirou. Entre de novo na página online.",
+      "network": "Não foi possível falar com o servidor. Tente de novo daqui a pouco."
+    }
   },
   "NOT_FOUND": {
     "TITLE": "Página não encontrada",

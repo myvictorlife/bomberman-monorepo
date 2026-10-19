@@ -25,6 +25,9 @@ import { paintPato } from './pato';
 import { paintTatu } from './tatu';
 import { paintTiao } from './tiao';
 
+/** Colour index for painters, re-exported for pages that pick a colour. */
+export { colorSlot } from './ink';
+
 export const CHARACTER_PAINTERS: Readonly<
   Record<CharacterId, CharacterPainter>
 > = {
@@ -56,7 +59,7 @@ export interface CartoonPose {
   facing: Direction;
   /** 0 = standing, 1 and 2 = the two steps of the walk cycle. */
   frame: number;
-  /** Player slot, 0–3: picks the team colour. */
+  /** Picks the team colour: a slot of the round, or a picked colour's {@link colorSlot}. */
   slot: number;
   /** Seconds, for idle motion; omit for a still frame. */
   t?: number;

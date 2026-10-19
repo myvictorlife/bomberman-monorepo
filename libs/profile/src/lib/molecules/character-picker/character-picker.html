@@ -1,0 +1,23 @@
+<div
+  class="roster"
+  role="radiogroup"
+  [attr.aria-label]="'PROFILE.CHARACTER' | translate"
+  data-testid="profile-characters"
+>
+  @for (character of characters; track character.id) {
+  <button
+    type="button"
+    role="radio"
+    class="roster__item"
+    [attr.aria-checked]="value() === character.id"
+    [disabled]="disabled()"
+    (click)="choose(character.id)"
+    [attr.data-testid]="'profile-character-' + character.id"
+  >
+    @if (painters().get(character.id); as paint) {
+    <lib-sprite-tile [paint]="paint" [size]="64" />
+    }
+    <span class="roster__name">{{ nameKey(character.id) | translate }}</span>
+  </button>
+  }
+</div>

@@ -1,25 +1,62 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { Router } from '@angular/router';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  linkedSignal,
+  untracked,
+} from '@angular/core';
+import { RouterLink } from '@angular/router';
+import { AUTH } from '@libs/auth';
+import {
+  CharacterId,
+  DEFAULT_CHARACTER_ID,
+  PlayerColorId,
+} from '@libs/game-core';
+import { colorSlot, paintCartoonCharacter } from '@libs/game-client';
+import { parsePlayerName, PLAYER_NAME_LENGTH } from '@libs/game-protocol';
 import {
   AlertComponent,
   ButtonComponent,
   CardComponent,
   IconComponent,
   SpinnerComponent,
+  SpritePainter,
+  SpriteTileComponent,
 } from '@libs/ui';
 import { TranslatePipe } from '@ngx-translate/core';
 import { ProfileStore } from '../../+state/profile.store';
-import { UserInfoComponent } from '../../molecules/user-info/user-info';
+import { CharacterPickerComponent } from '../../molecules/character-picker/character-picker';
+import { ColorPickerComponent } from '../../molecules/color-picker/color-picker';
+import { ProfileService } from '../../services/profile/profile.service';
 
+/** What the page shows: one of these at a time. */
+export type ProfileView =
+  | 'unavailable'
+  | 'starting'
+  | 'signed-out'
+  | 'loading'
+  | 'error'
+  | 'ready';
+
+/**
+ * The signed-in player's profile: the name on the ranking, the favourite
+ * character and the colour, saved on the game server so they follow the
+ * account to any device. Signing in happens on `/online`; this page links there.
+ */
 @Component({
   selector: 'lib-profile',
   imports: [
     AlertComponent,
     ButtonComponent,
     CardComponent,
+    CharacterPickerComponent,
+    ColorPickerComponent,
     IconComponent,
+    RouterLink,
     SpinnerComponent,
-    UserInfoComponent,
+    SpriteTileComponent,
     TranslatePipe,
   ],
   templateUrl: './profile.html',
@@ -28,23 +65,80 @@ import { UserInfoComponent } from '../../molecules/user-info/user-info';
 })
 export class Profile {
   private readonly store = inject(ProfileStore);
-  private readonly router = inject(Router);
+  private readonly auth = inject(AUTH);
+  private readonly available = inject(ProfileService).available;
 
-  // Read straight off the store: these are already signals, so there is no
-  // selector layer and nothing to unsubscribe from.
   readonly profile = this.store.profile;
-  readonly loading = this.store.loading;
-  readonly errorMessage = this.store.errorMessage;
+  readonly saving = this.store.saving;
+  readonly saveError = this.store.saveError;
+  readonly nameLength = PLAYER_NAME_LENGTH;
+
+  /** Signed-in account id, so a token refresh does not reload the page. */
+  private readonly userId = computed(() => this.auth.user()?.id ?? null);
+
+  readonly view = computed<ProfileView>(() => {
+    if (!this.available) return 'unavailable';
+    if (!this.auth.ready()) return 'starting';
+    if (!this.userId()) return 'signed-out';
+    if (this.store.error()) return 'error';
+    if (!this.profile()) return 'loading';
+    return 'ready';
+  });
+
+  /** What is typed in the name field; follows the saved name until edited. */
+  readonly nameDraft = linkedSignal(() => this.profile()?.name ?? '');
+  /** The draft as the server would keep it, or `null` when it would refuse it. */
+  readonly cleanName = computed(() => parsePlayerName(this.nameDraft()));
+  readonly nameChanged = computed(
+    () =>
+      this.cleanName() !== null && this.cleanName() !== this.profile()?.name,
+  );
+
+  readonly character = computed<CharacterId>(
+    () => this.profile()?.favoriteCharacterId ?? DEFAULT_CHARACTER_ID,
+  );
+  readonly color = computed<PlayerColorId | null>(
+    () => this.profile()?.color ?? null,
+  );
+  readonly paintFace = computed<SpritePainter>(() => {
+    const characterId = this.character();
+    const color = this.color();
+    return (ctx) =>
+      paintCartoonCharacter(ctx, {
+        characterId,
+        facing: 'down',
+        frame: 0,
+        slot: color ? colorSlot(color) : 0,
+      });
+  });
 
   constructor() {
-    this.loadProfile();
+    if (!this.available) return;
+    void this.auth.initialize();
+    effect(() => {
+      const id = this.userId();
+      untracked(() => (id ? this.store.fetchProfile() : this.store.clear()));
+    });
   }
 
-  loadProfile(): void {
+  retry(): void {
     this.store.fetchProfile();
   }
 
-  goHome(): void {
-    this.router.navigate(['/']);
+  setName(value: string): void {
+    this.nameDraft.set(value);
+  }
+
+  saveName(): void {
+    const name = this.cleanName();
+    if (name !== null && this.nameChanged()) this.store.save({ name });
+  }
+
+  pickCharacter(favoriteCharacterId: CharacterId): void {
+    this.store.save({ favoriteCharacterId });
+  }
+
+  pickColor(color: PlayerColorId | null): void {
+    this.store.save({ color });
   }
 }
