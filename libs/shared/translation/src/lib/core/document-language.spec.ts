@@ -1,6 +1,6 @@
 import { DOCUMENT } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { Language } from '@libs/entity';
+import { Language, LANGUAGE_METADATA } from '@libs/entity';
 import {
   TranslateLoader,
   TranslateService,
@@ -51,14 +51,10 @@ describe('provideDocumentLanguage', () => {
     expect(html.dir).toBe('ltr');
   });
 
-  it('switches the document to rtl for Arabic, and back', () => {
-    translate.use(Language.Arabic);
+  it('takes the direction from the language metadata, so an rtl language would flip it', () => {
+    translate.use(Language.Portuguese);
     TestBed.tick();
-    expect(html.lang).toBe(Language.Arabic);
-    expect(html.dir).toBe('rtl');
 
-    translate.use(Language.French);
-    TestBed.tick();
-    expect(html.dir).toBe('ltr');
+    expect(html.dir).toBe(LANGUAGE_METADATA[Language.Portuguese].dir);
   });
 });

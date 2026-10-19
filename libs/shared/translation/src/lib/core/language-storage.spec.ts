@@ -26,9 +26,9 @@ describe('language-storage', () => {
     });
 
     it('returns the stored language when it is supported', () => {
-      localStorage.setItem(LANGUAGE_STORAGE_KEY, Language.French);
+      localStorage.setItem(LANGUAGE_STORAGE_KEY, Language.Portuguese);
 
-      expect(readStoredLanguage()).toBe(Language.French);
+      expect(readStoredLanguage()).toBe(Language.Portuguese);
     });
 
     it('falls back to English for a language that is no longer supported', () => {

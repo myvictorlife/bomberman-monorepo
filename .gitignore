@@ -67,3 +67,5 @@ hosting/dist/
 .nx/polygraph
 .nx/self-healing
 .nx/migrate-runs
+# Game server runtime data (player records)
+.data

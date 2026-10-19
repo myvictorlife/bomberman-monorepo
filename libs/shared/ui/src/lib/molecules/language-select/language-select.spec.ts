@@ -70,9 +70,9 @@ describe('LanguageSelectComponent', () => {
 
     // Endonyms stay identical whatever the active language is.
     expect(labels).toContain('Português');
-    expect(labels).toContain('العربية');
+    expect(labels).toContain('English');
 
-    spectator.inject(TranslateService).use(Language.French);
+    spectator.inject(TranslateService).use(Language.Portuguese);
     spectator.detectChanges();
     const after = spectator
       .queryAll('.language-select__option')
@@ -83,11 +83,11 @@ describe('LanguageSelectComponent', () => {
   it('changes language and closes on selection', () => {
     spectator.click('.language-select__trigger');
 
-    spectator.component.select(Language.Dutch);
+    spectator.component.select(Language.Portuguese);
     spectator.detectChanges();
 
     expect(spectator.inject(TranslateService).getCurrentLang()).toBe(
-      Language.Dutch,
+      Language.Portuguese,
     );
     expect(spectator.component.open()).toBe(false);
   });
@@ -95,10 +95,10 @@ describe('LanguageSelectComponent', () => {
   it('reflects the active language without mirroring it in local state', () => {
     expect(spectator.component.currentLang()).toBe(Language.English);
 
-    spectator.inject(TranslateService).use(Language.French);
+    spectator.inject(TranslateService).use(Language.Portuguese);
     spectator.detectChanges();
 
-    expect(spectator.component.currentLang()).toBe(Language.French);
+    expect(spectator.component.currentLang()).toBe(Language.Portuguese);
   });
 
   it('closes on backdrop click', () => {

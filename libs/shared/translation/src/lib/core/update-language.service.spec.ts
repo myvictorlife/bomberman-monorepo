@@ -40,21 +40,23 @@ describe('UpdateLanguageService', () => {
   });
 
   it('activates the chosen language', () => {
-    service.changeLanguage(Language.Dutch);
+    service.changeLanguage(Language.Portuguese);
 
-    expect(translate.getCurrentLang()).toBe(Language.Dutch);
-    expect(service.currentLanguage()).toBe(Language.Dutch);
+    expect(translate.getCurrentLang()).toBe(Language.Portuguese);
+    expect(service.currentLanguage()).toBe(Language.Portuguese);
   });
 
   it('persists the choice so it survives a reload', () => {
-    service.changeLanguage(Language.French);
+    service.changeLanguage(Language.Portuguese);
 
-    expect(localStorage.getItem(LANGUAGE_STORAGE_KEY)).toBe(Language.French);
+    expect(localStorage.getItem(LANGUAGE_STORAGE_KEY)).toBe(
+      Language.Portuguese,
+    );
   });
 
   it('actually swaps the served translations', () => {
-    service.changeLanguage(Language.French);
+    service.changeLanguage(Language.Portuguese);
 
-    expect(translate.instant('GREETING')).toBe('hello-fr');
+    expect(translate.instant('GREETING')).toBe('hello-pt');
   });
 });

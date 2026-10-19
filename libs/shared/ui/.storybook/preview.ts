@@ -14,7 +14,8 @@ import {
  * Mirrors `ThemeService.apply()`: tokens key off `[data-theme]`, Tailwind's
  * `dark:` variant keys off the `dark` class — both must move together or the
  * page splits into two themes. `dir` is what `provideDocumentLanguage()` does
- * in the app; here it is a toolbar so RTL (Arabic) can be checked per story.
+ * in the app; here it is a toolbar so RTL can be checked per story even though
+ * no shipped language needs it yet.
  */
 const withThemeAndDirection: Decorator = (story, context) => {
   const theme = (context.globals['theme'] as string) ?? 'light';
@@ -63,7 +64,8 @@ const preview: Preview = {
       },
     },
     dir: {
-      description: 'Text direction — rtl is what Arabic renders under',
+      description:
+        'Text direction — rtl is what e.g. Arabic would render under',
       toolbar: {
         title: 'Direction',
         icon: 'transfer',

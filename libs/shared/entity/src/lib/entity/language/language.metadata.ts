@@ -9,7 +9,7 @@ export interface LanguageMetadata {
    * language names from the i18n bundles.
    */
   label: string;
-  /** Direction `<html dir>` must switch to while this language is active. */
+  /** Direction `<html dir>` must switch to while this language is active (`rtl` for e.g. Arabic). */
   dir: 'ltr' | 'rtl';
 }
 
@@ -22,11 +22,5 @@ export interface LanguageMetadata {
  */
 export const LANGUAGE_METADATA: Record<Language, LanguageMetadata> = {
   [Language.English]: { label: 'English', dir: 'ltr' },
-  [Language.Dutch]: { label: 'Nederlands', dir: 'ltr' },
-  [Language.French]: { label: 'Français', dir: 'ltr' },
   [Language.Portuguese]: { label: 'Português', dir: 'ltr' },
-  [Language.Spanish]: { label: 'Español', dir: 'ltr' },
-  [Language.German]: { label: 'Deutsch', dir: 'ltr' },
-  [Language.Arabic]: { label: 'العربية', dir: 'rtl' },
-  [Language.Polish]: { label: 'Polski', dir: 'ltr' },
 };

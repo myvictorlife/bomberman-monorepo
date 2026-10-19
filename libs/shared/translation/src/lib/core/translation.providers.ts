@@ -1,6 +1,7 @@
 import { EnvironmentProviders, Provider } from '@angular/core';
 import { TitleStrategy } from '@angular/router';
 import { Language } from '@libs/entity';
+import { environment } from '@libs/environment';
 import { provideTranslateService } from '@ngx-translate/core';
 import { provideTranslateHttpLoader } from '@ngx-translate/http-loader';
 import { provideDocumentLanguage } from './document-language';
@@ -20,7 +21,9 @@ export function provideTranslation(): (Provider | EnvironmentProviders)[] {
     provideTranslateService({
       loader: provideTranslateHttpLoader({
         prefix: './assets/i18n/',
-        suffix: '.json',
+        // Versioned by content: the bundles keep fixed names, so a cached copy
+        // would otherwise outlive the strings a deploy adds.
+        suffix: `.json?v=${environment.i18nVersion}`,
         // A missing i18n file should break loudly at deploy time rather than
         // silently serving partial translations (v18 defaults to {} on 404).
         failOnError: true,

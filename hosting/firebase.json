@@ -12,7 +12,7 @@
       "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
       "headers": [
         {
-          "source": "index.html",
+          "regex": "^/(?:[^.]*|index\\.html)$",
           "headers": [
             {
               "key": "Cache-Control",
@@ -21,7 +21,7 @@
           ]
         },
         {
-          "source": "**/*.@(js|css|json|ico|png|jpg|jpeg|svg|ttf|woff|woff2|eot)",
+          "source": "**/*.@(js|css|ico|png|jpg|jpeg|svg|ttf|woff|woff2|eot)",
           "headers": [
             {
               "key": "Cache-Control",
@@ -30,11 +30,20 @@
           ]
         },
         {
+          "source": "**/*.json",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "public, max-age=0, must-revalidate"
+            }
+          ]
+        },
+        {
           "source": "**",
           "headers": [
             {
               "key": "Content-Security-Policy",
-              "value": "default-src 'self'; script-src 'self' https://www.googletagmanager.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://www.google-analytics.com https://www.googletagmanager.com; font-src 'self'; connect-src 'self' https://*.googleapis.com https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'; upgrade-insecure-requests"
+              "value": "default-src 'self'; script-src 'self' https://www.googletagmanager.com https://apis.google.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://www.google-analytics.com https://www.googletagmanager.com; font-src 'self'; connect-src 'self' https://*.googleapis.com https://apis.google.com https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com https://api.detona.online wss://api.detona.online; frame-src 'self' https://*.firebaseapp.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'; upgrade-insecure-requests"
             },
             {
               "key": "X-Content-Type-Options",
@@ -54,7 +63,7 @@
             },
             {
               "key": "Cross-Origin-Opener-Policy",
-              "value": "same-origin"
+              "value": "same-origin-allow-popups"
             }
           ]
         }

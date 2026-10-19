@@ -10,8 +10,6 @@ Multi-language support using [ngx-translate](https://github.com/ngx-translate/co
 | Code | Language   | Bundle                                  |
 | ---- | ---------- | --------------------------------------- |
 | `en` | English    | `apps/demo-app/src/assets/i18n/en.json` |
-| `nl` | Dutch      | `nl.json`                               |
-| `fr` | French     | `fr.json`                               |
 | `pt` | Portuguese | `pt.json`                               |
 
 The list is driven by the `Language` enum in `@libs/entity`, not by this library.

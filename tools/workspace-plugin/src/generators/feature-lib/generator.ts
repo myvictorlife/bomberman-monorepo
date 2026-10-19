@@ -16,7 +16,7 @@ const ESLINT_BASE = 'eslint.base.config.mjs';
 const FEATURE_MARKER = '// <feature-scopes>';
 const APP_MARKER = '// <demo-app-feature-scopes>';
 const I18N_DIR = 'apps/demo-app/src/assets/i18n';
-const LANGUAGES = ['en', 'nl', 'fr', 'pt', 'es', 'de', 'ar', 'pl'];
+const LANGUAGES = ['en', 'pt'];
 
 /**
  * Creates a complete feature library: the folder shape from
@@ -137,7 +137,7 @@ export default async function featureLibGenerator(
       `    { path: '${feature.fileName}', loadChildren: () => import('${alias}').then((m) => m.${feature.propertyName}Routes) }`,
     );
     console.log(
-      `\nTranslate the seeded values in nl/fr/pt — they start as English placeholders.\n`,
+      `\nTranslate the seeded values in pt — they start as English placeholders.\n`,
     );
   };
 }

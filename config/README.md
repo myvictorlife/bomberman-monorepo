@@ -30,17 +30,21 @@ of that. Quoting the keys afterwards only makes your editor stop underlining the
 > Prefer the exact JSON with no editing? With the CLI installed and authenticated:
 > `firebase apps:sdkconfig web --project <project-id> --json`
 
+Using Google sign-in? Change `authDomain` to the domain the site is served from
+(`my-app.web.app` or your custom domain) — see the `firebase-deploy` skill.
+
 ## What happens to it
 
 `tools/generate-config.mjs` compiles every file here into a typed module under
 `libs/environment/src/lib/generated/`, on `npm install` and before every Nx build, serve
 and test. `npm run config:generate` forces it.
 
-| Source                 | Generated                                               | Consumed by                                                 |
-| ---------------------- | ------------------------------------------------------- | ----------------------------------------------------------- |
-| `config/firebase.json` | `libs/environment/src/lib/generated/firebase.config.ts` | `environment.firebaseConfig`, `environment.firebaseEnabled` |
-| ↳ its `projectId`      | `hosting/.firebaserc`                                   | `npm run build:deploy:firebase`                             |
-| `config/site.json`     | `libs/environment/src/lib/generated/site.config.ts`     | `environment.repoUrl` — "view source" links in the app      |
+| Source                    | Generated                                                  | Consumed by                                                                              |
+| ------------------------- | ---------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `config/firebase.json`    | `libs/environment/src/lib/generated/firebase.config.ts`    | `environment.firebaseConfig`, `environment.firebaseEnabled`                              |
+| ↳ its `projectId`         | `hosting/.firebaserc`                                      | `npm run build:deploy:firebase`                                                          |
+| `config/site.json`        | `libs/environment/src/lib/generated/site.config.ts`        | `environment.repoUrl` — "view source" links in the app                                   |
+| `config/game-server.json` | `libs/environment/src/lib/generated/game-server.config.ts` | `environment.gameServerUrl` — the online room; dev falls back to `http://localhost:8086` |
 
 **`config/*.json` and everything generated from it are git-ignored.** Only the
 `*.example.json` files are committed. This repo is a public template: a credential in a
