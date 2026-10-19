@@ -14,7 +14,7 @@ class StubTranslateLoader implements TranslateLoader {
   getTranslation(lang: string): Observable<TranslationObject> {
     return of({
       HEADER: {
-        HOME: lang === Language.French ? 'Accueil' : 'Home',
+        HOME: lang === Language.Portuguese ? 'Início' : 'Home',
         START: 'Get started',
         MENU_ARIA: 'Open menu',
         GITHUB: 'GitHub',
@@ -63,10 +63,10 @@ describe('HeaderComponent', () => {
   it('re-renders translated labels when the language changes', () => {
     expect(spectator.query('.header__link')?.textContent).toContain('Home');
 
-    spectator.inject(TranslateService).use(Language.French);
+    spectator.inject(TranslateService).use(Language.Portuguese);
     spectator.detectChanges();
 
-    expect(spectator.query('.header__link')?.textContent).toContain('Accueil');
+    expect(spectator.query('.header__link')?.textContent).toContain('Início');
   });
 
   describe('repository link', () => {

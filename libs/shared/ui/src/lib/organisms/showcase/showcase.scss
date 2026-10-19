@@ -1,0 +1,86 @@
+:host {
+  display: block;
+}
+
+.showcase {
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: var(--space-6) var(--space-4) var(--space-10);
+}
+
+.showcase__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.showcase__eyebrow {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
+.showcase__title {
+  margin-top: var(--space-1);
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: -0.02em;
+  color: var(--color-text-primary);
+}
+
+.showcase__lead {
+  margin-top: var(--space-2);
+  max-width: 62ch;
+  line-height: 1.55;
+  color: var(--color-text-secondary);
+}
+
+.showcase__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+/* The stage takes most of the width; the panel keeps a readable minimum and
+   drops under it on narrow screens. */
+.showcase__stage-row {
+  display: grid;
+  gap: var(--space-4);
+  margin-top: var(--space-6);
+  grid-template-columns: 1fr;
+
+  @media (min-width: 52rem) {
+    grid-template-columns: minmax(0, 1.4fr) minmax(16rem, 1fr);
+  }
+}
+
+.showcase__stage {
+  display: grid;
+  place-items: center;
+  min-height: 20rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  background: #0b0d13; /* the arena floor: what is shown lives on it */
+}
+
+.showcase__panel {
+  display: grid;
+  gap: var(--space-4);
+  align-content: start;
+  min-width: 0;
+  padding: var(--space-5);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  background: var(--color-bg-surface);
+}
+
+.showcase__sections {
+  display: grid;
+  gap: var(--space-8);
+  margin-top: var(--space-8);
+}

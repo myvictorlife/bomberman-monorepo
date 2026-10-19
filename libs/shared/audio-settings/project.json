@@ -1,0 +1,26 @@
+{
+  "name": "audio-settings",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/shared/audio-settings/src",
+  "prefix": "lib",
+  "projectType": "library",
+  "tags": ["scope:audio-settings-lib"],
+  "targets": {
+    "test": {
+      "executor": "@angular/build:unit-test",
+      "options": {
+        "coverageInclude": ["libs/shared/audio-settings/src/**/*.ts"],
+        "coverageExclude": [
+          "libs/shared/audio-settings/src/**/index.ts",
+          "libs/shared/audio-settings/src/**/*.spec.ts"
+        ],
+        "coverageThresholds": {
+          "statements": 95,
+          "branches": 90,
+          "functions": 95,
+          "lines": 95
+        }
+      }
+    }
+  }
+}

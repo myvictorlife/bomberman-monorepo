@@ -1,0 +1,29 @@
+<article class="showcase">
+  <header class="showcase__head">
+    <div class="showcase__heading">
+      @if (eyebrow(); as text) {
+      <p class="showcase__eyebrow">{{ text }}</p>
+      }
+      <h1 class="showcase__title">{{ title() }}</h1>
+      @if (lead(); as text) {
+      <p class="showcase__lead">{{ text }}</p>
+      }
+    </div>
+    <div class="showcase__actions">
+      <ng-content select="[showcase-actions]" />
+    </div>
+  </header>
+
+  <div class="showcase__stage-row">
+    <div class="showcase__stage">
+      <ng-content select="[showcase-stage]" />
+    </div>
+    <aside class="showcase__panel">
+      <ng-content select="[showcase-panel]" />
+    </aside>
+  </div>
+
+  <div class="showcase__sections">
+    <ng-content />
+  </div>
+</article>

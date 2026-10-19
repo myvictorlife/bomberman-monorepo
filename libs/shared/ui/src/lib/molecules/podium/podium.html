@@ -1,0 +1,41 @@
+<ol class="podium" role="list" data-testid="podium">
+  @for (entry of steps(); track $index) { @if (entry) {
+  <li
+    class="podium__step"
+    [class]="'podium__step podium__step--' + entry.place"
+    [class.podium__step--me]="entry.id === myId()"
+    [attr.data-place]="entry.place"
+    data-testid="podium-step"
+  >
+    <div class="podium__figure">
+      @if (entry.place === 1) {
+      <span class="podium__crown" aria-hidden="true">👑</span>
+      }
+      <canvas
+        #sprite
+        class="podium__sprite"
+        [width]="size()"
+        [height]="size()"
+        [attr.data-character]="entry.characterId ?? ''"
+        [attr.data-place]="entry.place"
+        aria-hidden="true"
+      ></canvas>
+    </div>
+    <p class="podium__name" data-testid="podium-name">{{ entry.name }}</p>
+    <p class="podium__title">{{ entry.titleKey | translate }}</p>
+    <p class="podium__tag">{{ entry.tagKey | translate }}</p>
+    <div class="podium__block">
+      <span class="podium__place" aria-hidden="true">{{ entry.place }}</span>
+      <span class="sr-only"
+        >{{ 'PODIUM.PLACE' | translate: { n: entry.place } }}</span
+      >
+      <span class="podium__score"
+        >{{ 'PODIUM.SCORE' | translate: { wins: entry.wins, matches:
+        entry.matches, rate: entry.rate } }}</span
+      >
+    </div>
+  </li>
+  } @else {
+  <li class="podium__step podium__step--empty" aria-hidden="true"></li>
+  } }
+</ol>

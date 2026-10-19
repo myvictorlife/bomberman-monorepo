@@ -1,0 +1,188 @@
+/* The podium: three steps, the winner's in the middle and tallest. Metals are
+   mixes of the theme's own hues, so they follow light and dark like the rest. */
+:host {
+  display: block;
+  /* The figures scale with the space the podium gets, not the window: a
+     sidebar's podium stays inside its column. */
+  container-type: inline-size;
+  --gold: var(--color-warning);
+  --silver: color-mix(
+    in srgb,
+    var(--color-text-secondary) 70%,
+    var(--color-bg-surface)
+  );
+  --bronze: color-mix(in srgb, var(--color-warning) 55%, var(--color-danger));
+}
+
+.podium {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: end;
+  gap: var(--space-3);
+  max-width: 48rem;
+  margin: 0 auto;
+  padding: 0;
+  list-style: none;
+
+  @media (min-width: 640px) {
+    gap: var(--space-5);
+  }
+}
+
+.podium__step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  min-width: 0;
+  --metal: var(--bronze);
+  --block-height: 4.5rem;
+}
+
+.podium__step--1 {
+  --metal: var(--gold);
+  --block-height: 8rem;
+}
+
+.podium__step--2 {
+  --metal: var(--silver);
+  --block-height: 6rem;
+}
+
+.podium__step--empty {
+  min-height: 1px;
+}
+
+.podium__figure {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: clamp(3.5rem, 22cqw, 8rem);
+  aspect-ratio: 1;
+  margin-bottom: var(--space-2);
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 50% 60%,
+    #2b303c 0%,
+    #1f2330 55%,
+    #0b0b12 100%
+  );
+  box-shadow:
+    0 0 0 3px var(--metal),
+    0 20px 40px -20px var(--metal);
+}
+
+.podium__step--1 .podium__figure {
+  width: clamp(4.25rem, 26cqw, 10rem);
+}
+
+.podium__sprite {
+  width: 82%;
+  height: 82%;
+  filter: drop-shadow(0 8px 8px rgba(0, 0, 0, 0.5));
+}
+
+.podium__crown {
+  position: absolute;
+  top: -1.1rem;
+  left: 50%;
+  font-size: 1.75rem;
+  line-height: 1;
+  transform: translateX(-50%) rotate(-12deg);
+  animation: podium-bounce 1.6s ease-in-out infinite alternate;
+}
+
+@keyframes podium-bounce {
+  from {
+    transform: translateX(-50%) rotate(-12deg) translateY(0);
+  }
+  to {
+    transform: translateX(-50%) rotate(-6deg) translateY(-4px);
+  }
+}
+
+.podium__name {
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-bold);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.podium__title {
+  color: var(--metal);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.podium__tag {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-xs);
+}
+
+.podium__block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--space-1);
+  width: 100%;
+  height: var(--block-height);
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-top: 4px solid var(--metal);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--metal) 18%, var(--color-bg-surface)),
+    var(--color-bg-surface)
+  );
+}
+
+.podium__place {
+  color: var(--metal);
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  line-height: 1;
+}
+
+.podium__score {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+.podium__step--me .podium__name {
+  color: var(--color-primary);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .podium__crown {
+    animation: none;
+  }
+}
+
+/* In a narrow column (the room's sidebar) the podium keeps the faces and the
+   numbers and drops the small talk, so three steps still fit side by side. */
+@container (max-width: 28rem) {
+  .podium {
+    gap: var(--space-2);
+  }
+
+  .podium__tag {
+    display: none;
+  }
+
+  .podium__title {
+    font-size: var(--font-size-xs);
+    letter-spacing: 0.04em;
+  }
+
+  .podium__score {
+    font-size: 0.7rem;
+  }
+}

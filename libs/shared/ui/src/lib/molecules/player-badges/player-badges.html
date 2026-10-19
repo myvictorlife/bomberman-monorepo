@@ -1,0 +1,19 @@
+<ul class="badges" role="list">
+  @for (badge of badges(); track badge.key) {
+  <li
+    class="badge"
+    [class.badge--ready]="badge.state === 'ready'"
+    [class.badge--active]="badge.state === 'active'"
+    [attr.data-tip]="badge.tip"
+    [attr.aria-label]="badge.value ? badge.tip + ': ' + badge.value : badge.tip"
+    [attr.data-testid]="testId() + '-' + badge.key"
+    role="img"
+    tabindex="0"
+  >
+    <span class="badge__icon" aria-hidden="true">{{ badge.icon }}</span>
+    @if (badge.value; as value) {
+    <span class="badge__value" aria-hidden="true">{{ value }}</span>
+    }
+  </li>
+  }
+</ul>

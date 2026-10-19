@@ -14,8 +14,6 @@ const THEME_OPTIONS: SegmentedControlOption<string>[] = [
 const LANGUAGE_OPTIONS: SegmentedControlOption<string>[] = [
   { value: 'en', label: 'English', lang: 'en' },
   { value: 'pt', label: 'Português', lang: 'pt' },
-  { value: 'ar', label: 'العربية', lang: 'ar' },
-  { value: 'pl', label: 'Polski', lang: 'pl' },
 ];
 
 /**

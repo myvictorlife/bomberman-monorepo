@@ -11,10 +11,14 @@ export * from './lib/atoms/theme-toggle/theme-toggle';
 // Molecules
 export * from './lib/molecules/language-select/language-select';
 export * from './lib/molecules/page-header/page-header';
+export * from './lib/molecules/player-badges/player-badges';
+export * from './lib/molecules/podium/podium';
 export * from './lib/molecules/segmented-control/segmented-control';
+export * from './lib/molecules/sprite-tile/sprite-tile';
 
 // Organisms
 export * from './lib/organisms/header/header';
+export * from './lib/organisms/showcase/showcase';
 
 // Cross-cutting
 export * from './lib/core/global-error-handler';

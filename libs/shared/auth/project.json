@@ -1,0 +1,27 @@
+{
+  "name": "auth",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/shared/auth/src",
+  "prefix": "lib",
+  "projectType": "library",
+  "tags": ["scope:auth-lib"],
+  "targets": {
+    "test": {
+      "executor": "@angular/build:unit-test",
+      "options": {
+        "coverageInclude": ["libs/shared/auth/src/**/*.ts"],
+        "coverageExclude": [
+          "libs/shared/auth/src/**/index.ts",
+          "libs/shared/auth/src/**/*.routes.ts",
+          "libs/shared/auth/src/**/*.spec.ts"
+        ],
+        "coverageThresholds": {
+          "statements": 95,
+          "branches": 90,
+          "functions": 95,
+          "lines": 95
+        }
+      }
+    }
+  }
+}
