@@ -89,6 +89,9 @@
       [maxLength]="maxLength"
       [value]="draft()"
       (input)="onInput($any($event.target).value)"
+      (focus)="typing.set(true)"
+      (blur)="typing.set(false)"
+      (keydown.escape)="leave($event)"
       [attr.aria-label]="'ONLINE.CHAT.PLACEHOLDER' | translate"
       [placeholder]="'ONLINE.CHAT.PLACEHOLDER' | translate"
       data-testid="chat-input"
@@ -106,6 +109,10 @@
   </form>
   @if (left() <= 20) {
   <p class="chat__count" data-testid="chat-count">{{ left() }}</p>
+  } @if (typing()) {
+  <p class="chat__hint chat__hint--typing" data-testid="chat-typing">
+    {{ 'ONLINE.CHAT.BACK_TO_GAME' | translate }}
+  </p>
   } } @if (error(); as code) {
   <p class="chat__error" role="alert" data-testid="chat-error">
     {{ 'ONLINE.SERVER_ERROR.' + code | translate }}

@@ -58,6 +58,8 @@ export class ChatPanelComponent {
   readonly reactions = REACTIONS;
   readonly maxLength = CHAT_MAX_LENGTH;
   readonly draft = signal('');
+  /** The box has focus: the keys are the chat's, and the hint says how to get them back. */
+  readonly typing = signal(false);
   /** Characters left, counted the way the server counts them (an emoji is one). */
   readonly left = computed(() => CHAT_MAX_LENGTH - [...this.draft()].length);
   readonly canSend = computed(
@@ -87,6 +89,16 @@ export class ChatPanelComponent {
 
   onInput(value: string): void {
     this.draft.set(value);
+  }
+
+  /**
+   * Escape hands the keys back to the game: the box loses focus and the
+   * arena reads the keys again. The page's own Escape (leaving full screen)
+   * is not meant — the key stops here.
+   */
+  leave(event: Event): void {
+    event.stopPropagation();
+    (event.target as HTMLElement | null)?.blur();
   }
 
   submit(event: Event): void {

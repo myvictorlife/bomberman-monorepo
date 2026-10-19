@@ -181,3 +181,8 @@
     }
   }
 }
+
+.chat__hint--typing {
+  margin-top: var(--space-1);
+  font-size: var(--font-size-xs);
+}

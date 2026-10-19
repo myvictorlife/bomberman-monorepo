@@ -99,6 +99,30 @@ describe('ChatPanelComponent', () => {
     expect(spectator.component.draft()).toBe('');
   });
 
+  it('says how to get the keys back while typing, and hands them back on Escape', () => {
+    const input = spectator.query<HTMLInputElement>(
+      '[data-testid="chat-input"]',
+    )!;
+    expect(spectator.query('[data-testid="chat-typing"]')).toBeNull();
+
+    input.focus();
+    spectator.dispatchFakeEvent(input, 'focus');
+    expect(spectator.query('[data-testid="chat-typing"]')).toExist();
+
+    // Escape stops here: the page's own Escape (leaving full screen) is not meant.
+    const escape = new KeyboardEvent('keydown', {
+      key: 'Escape',
+      bubbles: true,
+    });
+    const bubbled = vi.fn();
+    document.addEventListener('keydown', bubbled, { once: true });
+    input.dispatchEvent(escape);
+    expect(document.activeElement).not.toBe(input);
+    expect(bubbled).not.toHaveBeenCalled();
+    spectator.dispatchFakeEvent(input, 'blur');
+    expect(spectator.query('[data-testid="chat-typing"]')).toBeNull();
+  });
+
   it('counts down the characters left near the limit, an emoji as one', () => {
     type('x');
     expect(spectator.query('[data-testid="chat-count"]')).not.toExist();
