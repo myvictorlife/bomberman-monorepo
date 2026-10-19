@@ -121,6 +121,15 @@
 .play__arena {
   position: absolute;
   inset: 0;
+
+  // Phaser sizes the canvas to fit; the page centres it. The canvas is
+  // Phaser's, not the template's, so the rule has to reach past the view
+  // encapsulation.
+  ::ng-deep canvas {
+    position: absolute;
+    inset: 0;
+    margin: auto;
+  }
 }
 
 .play__overlay {
@@ -210,4 +219,237 @@
   flex-basis: 100%;
   color: var(--color-text-secondary);
   font-size: var(--font-size-sm);
+}
+
+.play__enter {
+  margin-inline-start: auto;
+}
+
+/* The expand and controller buttons, tucked in the stage's top corner. */
+.play__stage-buttons {
+  position: absolute;
+  top: var(--space-2);
+  inset-inline-end: var(--space-2);
+  display: flex;
+  gap: var(--space-2);
+  z-index: 3;
+}
+
+.play__stage-button {
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 1px solid rgb(255 255 255 / 0.3);
+  border-radius: var(--radius-md);
+  background: rgb(0 0 0 / 0.5);
+  color: #fff;
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  backdrop-filter: blur(2px);
+
+  &:hover {
+    background: rgb(0 0 0 / 0.7);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+}
+
+/* "Tap to play": the whole stage is the button. */
+.play__tap {
+  z-index: 2;
+  border: 0;
+  cursor: pointer;
+  background: rgb(0 0 0 / 0.65);
+}
+
+.play__tap-hint {
+  max-width: 24rem;
+  color: rgb(255 255 255 / 0.8);
+  font-size: var(--font-size-sm);
+  text-align: center;
+}
+
+/*
+ * Game mode's HUD: a thin strip over the top of the arena's stage, fading out
+ * below. A phone held sideways has no height to spare but has slack beside
+ * the arena, so there it becomes a column in the top-left corner; held
+ * upright the arena is the full width, and the strip sits under it.
+ */
+.play__strip {
+  position: absolute;
+  top: env(safe-area-inset-top);
+  inset-inline: 0;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+  padding: var(--space-2) 6rem var(--space-3) var(--space-2);
+  background: linear-gradient(rgb(0 0 0 / 0.6), transparent);
+  pointer-events: none;
+}
+
+.play__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 0.125rem var(--space-2);
+  border-radius: 999px;
+  background: rgb(0 0 0 / 0.45);
+  color: #fff;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+
+  .play__swatch {
+    width: 0.625rem;
+    height: 0.625rem;
+    box-shadow: none;
+  }
+}
+
+.play__chip--out {
+  opacity: 0.5;
+  text-decoration: line-through;
+}
+
+.play__chip--closing {
+  color: #ffb4a8;
+}
+
+/*
+ * Game mode: the page steps aside and the arena fills the screen, the
+ * on-screen controller over it. Sideways the arena sits in the middle with
+ * room for the thumbs either side, like a pad; upright it sits at the top
+ * with the controller below, like a handheld.
+ */
+// The upright phone: the arena the full width at the top, the HUD under it,
+// the controls in what is left.
+@mixin upright-layout {
+  grid-template-rows: auto auto minmax(0, 1fr);
+
+  .play__stage {
+    aspect-ratio: 15 / 13;
+    // The buttons below it are its children; nothing else sticks out.
+    overflow: visible;
+  }
+
+  .play__strip {
+    position: static;
+    padding: var(--space-2) 6rem var(--space-2) var(--space-2);
+    background: none;
+  }
+
+  // Off the arena, which is the whole width here: just under it, beside the strip.
+  .play__stage-buttons {
+    top: 100%;
+    margin-top: var(--space-2);
+  }
+
+  .play__gamepad {
+    position: relative;
+    inset: auto;
+    align-items: center;
+    min-height: 0;
+  }
+}
+
+@mixin short-screen {
+  .play__strip {
+    inset-inline-end: auto;
+    flex-direction: column;
+    align-items: flex-start;
+    // The slack beside the arena, which is as wide as the screen is tall × 15/13.
+    max-width: calc((100% - 100cqh * 15 / 13) / 2 - var(--space-2));
+    padding-inline-end: 0;
+    background: none;
+  }
+
+  .play__chip {
+    flex-wrap: wrap;
+    white-space: normal;
+  }
+
+  .play__gamepad {
+    --gamepad-gutter: var(--space-2);
+    --gamepad-pad: clamp(5.5rem, 26vmin, 8rem);
+  }
+}
+
+.play--game {
+  position: fixed;
+  container-type: size;
+  inset: 0;
+  // Over the site's fixed header too: on an iPhone, where the browser refuses
+  // full screen, this layout is all there is.
+  z-index: var(--z-modal);
+  display: grid;
+  grid-template-rows: minmax(0, 1fr);
+  max-width: none;
+  margin: 0;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right)
+    env(safe-area-inset-bottom) env(safe-area-inset-left);
+  background: #000;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  overscroll-behavior: none;
+
+  .play__header,
+  .play__setup,
+  .play__status,
+  .play__hud,
+  .play__controls {
+    display: none;
+  }
+
+  .play__stage {
+    margin: 0;
+    min-height: 0;
+    aspect-ratio: auto;
+    border-radius: 0;
+  }
+
+  // A short screen — a phone sideways — has no height to spare but slack
+  // beside the arena: the HUD goes there, the controls pull in and shrink.
+  @media (orientation: landscape) and (max-height: 32rem) {
+    @include short-screen;
+  }
+
+  @media (orientation: portrait) {
+    &:not(.play--sideways) {
+      @include upright-layout;
+    }
+
+    // Turned a quarter clockwise around its top-left corner, after being
+    // moved to the screen's right edge: the game is laid out as a
+    // landscape screen and the phone's screen shows it sideways. The notch
+    // (safe-area top) is then on the game's left, the home bar on its right.
+    &.play--sideways {
+      inset: 0 auto auto 100%;
+      width: 100dvh;
+      height: 100dvw;
+      padding: env(safe-area-inset-right) env(safe-area-inset-bottom)
+        env(safe-area-inset-left) env(safe-area-inset-top);
+      transform: rotate(90deg);
+      transform-origin: 0 0;
+    }
+
+    &.play--sideways {
+      @media (max-width: 32rem) {
+        @include short-screen;
+      }
+    }
+  }
+}
+
+.play__gamepad {
+  z-index: 4;
 }

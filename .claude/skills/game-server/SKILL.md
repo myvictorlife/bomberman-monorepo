@@ -126,7 +126,15 @@ forgets all of it, along with who was silenced.
 - An admin sends `chat:delete { id }` or `chat:mute { accountId }` (which
   also removes what the account wrote); everyone gets `chat:removed { ids }`.
 - The arena stops reading (and swallowing) keys while a text field has
-  focus, so typing in the chat never moves the player.
+  focus, so typing in the chat never moves the player. They come back on a
+  click or tap on the canvas (the scene blurs the field itself, since Phaser
+  cancels the pointer's default action) or on Escape in the chat box, which
+  stops there rather than leaving full screen; the box shows that hint
+  while it has focus (`chat-typing`).
+- Both hands always drive you online (`ONLINE_CONTROLS`: WASD and the
+  arrows). The keyboard choice in `@libs/controls-settings` only matters
+  on `/play`, where player 1 takes the chosen hand and a second player the
+  other — alone, both.
 - On the page the chat is the first card beside the arena. The stage's
   corner button (`online-expand`) sets `expanded`: the layout goes
   `position: fixed` with the arena filling the screen and the chat docked
@@ -142,6 +150,31 @@ forgets all of it, along with who was silenced.
   painted with `paintCartoonCharacter`, then `lib-ranking-list` from
   fourth place), the arena, the room's cards. The expanded layout hides
   the ranking column.
+
+### Input: keys and the on-screen controller
+
+- `ArenaScene` keeps one `DirectionTracker` per player; the keys of a
+  `ControlScheme` feed it and `session.pressBomb/Ability/Detonate` fire on
+  key down. `ArenaHandle.controller(playerId)` is a `PlayerController`
+  (`press`, `release`, `clear`, `bomb`, `ability`, `detonate`) over the
+  same tracker, safe to ask for before the scene has booted — what a touch
+  controller drives. Keys and touch on one player share the tracker, so
+  the last one pressed wins either way.
+- `/play` has the controller already: `lib-virtual-gamepad` (`@libs/ui`,
+  a D-pad resolved by `dragDirection` plus bomb/ability/detonate buttons)
+  laid over a full-screen game mode (`play--game`, fixed over the page at
+  `--z-modal`). A touch screen — `(pointer: coarse)` or the first touch
+  pointer — goes straight to game mode behind "tap to play" and drops the
+  second keyboard player. Held upright it turns the whole game sideways by
+  CSS (`play--sideways`): full screen is asked of `document.documentElement`,
+  never of the page element, because a full-screen element gets the
+  browser's `transform: none !important`. Phaser's `autoCenter` is off —
+  the host centres the canvas (`::ng-deep canvas { inset: 0; margin: auto }`)
+  — and the host's `getBoundingClientRect` is swapped while sideways, since
+  Phaser measures the parent through the turn. The expanded `/online`
+  layout should take the same component and `handle.controller(myId)` when
+  the room gets touch support; both layouts must sit above the site header,
+  since an iPhone refuses the Fullscreen API.
 
 ## HTTP routes
 

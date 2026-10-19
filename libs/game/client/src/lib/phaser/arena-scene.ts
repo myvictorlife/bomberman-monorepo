@@ -16,7 +16,7 @@ import * as Phaser from 'phaser';
 import { mountMoment, powerUpMoment } from '../audio/quips';
 import { Sfx } from '../audio/sfx';
 import { Voice } from '../audio/voice';
-import { ControlScheme, DirectionTracker } from '../controls';
+import { ControlScheme, DirectionTracker, PlayerController } from '../controls';
 import { HudSnapshot, sameHud, toHud } from '../hud';
 import { flameFrame } from '../skins/flame-frame';
 import { ARENA_THEMES } from '../skins/hd/themes';
@@ -135,8 +135,7 @@ export class ArenaScene extends Phaser.Scene {
     >;
 
     for (const scheme of this.config.controls) {
-      const tracker = new DirectionTracker();
-      this.trackers.set(scheme.playerId, tracker);
+      const tracker = this.trackerFor(scheme.playerId);
       for (const direction of FACINGS) {
         const key = keyboard.addKey(codes[scheme.keys[direction]] as number);
         key.on('down', () => tracker.press(direction));
@@ -152,6 +151,34 @@ export class ArenaScene extends Phaser.Scene {
         .addKey(codes[scheme.keys.detonate] as number)
         .on('down', () => this.config.session.pressDetonate(scheme.playerId));
     }
+  }
+
+  /**
+   * Hands on `playerId` that are not keys: a touch controller's. Safe to ask
+   * for before the scene has booted — the tracker is made on first use and
+   * the keys, bound later, share it.
+   */
+  controller(playerId: string): PlayerController {
+    const tracker = this.trackerFor(playerId);
+    const session = this.config.session;
+    return {
+      press: (direction) => tracker.press(direction),
+      release: (direction) => tracker.release(direction),
+      clear: () => tracker.clear(),
+      bomb: () => session.pressBomb(playerId),
+      ability: () => session.pressAbility(playerId),
+      detonate: () => session.pressDetonate(playerId),
+    };
+  }
+
+  /** One tracker per player, whoever asks first — keys and touch feed the same one. */
+  private trackerFor(playerId: string): DirectionTracker {
+    let tracker = this.trackers.get(playerId);
+    if (!tracker) {
+      tracker = new DirectionTracker();
+      this.trackers.set(playerId, tracker);
+    }
+    return tracker;
   }
 
   /**
@@ -177,11 +204,21 @@ export class ArenaScene extends Phaser.Scene {
     };
     // `focusout` fires before the next element has focus: check once it has.
     const later = () => setTimeout(sync);
+    // A click or tap on the arena takes the keys back. Phaser cancels the
+    // pointer's default action on its canvas, which is what would have moved
+    // focus off the text field — so do that part here.
+    const takeBack = () => {
+      const active = document.activeElement;
+      if (isTextField(active)) (active as HTMLElement).blur();
+    };
+    const canvas = this.game.canvas;
     document.addEventListener('focusin', sync);
     document.addEventListener('focusout', later);
+    canvas?.addEventListener('pointerdown', takeBack);
     this.events.once(Phaser.Scenes.Events.DESTROY, () => {
       document.removeEventListener('focusin', sync);
       document.removeEventListener('focusout', later);
+      canvas?.removeEventListener('pointerdown', takeBack);
     });
     sync();
   }

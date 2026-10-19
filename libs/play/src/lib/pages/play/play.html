@@ -1,4 +1,10 @@
-<section class="play">
+<section
+  class="play"
+  [class.play--game]="game()"
+  [class.play--touch]="touch()"
+  [class.play--sideways]="sideways()"
+  data-testid="play-page"
+>
   <header class="play__header">
     <div>
       <h1 class="play__title" data-testid="play-title">
@@ -67,7 +73,16 @@
         (valueChange)="setLevel($event)"
       />
     </div>
-    }
+    } @if (!touch()) {
+    <div class="play__setup-field" data-testid="play-setup-keys">
+      <span class="play__setup-label">{{ 'PLAY.SETUP_KEYS' | translate }}</span>
+      <lib-segmented-control
+        [options]="keySchemeOptions"
+        [value]="keyScheme()"
+        [label]="'PLAY.SETUP_KEYS' | translate"
+        (valueChange)="setKeyScheme($event)"
+      />
+    </div>
     <label class="play__setup-check">
       <input
         type="checkbox"
@@ -77,7 +92,19 @@
       />
       {{ 'PLAY.SETUP_P2' | translate }}
     </label>
+    }
     <p class="play__setup-hint">{{ 'PLAY.SETUP_HINT' | translate }}</p>
+    <button
+      type="button"
+      libButton
+      variant="primary"
+      size="sm"
+      class="play__enter"
+      (click)="enterGame()"
+      data-testid="play-enter"
+    >
+      <span aria-hidden="true">⛶</span> {{ 'PLAY.ENTER' | translate }}
+    </button>
   </section>
 
   <!-- Where and when: the arena, and the round's clock -->
@@ -130,7 +157,7 @@
     }
   </ul>
 
-  <div class="play__stage">
+  <div class="play__stage" data-testid="play-stage">
     <div #arena class="play__arena" data-testid="play-arena"></div>
 
     @if (status() === 'loading') {
@@ -141,6 +168,16 @@
     <div class="play__overlay" data-testid="play-error">
       <lib-alert tone="danger">{{ 'PLAY.ERROR' | translate }}</lib-alert>
     </div>
+    } @else if (tapToPlay()) {
+    <button
+      type="button"
+      class="play__overlay play__tap"
+      (click)="tapPlay()"
+      data-testid="play-tap"
+    >
+      <span class="play__result">{{ 'PLAY.TAP_TO_PLAY' | translate }}</span>
+      <span class="play__tap-hint">{{ 'PLAY.TAP_HINT' | translate }}</span>
+    </button>
     } @else if (isOver()) {
     <div class="play__overlay" data-testid="play-result" role="status">
       <p class="play__result">
@@ -160,17 +197,108 @@
       </button>
     </div>
     }
+
+    <div class="play__stage-buttons">
+      @if (game() && touch() && portrait()) {
+      <button
+        type="button"
+        class="play__stage-button"
+        [attr.aria-label]="(upright() ? 'PLAY.SIDEWAYS' : 'PLAY.UPRIGHT') | translate"
+        [title]="(upright() ? 'PLAY.SIDEWAYS' : 'PLAY.UPRIGHT') | translate"
+        [attr.aria-pressed]="upright()"
+        (click)="toggleUpright()"
+        data-testid="play-turn"
+      >
+        <span aria-hidden="true">🔄</span>
+      </button>
+      } @if (game()) {
+      <button
+        type="button"
+        class="play__stage-button"
+        [attr.aria-label]="(pad() ? 'PLAY.PAD_OFF' : 'PLAY.PAD_ON') | translate"
+        [title]="(pad() ? 'PLAY.PAD_OFF' : 'PLAY.PAD_ON') | translate"
+        [attr.aria-pressed]="pad()"
+        (click)="togglePad()"
+        data-testid="play-pad"
+      >
+        <span aria-hidden="true">🎮</span>
+      </button>
+      }
+      <button
+        type="button"
+        class="play__stage-button"
+        [attr.aria-label]="(game() ? 'PLAY.COLLAPSE' : 'PLAY.EXPAND') | translate"
+        [title]="(game() ? 'PLAY.COLLAPSE' : 'PLAY.EXPAND') | translate"
+        [attr.aria-pressed]="game()"
+        (click)="toggleGame()"
+        data-testid="play-expand"
+      >
+        <span aria-hidden="true">{{ game() ? '✕' : '⛶' }}</span>
+      </button>
+    </div>
   </div>
 
+  <!-- In game mode the page's HUD is hidden: a strip over the arena says what matters -->
+  @if (game() && players().length) {
+  <div class="play__strip" data-testid="play-strip">
+    @if (closing()) {
+    <span class="play__chip play__chip--closing" role="status">
+      <span aria-hidden="true">⚠️</span> {{ 'PLAY.CLOSING' | translate }}
+    </span>
+    } @else if (clock(); as time) {
+    <span class="play__chip play__chip--clock">
+      <span aria-hidden="true">⏱</span> {{ time }}
+    </span>
+    } @for (player of players(); track player.id) {
+    <span
+      class="play__chip"
+      [class.play__chip--out]="!player.alive"
+      [style.--player-color]="colors[player.colorSlot]"
+      data-testid="play-strip-player"
+    >
+      <span class="play__swatch" aria-hidden="true"></span>
+      @if (isBot(player.id)) { {{ 'PLAY.BOT' | translate: { n:
+      botNumber(player.id) } }} } @else { {{ 'PLAY.PLAYER' | translate: { n:
+      player.slot + 1 } }} }
+      <lib-player-badges [stats]="player" size="sm" />
+    </span>
+    }
+  </div>
+  } @if (game() && pad()) {
+  <lib-virtual-gamepad
+    class="play__gamepad"
+    [ability]="!!me()?.mount"
+    [detonate]="!!me()?.remote"
+    [turned]="sideways()"
+    (direction)="onPadDirection($event)"
+    (bombPress)="padBomb()"
+    (abilityPress)="padAbility()"
+    (detonatePress)="padDetonate()"
+    data-testid="play-gamepad"
+  />
+  }
+
   <dl class="play__controls">
+    @if (touch()) {
     <div>
       <dt>{{ 'PLAY.PLAYER' | translate: { n: 1 } }}</dt>
-      <dd>{{ 'PLAY.CONTROLS_P1' | translate }}</dd>
+      <dd>{{ 'PLAY.TOUCH_CONTROLS' | translate }}</dd>
     </div>
-    @if (setup().secondHuman) {
+    } @else if (setup().secondHuman) {
+    <div>
+      <dt>{{ 'PLAY.PLAYER' | translate: { n: 1 } }}</dt>
+      <dd>{{ keysHint(keyScheme()) | translate }}</dd>
+    </div>
     <div>
       <dt>{{ 'PLAY.PLAYER' | translate: { n: 2 } }}</dt>
-      <dd>{{ 'PLAY.CONTROLS_P2' | translate }}</dd>
+      <dd>
+        {{ keysHint(keyScheme() === 'wasd' ? 'arrows' : 'wasd') | translate }}
+      </dd>
+    </div>
+    } @else {
+    <div>
+      <dt>{{ 'PLAY.PLAYER' | translate: { n: 1 } }}</dt>
+      <dd>{{ 'PLAY.CONTROLS_SOLO' | translate }}</dd>
     </div>
     }
   </dl>

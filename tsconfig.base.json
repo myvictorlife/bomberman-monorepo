@@ -35,6 +35,7 @@
       "@libs/items": ["libs/items/src/index.ts"],
       "@libs/sounds": ["libs/sounds/src/index.ts"],
       "@libs/audio-settings": ["libs/shared/audio-settings/src/index.ts"],
+      "@libs/controls-settings": ["libs/shared/controls-settings/src/index.ts"],
       "@libs/online": ["libs/online/src/index.ts"],
       "@libs/mounts": ["libs/mounts/src/index.ts"]
     },

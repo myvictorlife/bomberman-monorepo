@@ -207,7 +207,16 @@
     "SECTION_AUDIO": "Áudio",
     "SOUNDS": "Sons e locutor",
     "SOUNDS_DESC": "Ouça cada som do jogo separado e escolha a voz do locutor.",
-    "SOUNDS_OPEN": "Abrir"
+    "SOUNDS_OPEN": "Abrir",
+    "SECTION_CONTROLS": "Controles",
+    "KEYS": "Teclado",
+    "KEYS_DESC": "A mão com que o jogador 1 joga. Um segundo jogador no mesmo teclado fica com a outra; no online, as duas valem.",
+    "KEYS_WASD": "W A S D",
+    "KEYS_ARROWS": "Setas",
+    "KEYS_PLAYER_1": "Jogador 1:",
+    "KEYS_PLAYER_2": "Jogador 2:",
+    "KEYS_WASD_HINT": "W A S D para andar · Espaço solta bomba · Shift usa a montaria · E detona",
+    "KEYS_ARROWS_HINT": "Setas para andar · Enter solta bomba · Ctrl usa a montaria · / detona"
   },
   "PLAY": {
     "TITLE": "Versus",
@@ -222,8 +231,8 @@
     "WINNER": "Jogador {{n}} venceu!",
     "DRAW": "Empate!",
     "RESTART": "Jogar de novo",
-    "CONTROLS_P1": "W A S D para andar · Espaço solta bomba · Shift usa a montaria · E detona",
-    "CONTROLS_P2": "Setas para andar · Enter solta bomba · Ctrl usa a montaria · / detona",
+    "KEYS_WASD_HINT": "W A S D para andar · Espaço solta bomba · Shift usa a montaria · E detona",
+    "KEYS_ARROWS_HINT": "Setas para andar · Enter solta bomba · Ctrl usa a montaria · / detona",
     "SOUND_ON": "Som ligado",
     "SOUND_OFF": "Som desligado",
     "MOUNT": "Montaria",
@@ -245,13 +254,27 @@
     "SETUP_TITLE": "Quem joga",
     "SETUP_BOTS": "Bots",
     "SETUP_LEVEL": "Dificuldade",
-    "SETUP_P2": "Segundo jogador nas setas",
+    "SETUP_P2": "Segundo jogador no mesmo teclado",
     "SETUP_HINT": "Mudar a escalação começa uma nova partida.",
     "LEVEL_EASY": "Fácil",
     "LEVEL_MEDIUM": "Médio",
     "LEVEL_HARD": "Difícil",
     "BOT": "CPU {{n}}",
-    "BOT_WINS": "CPU {{n}} venceu!"
+    "BOT_WINS": "CPU {{n}} venceu!",
+    "EXPAND": "Tela cheia",
+    "COLLAPSE": "Sair da tela cheia",
+    "PAD_ON": "Mostrar o controle na tela",
+    "PAD_OFF": "Esconder o controle na tela",
+    "TAP_TO_PLAY": "Toque para jogar",
+    "TAP_HINT": "O polegar esquerdo anda, o direito solta bomba. Vire o celular de lado para ver melhor.",
+    "TOUCH_CONTROLS": "Controle na tela: deslize no direcional para andar · 💣 solta bomba · ⚡ usa a montaria · 🎯 detona",
+    "ENTER": "Jogar",
+    "SIDEWAYS": "Jogar deitado",
+    "UPRIGHT": "Jogar em pé",
+    "SETUP_KEYS": "Teclas do jogador 1",
+    "KEYS_WASD": "W A S D",
+    "KEYS_ARROWS": "Setas",
+    "CONTROLS_SOLO": "W A S D ou as setas para andar · Espaço ou Enter solta bomba · Shift ou Ctrl usa a montaria · E ou / detona"
   },
   "CHARACTERS": {
     "TITLE": "Personagens",
@@ -791,7 +814,8 @@
         "sign-in": "Entre na sua conta para escrever no chat. Qualquer um pode reagir.",
         "verify": "Confirme seu e-mail para escrever no chat.",
         "offline": "O chat volta quando a sala reconectar."
-      }
+      },
+      "BACK_TO_GAME": "Esc, ou um clique na arena, devolve as teclas ao jogo."
     }
   },
   "PODIUM": {
@@ -803,5 +827,11 @@
     "TAG_STUBBORN": "Teimoso: perde, volta, e um dia ganha.",
     "PLACE": "{{n}}º lugar",
     "SCORE": "{{wins}} vitórias em {{matches}} · {{rate}}%"
+  },
+  "GAMEPAD": {
+    "MOVE": "Andar",
+    "BOMB": "Soltar bomba",
+    "ABILITY": "Usar a habilidade da montaria",
+    "DETONATE": "Detonar"
   }
 }

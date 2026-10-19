@@ -105,6 +105,7 @@ describe('Online', () => {
             restart: vi.fn(),
             setMuted: vi.fn(),
             setMusic: vi.fn(),
+            controller: vi.fn(),
           };
           handles.push(handle);
           return handle;

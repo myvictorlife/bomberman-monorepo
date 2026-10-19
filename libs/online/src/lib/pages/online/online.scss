@@ -88,6 +88,15 @@
 .online__arena {
   position: absolute;
   inset: 0;
+
+  // Phaser sizes the canvas to fit; the page centres it. The canvas is
+  // Phaser's, not the template's, so the rule has to reach past the view
+  // encapsulation.
+  ::ng-deep canvas {
+    position: absolute;
+    inset: 0;
+    margin: auto;
+  }
 }
 
 .online__overlay {
@@ -157,7 +166,8 @@
 .online__layout--expanded {
   position: fixed;
   inset: 0;
-  z-index: 50;
+  // Over the site's fixed header too, for browsers that refuse full screen.
+  z-index: var(--z-modal);
   grid-template-columns: minmax(0, 1fr) 22rem;
   grid-template-areas: 'main side';
   gap: 0;

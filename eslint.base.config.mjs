@@ -57,6 +57,7 @@ const depConstraints = [
     sourceTag: 'scope:settings',
     onlyDependOnLibsWithTags: [
       'scope:audio-settings-lib',
+      'scope:controls-settings-lib',
       'scope:entity-lib',
       'scope:environment-lib',
       'scope:theme-lib',
@@ -127,6 +128,8 @@ const depConstraints = [
 
   // Music and effects on/off: shared between settings and the game.
   { sourceTag: 'scope:audio-settings-lib', onlyDependOnLibsWithTags: [] },
+  // Which hand drives on the keyboard: a root service, no dependencies.
+  { sourceTag: 'scope:controls-settings-lib', onlyDependOnLibsWithTags: [] },
 
   // The chosen character: shared between the roster and the game, which never
   // import each other. Knows the roster, nothing else.
@@ -142,6 +145,7 @@ const depConstraints = [
     sourceTag: 'scope:play',
     onlyDependOnLibsWithTags: [
       'scope:audio-settings-lib',
+      'scope:controls-settings-lib',
       'scope:character-select-lib',
       'scope:entity-lib',
       'scope:environment-lib',
@@ -211,6 +215,7 @@ const depConstraints = [
     sourceTag: 'scope:online',
     onlyDependOnLibsWithTags: [
       'scope:audio-settings-lib',
+      'scope:controls-settings-lib',
       'scope:auth-lib',
       'scope:character-select-lib',
       'scope:entity-lib',
@@ -252,6 +257,7 @@ const depConstraints = [
       'scope:auth-lib',
       'scope:auth-firebase-lib',
       'scope:audio-settings-lib',
+      'scope:controls-settings-lib',
       'scope:character-select-lib',
       'scope:entity-lib',
       'scope:environment-lib',

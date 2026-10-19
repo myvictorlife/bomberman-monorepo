@@ -3,14 +3,14 @@ import { CHARACTERS, MAX_PLAYERS, PlayerSetup } from '@libs/game-core';
 
 /**
  * Who plays an offline match: player 1 at the keyboard, optionally a second
- * player on the arrow keys, and the rest bots of one difficulty. It travels
+ * player on the other hand of the keyboard, and the rest bots of one difficulty. It travels
  * in the URL — `/play?bots=3&level=hard&p2=1` — so a link to a match carries
  * it, and a test can open any line-up without clicking.
  */
 export interface MatchSetup {
   bots: number;
   level: BotLevel;
-  /** A second person on the same keyboard, with the arrow keys. */
+  /** A second person on the same keyboard, on whichever hand player 1 left. */
   secondHuman: boolean;
 }
 

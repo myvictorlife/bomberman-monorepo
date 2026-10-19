@@ -19,6 +19,7 @@ export * from './lib/molecules/sprite-tile/sprite-tile';
 // Organisms
 export * from './lib/organisms/header/header';
 export * from './lib/organisms/showcase/showcase';
+export * from './lib/organisms/virtual-gamepad/virtual-gamepad';
 
 // Cross-cutting
 export * from './lib/core/global-error-handler';

@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { devices, expect, test } from '@playwright/test';
 
 /**
  * Routing, lazy loading and the 404 fallback.
@@ -24,7 +24,7 @@ test.describe('navigation', () => {
     await expect(page.locator('lib-profile')).toBeVisible();
   });
 
-  test('lazy-loads the game and starts a match', async ({ page }) => {
+  test('lazy-loads the game and starts a match', async ({ page, isMobile }) => {
     const errors: string[] = [];
     page.on('pageerror', (error) => errors.push(String(error)));
 
@@ -34,15 +34,15 @@ test.describe('navigation', () => {
     await expect(
       page.locator('[data-testid="play-arena"] canvas'),
     ).toBeVisible();
-    await expect(page.locator('[data-testid="play-hud-player"]')).toHaveCount(
-      2,
-    );
+    // A phone goes straight to game mode, where the HUD is a strip over the
+    // arena behind "tap to play"; a desktop keeps the page's HUD list.
+    if (isMobile) await page.locator('[data-testid="play-tap"]').tap();
+    const hud = isMobile ? 'play-strip-player' : 'play-hud-player';
+    await expect(page.locator(`[data-testid="${hud}"]`)).toHaveCount(2);
 
     // Player 1 drops a bomb: the round keeps running and nothing throws.
     await page.keyboard.press('Space');
-    await expect(
-      page.locator('[data-testid="play-hud-player"]').first(),
-    ).toBeVisible();
+    await expect(page.locator(`[data-testid="${hud}"]`).first()).toBeVisible();
     expect(errors).toEqual([]);
   });
 
@@ -194,7 +194,8 @@ test.describe('navigation', () => {
     await page.goto('/settings');
 
     await expect(page.locator('lib-settings')).toBeVisible();
-    await expect(page.getByRole('radiogroup')).toHaveCount(2);
+    // Theme, language and the keyboard hand.
+    await expect(page.getByRole('radiogroup')).toHaveCount(3);
   });
 
   test('renders the design system page', async ({ page }) => {
@@ -243,5 +244,73 @@ test.describe('navigation', () => {
     expect(home).not.toBe(settings);
     // An untranslated title leaks the i18n key itself.
     expect(settings).not.toMatch(/^[A-Z_.]+$/);
+  });
+
+  test.describe('on a touch screen', () => {
+    // A phone's screen with touch, on every project's browser: `isMobile`
+    // (Chromium and WebKit only) would skip Firefox, and the device's
+    // `defaultBrowserType` would force a worker of another kind.
+    const { viewport, deviceScaleFactor } = devices['Pixel 7'];
+    test.use({ viewport, deviceScaleFactor, hasTouch: true });
+
+    test('plays from an on-screen controller in a full-screen game mode', async ({
+      page,
+    }) => {
+      const errors: string[] = [];
+      page.on('pageerror', (error) => errors.push(String(error)));
+
+      await page.goto('/play');
+      await expect(
+        page.locator('[data-testid="play-arena"] canvas'),
+      ).toBeVisible();
+
+      // A touch screen reports a coarse pointer: the page goes straight to
+      // game mode, one player only, and waits for the tap that lets the
+      // browser play sound.
+      const layout = page.locator('[data-testid="play-page"]');
+      await expect(layout).toHaveClass(/play--game/);
+      await page.locator('[data-testid="play-tap"]').tap();
+      await expect(page.locator('[data-testid="play-tap"]')).toHaveCount(0);
+      await expect(page.locator('[data-testid="play-setup-p2"]')).toHaveCount(
+        0,
+      );
+
+      // Held upright, the game turns sideways: a quarter clockwise, so a push
+      // towards the screen's right is the pad's "up". (Firefox's full screen
+      // makes the window landscape instead, and then right is right.)
+      const sideways = await page.evaluate(
+        () => matchMedia('(orientation: portrait)').matches,
+      );
+      if (sideways) await expect(layout).toHaveClass(/play--sideways/);
+      const pad = page.locator('[data-testid="gamepad-pad"]');
+      await expect(pad).toBeVisible();
+      const box = (await pad.boundingBox())!;
+      const press = {
+        clientX: box.x + box.width * 0.9,
+        clientY: box.y + box.height / 2,
+        pointerId: 1,
+        pointerType: 'touch',
+        bubbles: true,
+      };
+      await pad.dispatchEvent('pointerdown', press);
+      await expect(pad).toHaveAttribute(
+        'data-direction',
+        sideways ? 'up' : 'right',
+      );
+      await pad.dispatchEvent('pointerup', press);
+      await expect(pad).not.toHaveAttribute('data-direction', /./);
+
+      // A bomb from the button: the round keeps running and nothing throws.
+      await page.locator('[data-testid="gamepad-bomb"]').tap();
+      await expect(
+        page.locator('[data-testid="play-strip-player"]').first(),
+      ).toBeVisible();
+
+      // Leaving game mode brings the page back.
+      await page.locator('[data-testid="play-expand"]').tap();
+      await expect(layout).not.toHaveClass(/play--game/);
+      await expect(page.locator('[data-testid="play-setup"]')).toBeVisible();
+      expect(errors).toEqual([]);
+    });
   });
 });

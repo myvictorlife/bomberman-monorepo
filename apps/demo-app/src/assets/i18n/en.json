@@ -207,7 +207,16 @@
     "SECTION_AUDIO": "Audio",
     "SOUNDS": "Sounds and announcer",
     "SOUNDS_DESC": "Hear every sound of the game on its own and pick the announcer's voice.",
-    "SOUNDS_OPEN": "Open"
+    "SOUNDS_OPEN": "Open",
+    "SECTION_CONTROLS": "Controls",
+    "KEYS": "Keyboard",
+    "KEYS_DESC": "The hand player 1 drives with. A second player on the same keyboard gets the other one; online, both work.",
+    "KEYS_WASD": "W A S D",
+    "KEYS_ARROWS": "Arrow keys",
+    "KEYS_PLAYER_1": "Player 1:",
+    "KEYS_PLAYER_2": "Player 2:",
+    "KEYS_WASD_HINT": "W A S D to move · Space drops a bomb · Shift uses the mount · E detonates",
+    "KEYS_ARROWS_HINT": "Arrow keys to move · Enter drops a bomb · Ctrl uses the mount · / detonates"
   },
   "PLAY": {
     "TITLE": "Versus",
@@ -222,8 +231,8 @@
     "WINNER": "Player {{n}} wins!",
     "DRAW": "Draw!",
     "RESTART": "Play again",
-    "CONTROLS_P1": "W A S D to move · Space drops a bomb · Shift uses the mount · E detonates",
-    "CONTROLS_P2": "Arrow keys to move · Enter drops a bomb · Ctrl uses the mount · / detonates",
+    "KEYS_WASD_HINT": "W A S D to move · Space drops a bomb · Shift uses the mount · E detonates",
+    "KEYS_ARROWS_HINT": "Arrow keys to move · Enter drops a bomb · Ctrl uses the mount · / detonates",
     "SOUND_ON": "Sound on",
     "SOUND_OFF": "Sound off",
     "MOUNT": "Mount",
@@ -245,13 +254,27 @@
     "SETUP_TITLE": "Who plays",
     "SETUP_BOTS": "Bots",
     "SETUP_LEVEL": "Difficulty",
-    "SETUP_P2": "Second player on the arrow keys",
+    "SETUP_P2": "Second player on the same keyboard",
     "SETUP_HINT": "Changing the line-up starts a new match.",
     "LEVEL_EASY": "Easy",
     "LEVEL_MEDIUM": "Medium",
     "LEVEL_HARD": "Hard",
     "BOT": "CPU {{n}}",
-    "BOT_WINS": "CPU {{n}} wins!"
+    "BOT_WINS": "CPU {{n}} wins!",
+    "EXPAND": "Full screen",
+    "COLLAPSE": "Leave full screen",
+    "PAD_ON": "Show the on-screen controller",
+    "PAD_OFF": "Hide the on-screen controller",
+    "TAP_TO_PLAY": "Tap to play",
+    "TAP_HINT": "Left thumb walks, right thumb drops bombs. Turn the phone sideways for the best view.",
+    "TOUCH_CONTROLS": "On-screen controller: slide on the pad to walk · 💣 drops a bomb · ⚡ uses the mount · 🎯 detonates",
+    "ENTER": "Play",
+    "SIDEWAYS": "Play sideways",
+    "UPRIGHT": "Play upright",
+    "SETUP_KEYS": "Player 1 keys",
+    "KEYS_WASD": "W A S D",
+    "KEYS_ARROWS": "Arrows",
+    "CONTROLS_SOLO": "W A S D or the arrow keys to move · Space or Enter drops a bomb · Shift or Ctrl uses the mount · E or / detonates"
   },
   "CHARACTERS": {
     "TITLE": "Characters",
@@ -791,7 +814,8 @@
         "sign-in": "Sign in to write in the chat. Anyone can react.",
         "verify": "Confirm your e-mail to write in the chat.",
         "offline": "The chat is back once the room reconnects."
-      }
+      },
+      "BACK_TO_GAME": "Esc, or a click on the arena, hands the keys back to the game."
     }
   },
   "PODIUM": {
@@ -803,5 +827,11 @@
     "TAG_STUBBORN": "Stubborn: loses, comes back, and one day wins.",
     "PLACE": "{{n}}. place",
     "SCORE": "{{wins}} wins in {{matches}} · {{rate}}%"
+  },
+  "GAMEPAD": {
+    "MOVE": "Move",
+    "BOMB": "Drop a bomb",
+    "ABILITY": "Use the mount's ability",
+    "DETONATE": "Detonate"
   }
 }

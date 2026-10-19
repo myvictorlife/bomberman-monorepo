@@ -50,7 +50,8 @@ The `scope:` prefix is mandatory. It is what connects the `project.json` tag to 
 | translation        | `libs/shared/translation`        | `scope:translate`              | entity-lib, environment-lib                                                                                |
 | ui                 | `libs/shared/ui`                 | `scope:ui-lib`                 | analytics-lib, entity-lib, environment-lib, theme-lib, translate                                           |
 | profile            | `libs/profile`                   | `scope:profile`                | entity-lib, environment-lib                                                                                |
-| settings           | `libs/settings`                  | `scope:settings`               | entity-lib, environment-lib, theme-lib, translate, ui-lib                                                  |
+| settings           | `libs/settings`                  | `scope:settings`               | audio-settings, controls-settings, entity-lib, environment-lib, theme-lib, translate, ui-lib               |
+| controls-settings  | `libs/shared/controls-settings`  | `scope:controls-settings-lib`  | _(nothing)_ — the keyboard hand, read by settings and play                                                 |
 | auth               | `libs/shared/auth`               | `scope:auth-lib`               | _(nothing)_                                                                                                |
 | auth-firebase      | `libs/shared/auth-firebase`      | `scope:auth-firebase-lib`      | auth-lib, environment-lib                                                                                  |
 | game-ai            | `libs/game/ai`                   | `scope:game-ai-lib`            | game-core-lib (bots: pure TS, run offline and on the server)                                               |

@@ -64,3 +64,19 @@ export class DirectionTracker {
     return this.held[this.held.length - 1] ?? null;
   }
 }
+
+/**
+ * One player's hands on the game, whatever drives them: the keyboard binds
+ * keys to these, a touch controller calls them from pointer events. Directions
+ * are held and released like keys — `press('up')` walks until `release('up')`
+ * — and the actions fire once per call.
+ */
+export interface PlayerController {
+  press(direction: Direction): void;
+  release(direction: Direction): void;
+  /** Lets go of every held direction: the finger left the pad. */
+  clear(): void;
+  bomb(): void;
+  ability(): void;
+  detonate(): void;
+}

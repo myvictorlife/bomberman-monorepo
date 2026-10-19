@@ -1,6 +1,6 @@
 import type { BotSetup } from '@libs/game-ai';
 import { MapId, PlayerSetup } from '@libs/game-core';
-import { ControlScheme } from './controls';
+import { ControlScheme, PlayerController } from './controls';
 import { HudSnapshot } from './hud';
 import { ArenaSession } from './session/arena-session';
 import { ArenaSkin } from './skins/skin';
@@ -37,6 +37,12 @@ export interface ArenaHandle {
   setMuted(muted: boolean): void;
   /** Plays or stops the arena theme. */
   setMusic(on: boolean): void;
+  /**
+   * A second pair of hands for `playerId`, beside any keys bound to it: what
+   * a touch controller drives. Directions it holds and keys held at the same
+   * time share one tracker, so the last one pressed wins either way.
+   */
+  controller(playerId: string): PlayerController;
   /** Stops the game loop, removes the canvas and every keyboard listener. */
   destroy(): void;
 }

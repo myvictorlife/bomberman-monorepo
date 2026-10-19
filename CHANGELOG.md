@@ -13,6 +13,30 @@ config file. Ordinary app-level additions are minor.
 
 ### Added
 
+- **Play on a phone: an on-screen controller and a full-screen game mode on
+  `/play`.** `lib-virtual-gamepad` (`@libs/ui`) lays a thumbstick-as-D-pad
+  and the bomb, ability and detonate buttons over the game — pointer events
+  with capture, a dead zone and a bias towards the held direction
+  (`dragDirection`, pure and tested). `ArenaHandle.controller(playerId)`
+  is the hands it drives: the same `DirectionTracker` the keys feed. On a
+  touch screen the page goes straight to game mode behind "tap to play"
+  (the gesture that unlocks sound and full screen), hides the second
+  keyboard player and shows the controller; sideways the arena sits between
+  the thumbs with the HUD in the top-left slack, upright it fills the width
+  with the HUD and the controller under it. A ⛶ button (and Escape) does
+  the same on a desktop, and 🎮 toggles the controller by hand. The page
+  has `viewport-fit=cover`, the home-screen metas and a manifest, so an
+  iPhone — which refuses the Fullscreen API — gets a full screen once added
+  to the home screen. A touch screen held upright plays **sideways**: the
+  whole game turns a quarter clockwise by CSS (`play--sideways`), whatever
+  the rotation lock says, with the pad reading its directions in the turned
+  frame (`[turned]`) and Phaser told the host's own size through the turn;
+  🔄 plays upright instead, remembered in `localStorage`. In full screen
+  the page also asks for a landscape orientation lock (Android). Phaser no
+  longer centres the canvas — the host's stylesheet does (`inset: 0; margin: auto`), since Phaser would measure it through the turn. The site's icon is now the header's burst
+  (`favicon.svg`, a PNG-based `favicon.ico`, `apple-touch-icon.png` and
+  192/512 maskable PNGs in the manifest) instead of the template's.
+
 - **Player profile on the server: a chosen name, a favourite character and a
   colour.** `GET /me` and `PUT /me` on the game server (bearer Firebase ID
   token, CORS open, `no-store`) read and change the signed-in player's
@@ -83,7 +107,24 @@ config file. Ordinary app-level additions are minor.
   in a thin strip along the top of the stage instead of a sidebar card,
   so they are in view in both layouts.
 
+- **Play on the arrow keys.** `@libs/controls-settings` keeps which hand
+  player 1 drives with (`wasd`, the default, or `arrows`), in
+  `localStorage`. Settings has a "Controls" section with the choice and
+  what each hand does; `/play` has the same choice in "Who plays" and seats
+  player 1 on the chosen hand, a second player on the other — alone, both
+  hands drive player 1, as online. `PLAY.CONTROLS_P1/P2` became
+  `PLAY.KEYS_WASD_HINT/KEYS_ARROWS_HINT`.
+
 ### Fixed
+
+- **The keys come back from the chat.** Clicking the arena after typing in
+  the chat left the keys in the text box (Phaser cancels the pointer's
+  default action, which is what would have moved focus). The scene now
+  blurs the field on a pointer down on its canvas; Escape in the chat box
+  does the same without leaving full screen, and the box says so while it
+  has focus.
+- The expanded `/online` layout now sits above the site's fixed header for
+  browsers that refuse full screen.
 
 - **Google sign-in on a custom domain.** `authDomainRedirect` now sends
   `<projectId>.web.app` and `<projectId>.firebaseapp.com` to a custom

@@ -1,0 +1,71 @@
+<div
+  #pad
+  class="gamepad__pad"
+  role="group"
+  [attr.aria-label]="'GAMEPAD.MOVE' | translate"
+  [attr.data-direction]="held()"
+  (pointerdown)="onPadDown($event)"
+  (pointermove)="onPadMove($event)"
+  (pointerup)="onPadUp($event)"
+  (pointercancel)="onPadUp($event)"
+  data-testid="gamepad-pad"
+>
+  <span
+    class="gamepad__arrow gamepad__arrow--up"
+    [class.gamepad__arrow--held]="held() === 'up'"
+    aria-hidden="true"
+    >▲</span
+  >
+  <span
+    class="gamepad__arrow gamepad__arrow--left"
+    [class.gamepad__arrow--held]="held() === 'left'"
+    aria-hidden="true"
+    >◀</span
+  >
+  <span class="gamepad__hub" aria-hidden="true"></span>
+  <span
+    class="gamepad__arrow gamepad__arrow--right"
+    [class.gamepad__arrow--held]="held() === 'right'"
+    aria-hidden="true"
+    >▶</span
+  >
+  <span
+    class="gamepad__arrow gamepad__arrow--down"
+    [class.gamepad__arrow--held]="held() === 'down'"
+    aria-hidden="true"
+    >▼</span
+  >
+</div>
+
+<div class="gamepad__buttons">
+  @if (detonate()) {
+  <button
+    type="button"
+    class="gamepad__button gamepad__button--detonate"
+    [attr.aria-label]="'GAMEPAD.DETONATE' | translate"
+    (pointerdown)="onButton($event, 'detonate')"
+    data-testid="gamepad-detonate"
+  >
+    <span aria-hidden="true">🎯</span>
+  </button>
+  } @if (ability()) {
+  <button
+    type="button"
+    class="gamepad__button gamepad__button--ability"
+    [attr.aria-label]="'GAMEPAD.ABILITY' | translate"
+    (pointerdown)="onButton($event, 'ability')"
+    data-testid="gamepad-ability"
+  >
+    <span aria-hidden="true">⚡</span>
+  </button>
+  }
+  <button
+    type="button"
+    class="gamepad__button gamepad__button--bomb"
+    [attr.aria-label]="'GAMEPAD.BOMB' | translate"
+    (pointerdown)="onButton($event, 'bomb')"
+    data-testid="gamepad-bomb"
+  >
+    <span aria-hidden="true">💣</span>
+  </button>
+</div>

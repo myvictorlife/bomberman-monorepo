@@ -51,7 +51,10 @@ export function createArenaGame(
     banner: false,
     scale: {
       mode: Phaser.Scale.FIT,
-      autoCenter: Phaser.Scale.CENTER_BOTH,
+      // Centred by the host's stylesheet (`canvas { inset: 0; margin: auto }`),
+      // not by Phaser: it would measure the canvas through any CSS turn of the
+      // page — a phone held upright plays sideways — and centre it wrong.
+      autoCenter: Phaser.Scale.NO_CENTER,
     },
     scene,
   });
@@ -63,6 +66,7 @@ export function createArenaGame(
       voice.muted = muted;
     },
     setMusic: (on) => (on ? music.start() : music.stop()),
+    controller: (playerId) => scene.controller(playerId),
     destroy: () => {
       music.close();
       voice.close();
