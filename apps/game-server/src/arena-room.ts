@@ -122,6 +122,8 @@ export function createArenaRoom(deps: ArenaRoomDeps) {
   const now = deps.now ?? Date.now;
   const random = deps.random ?? Math.random;
   const graceMs = deps.reconnectGraceMs ?? RECONNECT_GRACE_MS;
+  /** The one instance: it never disposes itself, so a second would only pile up. */
+  let liveId: string | null = null;
 
   return class ArenaRoom extends Room {
     override maxClients = 500;
@@ -149,6 +151,8 @@ export function createArenaRoom(deps: ArenaRoomDeps) {
     private round = 0;
 
     override onCreate(): void {
+      if (liveId) throw new Error('The public room already exists.');
+      liveId = this.roomId;
       this.patchRate = null;
       this.unwatchProfiles = deps.records.watchProfiles((record) =>
         this.profileChanged(record),
@@ -253,6 +257,7 @@ export function createArenaRoom(deps: ArenaRoomDeps) {
     }
 
     override onDispose(): void {
+      if (liveId === this.roomId) liveId = null;
       this.unwatchProfiles?.();
       deps.records.flush();
     }

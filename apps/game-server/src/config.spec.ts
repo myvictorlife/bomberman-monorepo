@@ -19,6 +19,7 @@ describe('loadConfig', () => {
 
     expect(loadConfig({}, dir)).toEqual({
       port: 8086,
+      host: null,
       firebaseProjectId: null,
       dataDir: join(dir, '.data/game-server'),
       outsiders: 5,
@@ -50,6 +51,7 @@ describe('loadConfig', () => {
     const config = loadConfig(
       {
         PORT: '9000',
+        HOST: '127.0.0.1',
         FIREBASE_PROJECT_ID: 'from-env',
         DATA_DIR: '/srv/data',
         OUTSIDERS: '2',
@@ -59,6 +61,7 @@ describe('loadConfig', () => {
 
     expect(config).toEqual({
       port: 9000,
+      host: '127.0.0.1',
       firebaseProjectId: 'from-env',
       dataDir: '/srv/data',
       outsiders: 2,
@@ -80,6 +83,14 @@ describe('loadConfig', () => {
     expect(
       loadConfig({}, workspace(undefined, '{"admins":"a@b.c"}')).admins,
     ).toEqual([]);
+  });
+
+  it('reads the interface to listen on from config/game-server.json, HOST winning', () => {
+    const dir = workspace(undefined, '{"host":" 127.0.0.1 "}');
+    expect(loadConfig({}, dir).host).toBe('127.0.0.1');
+    expect(loadConfig({ HOST: '::1' }, dir).host).toBe('::1');
+    expect(loadConfig({}, workspace(undefined, '{"host":""}')).host).toBeNull();
+    expect(loadConfig({}, workspace(undefined, '{"host":3}')).host).toBeNull();
   });
 
   it('lets ADMINS in the environment replace the file', () => {

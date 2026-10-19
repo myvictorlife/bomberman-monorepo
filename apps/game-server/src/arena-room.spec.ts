@@ -222,6 +222,14 @@ describe('ArenaRoom', () => {
     expect(lobby.players.every((s) => s.bot)).toBe(true);
   });
 
+  it('is the only room of its kind: a second one is refused', async () => {
+    const peer = await connect();
+
+    await expect(matchMaker.createRoom('arena', {})).rejects.toThrow();
+    const arenas = await matchMaker.query({ name: 'arena' });
+    expect(arenas.map((r) => r.roomId)).toEqual([peer.room.roomId]);
+  });
+
   it('lets anyone watch: the lobby and the ranking arrive on join', async () => {
     const peer = await connect();
 

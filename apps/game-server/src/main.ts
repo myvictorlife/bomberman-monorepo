@@ -65,7 +65,12 @@ server.define(
   }),
 );
 
-await server.listen(config.port);
+// One public room, created below by the server itself: a client may join it,
+// never make another. Colyseus exposes `create` and `joinOrCreate` by default,
+// and a room that outlives its last visitor would pile up with every request.
+matchMaker.controller.exposedMethods = ['join', 'joinById', 'reconnect'];
+
+await server.listen(config.port, config.host ?? undefined);
 // Our routes answer first; what they do not claim goes on to Colyseus' listener
 // (matchmaking). One listener in charge: two answers to one request would
 // throw once the headers are sent, and take the process down.
@@ -100,7 +105,7 @@ process.once('SIGINT', () => void shutdown('SIGINT'));
 process.once('SIGTERM', () => void shutdown('SIGTERM'));
 
 console.log(
-  `[game-server] ws://localhost:${config.port} — room "${ARENA_ROOM}" ready`,
+  `[game-server] ws://${config.host ?? 'localhost'}:${config.port} — room "${ARENA_ROOM}" ready`,
 );
 console.log(
   `[game-server] rules: ${JSON.stringify(rules)} · admins: ${config.admins.length}`,

@@ -47,14 +47,15 @@ async function loadSdk() {
 }
 
 /**
- * Joins the public room. The Colyseus client is imported here, dynamically, so
- * it is downloaded only when someone opens the online room.
+ * Joins the public room — the server creates it and refuses to make another.
+ * The Colyseus client is imported here, dynamically, so it is downloaded only
+ * when someone opens the online room.
  */
 export async function connectToArena(
   serverUrl: string,
 ): Promise<ArenaConnection> {
   const { Client } = await loadSdk();
-  const room = await new Client(serverUrl).joinOrCreate(ARENA_ROOM);
+  const room = await new Client(serverUrl).join(ARENA_ROOM);
   return {
     send: (type, payload) => room.send(type, payload),
     on: (type, listener) => room.onMessage(type, listener),

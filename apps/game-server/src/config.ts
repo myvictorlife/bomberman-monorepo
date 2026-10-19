@@ -7,6 +7,11 @@ import { join } from 'node:path';
 
 export interface ServerConfig {
   port: number;
+  /**
+   * The interface to listen on; `null` for all of them. Behind a tunnel on the
+   * same machine, `127.0.0.1` keeps the server reachable through the tunnel only.
+   */
+  host: string | null;
   /** `null` when unknown: then nobody can sign in, and the room is watch-only. */
   firebaseProjectId: string | null;
   dataDir: string;
@@ -17,8 +22,8 @@ export interface ServerConfig {
 }
 
 /**
- * Environment first (`PORT`, `FIREBASE_PROJECT_ID`, `DATA_DIR`, `OUTSIDERS`,
- * `ADMINS`), then the same `config/firebase.json` and `config/game-server.json`
+ * Environment first (`PORT`, `HOST`, `FIREBASE_PROJECT_ID`, `DATA_DIR`,
+ * `OUTSIDERS`, `ADMINS`), then the same `config/firebase.json` and `config/game-server.json`
  * the web app is generated from, so a local setup has one place to fill in.
  */
 export function loadConfig(
@@ -27,8 +32,11 @@ export function loadConfig(
 ): ServerConfig {
   const port = Number(env['PORT']);
   const outsiders = Number(env['OUTSIDERS']);
+  const gameServer = readJson(join(cwd, 'config/game-server.json'));
+  const host = env['HOST'] ?? gameServer?.['host'];
   return {
     port: Number.isInteger(port) && port > 0 ? port : DEFAULT_GAME_SERVER_PORT,
+    host: typeof host === 'string' && host.trim() ? host.trim() : null,
     firebaseProjectId:
       env['FIREBASE_PROJECT_ID'] ||
       projectIdFromFile(join(cwd, 'config/firebase.json')),
@@ -39,7 +47,7 @@ export function loadConfig(
         : PUBLIC_ROOM_RULES.outsiders,
     admins: emails(
       env['ADMINS']?.split(',') ??
-        adminsFromFile(join(cwd, 'config/game-server.json')),
+        (Array.isArray(gameServer?.['admins']) ? gameServer['admins'] : []),
     ),
   };
 }
@@ -50,14 +58,16 @@ const emails = (values: unknown[]): string[] =>
     .map((v) => v.trim().toLowerCase())
     .filter((v) => v.includes('@'));
 
-function adminsFromFile(path: string): unknown[] {
-  if (!existsSync(path)) return [];
+/** The file's top-level object, or `null` when it is missing, unreadable or not an object. */
+function readJson(path: string): Record<string, unknown> | null {
+  if (!existsSync(path)) return null;
   try {
     const parsed: unknown = JSON.parse(readFileSync(path, 'utf8'));
-    const admins = (parsed as { admins?: unknown } | null)?.admins;
-    return Array.isArray(admins) ? admins : [];
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+      ? (parsed as Record<string, unknown>)
+      : null;
   } catch {
-    return [];
+    return null;
   }
 }
 

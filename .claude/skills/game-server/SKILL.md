@@ -28,7 +28,9 @@ npm run start:server     # nx serve game-server, rebuilds on change, port 8086
 npm start                # the app; dev builds connect to http://localhost:8086
 ```
 
-Env: `PORT` (default 8086), `FIREBASE_PROJECT_ID` (falls back to
+Env: `PORT` (default 8086), `HOST` (the interface to listen on, or `"host"` in
+`config/game-server.json`; all of them when unset — set `127.0.0.1` when a
+tunnel on the same machine publishes the server), `FIREBASE_PROJECT_ID` (falls back to
 `config/firebase.json`), `DATA_DIR` (default `.data/game-server`, git-ignored),
 `OUTSIDERS` (how many of the queue stand outside during a round; default 5,
 `0` for none).
@@ -207,6 +209,13 @@ whatever it returns `false` for. A handler that writes to a request Colyseus
 also answers throws `ERR_HTTP_HEADERS_SENT` and kills the process — so claim
 a path, or leave it alone, never 404/405 the rest.
 
+**Matchmaking joins, never creates.** `main.ts` creates the one public room
+and sets `matchMaker.controller.exposedMethods` to `join`, `joinById` and
+`reconnect`; the room also refuses a second instance of itself. It never
+disposes itself, so a client-created room would tick forever. The browser
+joins with `join(ARENA_ROOM)` — ship a client change before the server that
+expects it.
+
 - `GET /ranking` — the top 10 as JSON (`RankingEntry[]`, with each player's
   last `characterId`), `Access-Control-Allow-Origin: *`, cached 30 s. The
   title screen's podium reads it; add a route there, never a second server.
@@ -279,8 +288,9 @@ headers it needs are in the `firebase-deploy` skill.
 
 Current setup of this project: the server runs on the developer machine and a
 Cloudflare Tunnel publishes it as `https://api.detona.online` ("Published
-application" route → `http://localhost:8086`; Cloudflare proxies WebSockets by
-default). `hosting/firebase.json` already lists that origin in `connect-src`.
+application" route → `http://127.0.0.1:8086`, and the server runs with
+`HOST=127.0.0.1`, so nothing on the network reaches it past the tunnel;
+Cloudflare proxies WebSockets by default). `hosting/firebase.json` already lists that origin in `connect-src`.
 A fork replaces that origin with its own.
 
 General recipe:
