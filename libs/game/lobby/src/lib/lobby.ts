@@ -90,7 +90,8 @@ export const BOT_NAMES: readonly string[] = [
  *   player of that round from then on.
  * - With `rules.bots`, one person is enough for the countdown and bots take
  *   the seats left; with nobody queued, the bots play by themselves as long
- *   as someone is watching. Bots never queue: each round makes its own.
+ *   as someone is watching — until someone queues, which ends that round
+ *   and counts down to theirs. Bots never queue: each round makes its own.
  */
 export class Lobby {
   private phaseValue: LobbyPhase = 'waiting';
@@ -249,6 +250,18 @@ export class Lobby {
    * timer. `watched`: someone is connected — bots only play for an audience.
    */
   update(now: number, watched = true): StartRound | null {
+    // A round of bots alone, played for an audience, gives way the moment
+    // people can play: they get a round of their own instead of the border.
+    if (
+      this.phaseValue === 'playing' &&
+      this.players.length > 0 &&
+      this.players.every((s) => s.bot) &&
+      this.queue.length >= peopleNeeded(this.rules)
+    ) {
+      this.players = [];
+      this.phaseValue = 'waiting';
+      this.winnerId = null;
+    }
     if (
       this.phaseValue === 'results' &&
       this.resultsEndsAt !== null &&

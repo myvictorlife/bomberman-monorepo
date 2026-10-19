@@ -536,15 +536,34 @@ describe('Lobby, winner stays', () => {
       expect(ids(lobby.update(RULES.countdownMs)?.players)).toEqual(['a', 'b']);
     });
 
-    it('puts newcomers on the border of a bots round; a kill puts them in it', () => {
-      const lobby = new Lobby(BOTS);
+    it('ends a round of bots alone when someone queues, and counts down to theirs', () => {
+      const lobby = new Lobby({ ...BOTS, botsFillTo: 3 });
       lobby.update(0);
       lobby.update(RULES.countdownMs);
-      lobby.join(seat('a'));
+      expect(lobby.phase).toBe('playing');
 
-      expect(ids(lobby.outsiders())).toEqual(['a']);
-      expect(lobby.enterRound('a')).toBe(true);
-      expect(ids(lobby.people())).toEqual(['a']);
+      lobby.join(seat('a'));
+      lobby.update(20_000);
+
+      expect(lobby.phase).toBe('countdown');
+      expect(lobby.snapshot(20_000).players).toEqual([]);
+      const start = lobby.update(20_000 + RULES.countdownMs);
+      expect(ids(start?.players)).toEqual(['a', 'cpu1', 'cpu2']);
+    });
+
+    it('lets a round with people in it run its course when more queue', () => {
+      const lobby = new Lobby(BOTS);
+      lobby.join(seat('a'));
+      lobby.update(0);
+      lobby.update(RULES.countdownMs);
+      lobby.join(seat('b'));
+
+      lobby.update(20_000);
+
+      expect(lobby.phase).toBe('playing');
+      expect(ids(lobby.outsiders())).toEqual(['b']);
+      expect(lobby.enterRound('b')).toBe(true);
+      expect(ids(lobby.people())).toEqual(['a', 'b']);
     });
 
     it('never puts a bot in the queue, nor keeps its seat after a win', () => {

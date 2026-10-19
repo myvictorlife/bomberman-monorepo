@@ -121,7 +121,11 @@ on `/online` draws itself from the schema; `parseRules` validates a change.
   connected, the room stays idle. With people queued, bots fill the round up
   to `rules.botsFillTo` players (3 in the public room: one person plays two
   bots, two play one, three or more none; `0`: bots never join people) —
-  `botsFor(rules, people)` in `game-protocol` is the one formula. One
+  `botsFor(rules, people)` in `game-protocol` is the one formula. A round
+  of bots alone ends the moment people queue (`Lobby.update` drops it back
+  to the countdown; the room sees the lobby leave `playing` and drops the
+  game), so a newcomer plays their own round instead of the border; a round
+  with people in it always runs its course. One
   person is then enough for the countdown (`peopleNeeded(rules)`, also what
   the page shows). Bot seats are made per round
   by the lobby (`bot: true`, ids `cpu1…` — `isBotId`, names drawn from

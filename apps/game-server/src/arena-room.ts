@@ -594,6 +594,17 @@ export function createArenaRoom(deps: ArenaRoomDeps) {
 
     refreshLobby(): void {
       const start = this.lobby.update(now(), this.clients.length > 0);
+      // The lobby ended a round of bots alone for people who queued: stop playing it.
+      if (
+        !start &&
+        this.game?.phase === 'playing' &&
+        this.lobby.phase !== 'playing'
+      ) {
+        this.game = null;
+        this.bots = null;
+        this.heldInputs.clear();
+        this.pendingEvents = [];
+      }
       if (start) {
         this.round++;
         const rules = this.lobby.rules;

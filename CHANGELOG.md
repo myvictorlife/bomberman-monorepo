@@ -13,6 +13,11 @@ config file. Ordinary app-level additions are minor.
 
 ### Added
 
+- **A newcomer no longer waits out a round of bots.** When someone queues
+  while bots play alone for the audience, that round ends and the countdown
+  to theirs starts — them plus the bots `botsFillTo` allows — instead of
+  standing them on the border of a five-bot round. A round with people in
+  it still runs its course.
 - **Fewer, weaker bots online.** A new room rule, `botsFillTo` (3 in the
   public room): an empty room still gets five bots, but with people in
   line bots only complete the round to three players — two for one person,

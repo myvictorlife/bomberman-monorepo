@@ -203,7 +203,7 @@ const localRoom = (peer: { room: Room }) =>
   };
 
 describe('ArenaRoom', () => {
-  it('plays a round of bots for whoever watches; a newcomer stands on the border', async () => {
+  it('plays a round of bots for whoever watches, and ends it when someone queues', async () => {
     const viewer = await connect('bots');
 
     const first = await viewer.next<FrameMessage>(
@@ -227,14 +227,18 @@ describe('ArenaRoom', () => {
 
     const player = await signedIn('bia', true, 'bots');
     player.room.send(CLIENT_MESSAGE.joinQueue, {});
-    await player.next<FrameMessage>(SERVER_MESSAGE.frame, (f) =>
-      f.state.outsiders.some((o) => o.id === 'bia'),
-    );
-    const lobby = await viewer.next<LobbySnapshot>(
+    const countdown = await viewer.next<LobbySnapshot>(
       SERVER_MESSAGE.lobby,
-      (l) => l.queue.length === 1,
+      (l) => l.phase === 'countdown',
     );
-    expect(lobby.players.every((s) => s.bot)).toBe(true);
+    expect(countdown.players).toEqual([]);
+    expect(localRoom(viewer).game).toBeNull();
+
+    const next = await player.next<FrameMessage>(SERVER_MESSAGE.frame, (f) =>
+      f.state.players.some((p) => p.id === 'bia'),
+    );
+    expect(next.state.players[0]?.id).toBe('bia');
+    expect(next.round).toBe(first.round + 1);
   });
 
   it('is the only room of its kind: a second one is refused', async () => {
