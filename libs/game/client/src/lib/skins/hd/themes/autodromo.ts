@@ -242,8 +242,8 @@ export const autodromoTheme: ArenaTheme = {
   id: 'autodromo',
   accent: '#d8343a',
   moment: RAIN,
-  paint(doc) {
-    const { paint, textures } = tilePainter(doc);
+  paint(doc, resolution = 1) {
+    const { paint, textures } = tilePainter(doc, resolution);
     paint(TEXTURE.floor, (ctx) => asphalt(ctx, false, false));
     paint(TEXTURE.floorShadow, (ctx) => asphalt(ctx, false, true));
     paint(TEXTURE.wall, tyres);

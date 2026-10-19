@@ -40,9 +40,11 @@ export function paintHdTextures(
   doc: Document,
   characters: readonly CharacterId[] = [],
   colors: readonly PlayerColorId[] = [],
+  /** Texture pixels per art unit; see `ArenaSkin.resolution`. */
+  resolution = 1,
 ): Map<string, HTMLCanvasElement> {
   const textures = new Map<string, HTMLCanvasElement>();
-  const paint = painter(doc, textures);
+  const paint = painter(doc, textures, resolution);
 
   paint(TEXTURE.floor, (ctx) => paintFloor(ctx, false));
   paint(TEXTURE.floorShadow, (ctx) => paintFloor(ctx, true));
@@ -69,6 +71,7 @@ export function paintHdTextures(
       slot,
       textures,
       colors[slot],
+      resolution,
     );
   }
   return textures;
@@ -90,8 +93,10 @@ export function paintCharacterTextures(
   textures = new Map<string, HTMLCanvasElement>(),
   /** The colour to paint the slot in; its own slot colour when absent. */
   color?: PlayerColorId,
+  /** Texture pixels per art unit; see `ArenaSkin.resolution`. */
+  resolution = 1,
 ): Map<string, HTMLCanvasElement> {
-  const paint = painter(doc, textures);
+  const paint = painter(doc, textures, resolution);
   if (slot === 'outsider') {
     const id = characterId ?? DEFAULT_CHARACTER_ID;
     for (const facing of FACINGS) {
@@ -147,18 +152,24 @@ export function paintCharacterTextures(
 /**
  * Paints a texture of one tile. `headroom` (in the 64-unit space) makes it
  * taller at the top and moves the drawing down, so the bottom 64 × 64 is
- * still the cell — the arena stands tall textures on their feet.
+ * still the cell — the arena stands tall textures on their feet. The art
+ * is always drawn in 64 units; `resolution` is how many pixels each gets.
  */
-function painter(doc: Document, textures: Map<string, HTMLCanvasElement>) {
+function painter(
+  doc: Document,
+  textures: Map<string, HTMLCanvasElement>,
+  resolution = 1,
+) {
   return (key: string, draw: (ctx: Ctx) => void, headroom = 0) => {
     const canvas = doc.createElement('canvas');
     const extra = Math.round((headroom * S) / 64);
-    canvas.width = S;
-    canvas.height = S + extra;
+    canvas.width = S * resolution;
+    canvas.height = (S + extra) * resolution;
     const ctx = canvas.getContext('2d');
     if (!ctx) throw new Error('2D canvas is not available');
     ctx.lineJoin = 'round';
     ctx.lineCap = 'round';
+    ctx.scale(resolution, resolution);
     ctx.translate(0, extra);
     draw(ctx);
     textures.set(key, canvas);

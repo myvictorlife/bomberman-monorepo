@@ -1,4 +1,5 @@
 import { Client, Delayed, Room } from '@colyseus/core';
+import { BotDirector, BotLevel } from '@libs/game-ai';
 import {
   addOutsider,
   createGame,
@@ -13,6 +14,7 @@ import {
 } from '@libs/game-core';
 import {
   Chat,
+  isBotId,
   Lobby,
   PlayerRecord,
   ranking,
@@ -34,6 +36,7 @@ import {
   parseHello,
   parseInput,
   parseJoinQueue,
+  parseLeaveAfterRound,
   parseReaction,
   parseRules,
   RECONNECT_GRACE_MS,
@@ -85,6 +88,15 @@ export function chatOutcome(
   return { type, name, streak: outcome.streak };
 }
 
+/** How well the room's bots play: a notch under `/play`'s medium, so people stand a chance. */
+const BOT_LEVEL: BotLevel = 'casual';
+
+/**
+ * A round counts for the ranking only with this many people in it: a win
+ * over bots alone would let anyone farm the table.
+ */
+const PEOPLE_TO_RECORD = 2;
+
 /** How often the queue is re-checked for a countdown that ran out. */
 const LOBBY_CHECK_MS = 250;
 const RANKING_SIZE = 10;
@@ -118,12 +130,14 @@ export function createArenaRoom(deps: ArenaRoomDeps) {
     /** A client cannot flood the room; inputs only go out when something changes. */
     override maxMessagesPerSecond = 120;
 
-    readonly lobby = new Lobby(deps.rules);
+    readonly lobby = new Lobby(deps.rules, random);
     /** In memory only: a restart forgets the conversation and who was silenced. */
     readonly chat = new Chat();
     /** Signed-in account per connection. */
     readonly accounts = new Map<string, VerifiedAccount>();
     game: GameState | null = null;
+    /** Plays the round's bots; `null` in a round of people only. */
+    private bots: BotDirector | null = null;
     private readonly heldInputs = new Map<string, HeldInput>();
     /** Players whose last connection dropped, waiting to come back before they lose their place. */
     private readonly leaving = new Map<string, Delayed>();
@@ -150,6 +164,9 @@ export function createArenaRoom(deps: ArenaRoomDeps) {
       );
       this.onMessage(CLIENT_MESSAGE.leaveQueue, (client) =>
         this.leaveQueue(client),
+      );
+      this.onMessage(CLIENT_MESSAGE.leaveAfterRound, (client, message) =>
+        this.leaveAfterRound(client, message),
       );
       this.onMessage(CLIENT_MESSAGE.input, (client, message) =>
         this.input(client, message),
@@ -397,6 +414,14 @@ export function createArenaRoom(deps: ArenaRoomDeps) {
       this.refreshLobby();
     }
 
+    /** A player of the round plays it out, then is not put back in line. */
+    leaveAfterRound(client: Client, message: unknown): void {
+      const account = this.accounts.get(client.sessionId);
+      if (!account) return this.fail(client, 'auth-required');
+      const { leave } = parseLeaveAfterRound(message);
+      if (this.lobby.leaveAfterRound(account.id, leave)) this.refreshLobby();
+    }
+
     input(client: Client, message: unknown): void {
       const account = this.accounts.get(client.sessionId);
       const input = parseInput(message);
@@ -447,6 +472,8 @@ export function createArenaRoom(deps: ArenaRoomDeps) {
           });
       }
 
+      if (this.bots) Object.assign(inputs, this.bots.inputs(game));
+
       tick(game, inputs);
       this.pendingEvents.push(...game.events);
       for (const event of game.events) {
@@ -463,12 +490,20 @@ export function createArenaRoom(deps: ArenaRoomDeps) {
     }
 
     refreshLobby(): void {
-      const start = this.lobby.update(now());
+      const start = this.lobby.update(now(), this.clients.length > 0);
       if (start) {
         this.round++;
         const rules = this.lobby.rules;
+        const seed = Math.floor(random() * 2 ** 31) + 1;
+        const bots = start.players.filter((s) => s.bot);
+        this.bots = bots.length
+          ? new BotDirector(
+              bots.map((s) => ({ id: s.id, level: BOT_LEVEL })),
+              seed,
+            )
+          : null;
         this.game = createGame({
-          seed: Math.floor(random() * 2 ** 31) + 1,
+          seed,
           mapId: MAPS[Math.floor(random() * MAPS.length)]?.id,
           players: start.players.map(({ id, name, characterId, color }) => ({
             id,
@@ -496,7 +531,8 @@ export function createArenaRoom(deps: ArenaRoomDeps) {
         // The room's listing carries a summary, so `GET /status` answers without touching the room.
         void this.setMetadata({
           phase: snapshot.phase,
-          playing: snapshot.players.length,
+          // People only: the title screen's pill says who is here to play.
+          playing: this.lobby.people().length,
           queued: snapshot.queue.length,
           online: this.clients.length,
         });
@@ -504,24 +540,27 @@ export function createArenaRoom(deps: ArenaRoomDeps) {
     }
 
     private endRound(game: GameState): void {
-      const ids = game.players.map((p) => p.id);
-      const updated = recordRound(
-        deps.records.all(),
-        ids,
-        game.winnerId,
-        now(),
-        new Map(game.players.map((p) => [p.id, p.characterId])),
-      );
-      deps.records.put(...updated);
+      // Bots have no record, so only people are counted, and only in a round with enough of them.
+      const ids = game.players.map((p) => p.id).filter((id) => !isBotId(id));
+      if (ids.length >= PEOPLE_TO_RECORD) {
+        const updated = recordRound(
+          deps.records.all(),
+          ids,
+          game.winnerId,
+          now(),
+          new Map(game.players.map((p) => [p.id, p.characterId])),
+        );
+        deps.records.put(...updated);
+      }
       const outcome = this.lobby.finishRound(
         game.winnerId,
         now(),
         standings(game),
       );
       const winner = game.players.find((p) => p.id === game.winnerId);
-      this.announce(
-        chatOutcome(winner?.name, outcome, this.lobby.rules.winnerStays > 0),
-      );
+      const keepsSeat =
+        this.lobby.rules.winnerStays > 0 && !isBotId(game.winnerId ?? '');
+      this.announce(chatOutcome(winner?.name, outcome, keepsSeat));
 
       const all = deps.records.all().values();
       this.broadcast(SERVER_MESSAGE.ranking, ranking(all, RANKING_SIZE));

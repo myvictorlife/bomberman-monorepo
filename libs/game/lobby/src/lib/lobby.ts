@@ -1,8 +1,10 @@
+import { CHARACTERS, DEFAULT_CHARACTER_ID } from '@libs/game-core';
 import {
   Champion,
   LobbyPhase,
   LobbySnapshot,
   NO_WATCHERS,
+  peopleNeeded,
   RoomRules,
   Seat,
   Watchers,
@@ -23,6 +25,51 @@ export interface StartRound {
   players: Seat[];
 }
 
+/** A bot's id. Account ids are Firebase uids, so they never look like this. */
+export function botId(n: number): string {
+  return `cpu${n}`;
+}
+
+export function isBotId(id: string): boolean {
+  return /^cpu\d+$/.test(id);
+}
+
+/** What the bots are called: people's names, so a round of bots looks like a room of players. */
+export const BOT_NAMES: readonly string[] = [
+  'Ana',
+  'Bruno',
+  'Carla',
+  'Diego',
+  'Duda',
+  'Fábio',
+  'Fernanda',
+  'Gabi',
+  'Gui',
+  'Helena',
+  'Igor',
+  'Jéssica',
+  'João',
+  'Júlia',
+  'Kaique',
+  'Larissa',
+  'Léo',
+  'Lucas',
+  'Luana',
+  'Marcos',
+  'Mari',
+  'Mateus',
+  'Nina',
+  'Paulo',
+  'Pedro',
+  'Rafa',
+  'Renata',
+  'Rodrigo',
+  'Sofia',
+  'Thiago',
+  'Vini',
+  'Yasmin',
+];
+
 /**
  * The rules of a room's queue, with no network and no clock of its own — the
  * caller passes `now` in, so every transition is testable in a plain unit test.
@@ -40,6 +87,9 @@ export interface StartRound {
  * - The first `rules.outsiders` in line stand outside the arena while a round
  *   is played; one who gets a kill enters it ({@link enterRound}) and is a
  *   player of that round from then on.
+ * - With `rules.bots`, one person is enough for the countdown and bots take
+ *   the seats left; with nobody queued, the bots play by themselves as long
+ *   as someone is watching. Bots never queue: each round makes its own.
  */
 export class Lobby {
   private phaseValue: LobbyPhase = 'waiting';
@@ -47,6 +97,8 @@ export class Lobby {
   private players: Seat[] = [];
   /** Players of the current round who disconnected — not put back in the queue. */
   private readonly gone = new Set<string>();
+  /** Players of the current round who asked to leave when it ends. */
+  private readonly leavingAfter = new Set<string>();
   private countdownEndsAt: number | null = null;
   private resultsEndsAt: number | null = null;
   private winnerId: string | null = null;
@@ -57,8 +109,14 @@ export class Lobby {
   private rulesValue: RoomRules;
   /** Rules changed during a round, waiting for it to end. */
   private pendingRules: RoomRules | null = null;
+  /** Rounds started, so each round's bots look a little different. */
+  private rounds = 0;
 
-  constructor(rules: RoomRules) {
+  /** `random` picks the bots' names; tests pass a fixed one. */
+  constructor(
+    rules: RoomRules,
+    private readonly random: () => number = Math.random,
+  ) {
     this.rulesValue = { ...rules };
   }
 
@@ -137,6 +195,29 @@ export class Lobby {
     return 'queued';
   }
 
+  /**
+   * A player of the round in progress (or of the one just decided) leaves
+   * when it ends instead of going back in line — or, with `leave` false,
+   * stays after all. A winner who leaves gives the seat up. Returns whether
+   * the id is a player of that round.
+   */
+  leaveAfterRound(id: string, leave: boolean): boolean {
+    if (this.phaseValue !== 'playing' && this.phaseValue !== 'results')
+      return false;
+    if (!this.players.some((s) => s.id === id && !s.bot)) return false;
+    if (leave) {
+      this.leavingAfter.add(id);
+      if (this.championValue?.id === id) this.championValue = null;
+    } else {
+      this.leavingAfter.delete(id);
+    }
+    return true;
+  }
+
+  isLeavingAfterRound(id: string): boolean {
+    return this.leavingAfter.has(id);
+  }
+
   /** Leaves the queue; a player of the round in progress is marked gone instead. */
   leave(id: string): void {
     this.queue = this.queue.filter((s) => s.id !== id);
@@ -162,8 +243,11 @@ export class Lobby {
     return this.crown(winnerId);
   }
 
-  /** Runs every transition that is due. Call it after any change and on a timer. */
-  update(now: number): StartRound | null {
+  /**
+   * Runs every transition that is due. Call it after any change and on a
+   * timer. `watched`: someone is connected — bots only play for an audience.
+   */
+  update(now: number, watched = true): StartRound | null {
     if (
       this.phaseValue === 'results' &&
       this.resultsEndsAt !== null &&
@@ -178,16 +262,14 @@ export class Lobby {
       this.pendingRules = null;
     }
 
-    if (
-      this.phaseValue === 'waiting' &&
-      this.queue.length >= this.rules.minPlayers
-    ) {
+    const enough = this.enoughToPlay(watched);
+    if (this.phaseValue === 'waiting' && enough) {
       this.phaseValue = 'countdown';
       this.countdownEndsAt = now + this.rules.countdownMs;
     }
 
     if (this.phaseValue === 'countdown') {
-      if (this.queue.length < this.rules.minPlayers) {
+      if (!enough) {
         this.phaseValue = 'waiting';
         this.countdownEndsAt = null;
       } else if (
@@ -214,16 +296,60 @@ export class Lobby {
       rules: { ...this.rulesValue },
       nextRules: this.pendingRules ? { ...this.pendingRules } : null,
       watchers: { names: [...watchers.names], anonymous: watchers.anonymous },
+      leavingAfter: [...this.leavingAfter],
     };
   }
 
+  /** People in the round being played (or just decided), bots left out. */
+  people(): Seat[] {
+    return this.players.filter((s) => !s.bot).map((s) => ({ ...s }));
+  }
+
+  private enoughToPlay(watched: boolean): boolean {
+    if (this.queue.length >= peopleNeeded(this.rules)) return true;
+    return this.rules.bots > 0 && watched;
+  }
+
   private startRound(): StartRound {
-    this.players = this.queue.splice(0, this.rules.maxPlayers);
+    const people = this.queue.splice(0, this.rules.maxPlayers);
+    this.players = [...people, ...this.bots(people)];
+    this.rounds++;
     this.gone.clear();
+    this.leavingAfter.clear();
     this.phaseValue = 'playing';
     this.countdownEndsAt = null;
     this.winnerId = null;
     return { players: this.players.map((s) => ({ ...s })) };
+  }
+
+  /**
+   * The bots of a new round: as many as the rule allows in the seats left,
+   * each with a name drawn from {@link BOT_NAMES} that nobody in the round
+   * has, and a character no person in the round has, where one is left.
+   */
+  private bots(people: Seat[]): Seat[] {
+    const count = Math.min(
+      this.rules.bots,
+      this.rules.maxPlayers - people.length,
+    );
+    const taken = new Set(people.map((s) => s.characterId));
+    const free = CHARACTERS.filter((c) => !taken.has(c.id));
+    const pool = free.length ? free : CHARACTERS;
+    const names = BOT_NAMES.filter(
+      (n) => !people.some((s) => s.name.toLowerCase() === n.toLowerCase()),
+    );
+    const name = (i: number) => {
+      const index = Math.floor(this.random() * names.length);
+      // Five seats never run through the list; a number only as a last resort.
+      return names.splice(index, 1)[0] ?? `${BOT_NAMES[i]} ${i + 1}`;
+    };
+    return Array.from({ length: Math.max(0, count) }, (_, i) => ({
+      id: botId(i + 1),
+      name: name(i),
+      characterId:
+        pool[(this.rounds + i) % pool.length]?.id ?? DEFAULT_CHARACTER_ID,
+      bot: true,
+    }));
   }
 
   /** Decides whether the winner keeps a seat, counting their wins in a row. */
@@ -231,9 +357,12 @@ export class Lobby {
     const previous = this.championValue;
     this.championValue = null;
     if (!winnerId || this.gone.has(winnerId)) return null;
+    // A bot's win is a win, but its seat is never kept.
+    if (isBotId(winnerId)) return { winnerId, streak: 1, stays: false };
     const streak = (previous?.id === winnerId ? previous.streak : 0) + 1;
     const limit = this.rules.winnerStays;
-    const stays = limit > 0 && streak < limit;
+    const stays =
+      limit > 0 && streak < limit && !this.leavingAfter.has(winnerId);
     if (stays) this.championValue = { id: winnerId, streak };
     return { winnerId, streak, stays };
   }
@@ -245,7 +374,13 @@ export class Lobby {
       return index === -1 ? this.standings.length : index;
     };
     const back = this.players
-      .filter((s) => !this.gone.has(s.id) && !this.isQueued(s.id))
+      .filter(
+        (s) =>
+          !s.bot &&
+          !this.gone.has(s.id) &&
+          !this.leavingAfter.has(s.id) &&
+          !this.isQueued(s.id),
+      )
       .sort((a, b) => place(a.id) - place(b.id));
     const champion = back.find((s) => s.id === this.championValue?.id);
     if (champion) this.queue.unshift(champion);
@@ -253,5 +388,6 @@ export class Lobby {
     this.players = [];
     this.standings = [];
     this.gone.clear();
+    this.leavingAfter.clear();
   }
 }

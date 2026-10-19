@@ -12,17 +12,19 @@ export const ARENA_THEMES: Readonly<Record<MapId, ArenaTheme>> = {
   autodromo: autodromoTheme,
 };
 
-const cache = new Map<MapId, Map<string, HTMLCanvasElement>>();
+const cache = new Map<string, Map<string, HTMLCanvasElement>>();
 
-/** The theme's tiles, painted once per page. */
+/** The theme's tiles, painted once per page and resolution (pixels per art unit). */
 export function themeTextures(
   doc: Document,
   mapId: MapId,
+  resolution = 1,
 ): Map<string, HTMLCanvasElement> {
-  let textures = cache.get(mapId);
+  const cacheKey = `${mapId}@${resolution}`;
+  let textures = cache.get(cacheKey);
   if (!textures) {
-    textures = ARENA_THEMES[mapId].paint(doc);
-    cache.set(mapId, textures);
+    textures = ARENA_THEMES[mapId].paint(doc, resolution);
+    cache.set(cacheKey, textures);
   }
   return textures;
 }
@@ -31,8 +33,12 @@ export function themeTextures(
  * Swaps the scene's arena tiles for the theme's. Called after the skin has
  * loaded, so the skin's own tiles are the fallback for keys a theme lacks.
  */
-export function loadArenaTheme(scene: Phaser.Scene, mapId: MapId): void {
-  for (const [key, canvas] of themeTextures(document, mapId)) {
+export function loadArenaTheme(
+  scene: Phaser.Scene,
+  mapId: MapId,
+  resolution = 1,
+): void {
+  for (const [key, canvas] of themeTextures(document, mapId, resolution)) {
     if (scene.textures.exists(key)) scene.textures.remove(key);
     scene.textures.addCanvas(key, canvas);
   }

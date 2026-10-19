@@ -31,6 +31,7 @@ const RULES: RoomRules = {
   closingWalls: true,
   // Off here, so the rotation tests below read as before; `champion` turns it on.
   winnerStays: 0,
+  bots: 0,
 };
 const saved: RoomRules[] = [];
 const PORT = 18_000 + Math.floor(Math.random() * 1_000);
@@ -97,6 +98,14 @@ beforeAll(async () => {
     'no-outsiders',
     createArenaRoom({
       rules: { ...RULES, outsiders: 0 },
+      verify: fakeVerify,
+      records,
+    }),
+  );
+  server.define(
+    'bots',
+    createArenaRoom({
+      rules: { ...RULES, bots: 5 },
       verify: fakeVerify,
       records,
     }),
@@ -179,6 +188,40 @@ const localRoom = (peer: { room: Room }) =>
   };
 
 describe('ArenaRoom', () => {
+  it('plays a round of bots for whoever watches; a newcomer stands on the border', async () => {
+    const viewer = await connect('bots');
+
+    const first = await viewer.next<FrameMessage>(
+      SERVER_MESSAGE.frame,
+      (f) => f.state.phase === 'playing',
+    );
+    expect(first.state.players.map((p) => p.id)).toEqual([
+      'cpu1',
+      'cpu2',
+      'cpu3',
+      'cpu4',
+      'cpu5',
+    ]);
+    const start = first.state.players.map((p) => [p.x, p.y]);
+    // The bots play: someone has moved within a couple of seconds.
+    await viewer.next<FrameMessage>(SERVER_MESSAGE.frame, (f) =>
+      f.state.players.some(
+        (p, i) => p.x !== start[i]?.[0] || p.y !== start[i]?.[1],
+      ),
+    );
+
+    const player = await signedIn('bia', true, 'bots');
+    player.room.send(CLIENT_MESSAGE.joinQueue, {});
+    await player.next<FrameMessage>(SERVER_MESSAGE.frame, (f) =>
+      f.state.outsiders.some((o) => o.id === 'bia'),
+    );
+    const lobby = await viewer.next<LobbySnapshot>(
+      SERVER_MESSAGE.lobby,
+      (l) => l.queue.length === 1,
+    );
+    expect(lobby.players.every((s) => s.bot)).toBe(true);
+  });
+
   it('lets anyone watch: the lobby and the ranking arrive on join', async () => {
     const peer = await connect();
 
@@ -337,6 +380,16 @@ describe('ArenaRoom', () => {
     // Leaving the queue during your own round does nothing.
     ana.room.send(CLIENT_MESSAGE.leaveQueue);
     ana.room.send(CLIENT_MESSAGE.input, { direction: 'sideways' });
+    // Leaving after the round is: everyone sees it coming.
+    ana.room.send(CLIENT_MESSAGE.leaveAfterRound, { leave: true });
+    await bia.next<LobbySnapshot>(SERVER_MESSAGE.lobby, (l) =>
+      (l.leavingAfter ?? []).includes('ana'),
+    );
+    ana.room.send(CLIENT_MESSAGE.leaveAfterRound, { leave: false });
+    await bia.next<LobbySnapshot>(
+      SERVER_MESSAGE.lobby,
+      (l) => (l.leavingAfter ?? []).length === 0,
+    );
   });
 
   it('plays each player in the colour on their profile, first in line first', async () => {

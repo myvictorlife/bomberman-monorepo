@@ -50,6 +50,8 @@ export class Bot {
   private nextPlanTick = 0;
   private stillFor = 0;
   private last: [number, number] = [-1, -1];
+  /** When each of our remote bombs was first seen, by bomb id: how long it has waited. */
+  private readonly laidAt = new Map<number, number>();
 
   constructor(
     readonly id: string,
@@ -88,8 +90,7 @@ export class Bot {
       input.bomb = true;
       this.bombAt = null;
     }
-    if (this.profile.detonates && me.remote && this.shouldDetonate(state, me))
-      input.detonate = true;
+    if (this.shouldDetonate(state, me)) input.detonate = true;
     return input;
   }
 
@@ -339,16 +340,35 @@ export class Bot {
     return !!end && isSafe(danger, end[0], end[1]);
   }
 
-  /** The oldest remote bomb of ours goes off when it catches an enemy and not us. */
+  /**
+   * Presses the remote's button for the oldest of our remote bombs (the one
+   * the button sets off), never while we stand in the blast of any of them —
+   * one sets off the next. Every level fires it once it has waited a fuse,
+   * so a remote bomb is at least an ordinary one: without that the bot laid
+   * one, never set it off, and could lay no more. A level that `detonates`
+   * also fires it early, the moment it catches an enemy.
+   */
   private shouldDetonate(state: GameState, me: Player): boolean {
-    const oldest = state.bombs.find((b) => b.ownerId === me.id && b.remote);
+    const mine = state.bombs.filter(
+      (b) => b.ownerId === me.id && b.remote && b.fuse > 0,
+    );
+    for (const id of this.laidAt.keys())
+      if (!mine.some((b) => b.id === id)) this.laidAt.delete(id);
+    for (const b of mine)
+      if (!this.laidAt.has(b.id)) this.laidAt.set(b.id, state.tick);
+    const oldest = mine[0];
     if (!oldest) return false;
-    const cells = blastCells(state, oldest);
-    const caught = (p: Player) =>
+
+    const inBlast = (p: Player, cells: [number, number][]) =>
       cells.some(([c, r]) => playerCell(p)[0] === c && playerCell(p)[1] === r);
-    return (
-      !caught(me) &&
-      state.players.some((p) => p.alive && p.id !== me.id && caught(p))
+    if (mine.some((b) => inBlast(me, blastCells(state, b)))) return false;
+
+    const waited = state.tick - (this.laidAt.get(oldest.id) ?? state.tick);
+    if (waited >= BOMB_FUSE_TICKS) return true;
+    if (!this.profile.detonates) return false;
+    const cells = blastCells(state, oldest);
+    return state.players.some(
+      (p) => p.alive && p.id !== me.id && inBlast(p, cells),
     );
   }
 

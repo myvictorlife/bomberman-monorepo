@@ -686,7 +686,9 @@
       "CLOSING_WALLS": "Paredes fechando",
       "CLOSING_WALLS_DESC": "Quando o tempo acaba, as paredes caem em espiral até sobrar um. Desligado: empate quando o tempo acaba.",
       "WINNER_STAYS": "Vencedor continua",
-      "WINNER_STAYS_DESC": "Quem vence joga a próxima rodada com os próximos da fila, até esse número de vitórias seguidas; depois vai para o fim da fila. Desligado: todos os jogadores voltam para o fim."
+      "WINNER_STAYS_DESC": "Quem vence joga a próxima rodada com os próximos da fila, até esse número de vitórias seguidas; depois vai para o fim da fila. Desligado: todos os jogadores voltam para o fim.",
+      "BOTS": "Bots",
+      "BOTS_DESC": "Quantas vagas o computador pode ocupar. Sem ninguém na fila, essa quantidade de bots joga enquanto alguém assiste; com gente na fila, os bots completam as vagas e uma pessoa já basta para começar. 0: sem bots."
     },
     "STATUS": {
       "CONNECTING": "Conectando à arena…",
@@ -713,6 +715,9 @@
       "POSITION": "Você é o {{n}}º da fila.",
       "NEXT_UP": "Você joga a próxima partida ({{n}}º da fila).",
       "IN_ROUND": "Você está nesta partida. Vai!",
+      "LEAVE_AFTER": "Sair depois desta rodada",
+      "LEAVING_AFTER": "Você sai quando esta rodada acabar e não volta para a fila.",
+      "STAY": "Continuar jogando",
       "BLOCKED": {
         "sign-in": "Entre na sua conta para jogar. Assistir é livre.",
         "verify": "Confirme seu e-mail para jogar.",

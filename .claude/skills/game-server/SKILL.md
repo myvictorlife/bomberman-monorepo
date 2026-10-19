@@ -105,6 +105,26 @@ on `/online` draws itself from the schema; `parseRules` validates a change.
   and `game.ts`; who stands there is the lobby's call.
 - Frames carry `round`: the browser keys the arena by it, never by the
   players, because an entry adds a player mid-round.
+- **Leaving after the round**: a player of the round in progress (or of
+  the one just decided) sends `round:leave-after { leave }`
+  (`parseLeaveAfterRound`; `leave: false` takes it back).
+  `Lobby.leaveAfterRound` keeps them playing it out, then
+  `requeuePlayers` leaves them out of the line; a winner who leaves gives
+  the seat up (no champion). The snapshot's `leavingAfter` lists them; the
+  queue panel shows "Leave after this round" / "Keep playing".
+- **Bots** (`rules.bots`, 5 in the public room, `0` off). With nobody
+  queued, `Lobby.update(now, watched)` runs the countdown anyway while
+  anyone is connected and the round starts with that many bots; nobody
+  connected, the room stays idle. With people queued, one is enough for the
+  countdown (`peopleNeeded(rules)`, also what the page shows) and
+  `startRound` fills the seats left with bots. Bot seats are made per round
+  by the lobby (`bot: true`, ids `cpu1…` — `isBotId`, names drawn from
+  `BOT_NAMES`, never twice nor like a person in the round), never requeued,
+  never champion. The room plays them with a `BotDirector`
+  (`@libs/game-ai`, level `BOT_LEVEL` = `casual`: a notch under `/play`'s
+  medium, and not offered there) and merges its inputs before
+  `tick`. A round goes into the records only with `PEOPLE_TO_RECORD` (2)
+  people; `/status` and `Lobby.people()` count people only.
 
 ## Chat and reactions
 

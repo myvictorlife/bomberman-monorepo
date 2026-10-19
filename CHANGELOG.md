@@ -13,6 +13,22 @@ config file. Ordinary app-level additions are minor.
 
 ### Added
 
+- **Leave after this round, online.** A player of the round in progress
+  can ask to leave when it ends (`round:leave-after`): the round is played
+  out, then they are not put back in line, and a winner gives the seat up.
+  "Keep playing" takes it back. The snapshot lists them in `leavingAfter`.
+- **Bots in the online room, so it is never empty.** A new room rule,
+  `bots` (5 in the public room, `0` off): with nobody in line and someone
+  watching, five bots play a round by themselves; with people in line, one
+  person is enough for the countdown and bots take the seats left up to
+  `maxPlayers`. Whoever queues during a round stands on the border throwing
+  bombs, as before — a kill puts them in the bot's place. Bots carry
+  people's names drawn per round (`BOT_NAMES`), never queue, never keep a
+  seat after a win, and never reach the records: a round counts for the
+  ranking only with two people in it. `/status` counts people only. They
+  play at a new `casual` level (`@libs/game-ai`), between easy and medium,
+  which `/play` does not offer.
+
 - **Play on a phone: an on-screen controller and a full-screen game mode on
   `/play`.** `lib-virtual-gamepad` (`@libs/ui`) lays a thumbstick-as-D-pad
   and the bomb, ability and detonate buttons over the game — pointer events
@@ -116,6 +132,14 @@ config file. Ordinary app-level additions are minor.
   `PLAY.KEYS_WASD_HINT/KEYS_ARROWS_HINT`.
 
 ### Fixed
+
+- **Bots use the remote bomb.** A bot that picked up the remote laid one
+  bomb and never set it off — easy and casual never pressed the button,
+  medium and hard only with an enemy in the blast — so it could lay no more
+  and stood idle for the rest of the round. Every level now sets its oldest
+  remote bomb off once it has waited a fuse and the bot is out of the blast
+  (medium and hard still fire early on an enemy), and a bot reads its own
+  remote bomb as one about to go, so it no longer parks inside the blast.
 
 - **The keys come back from the chat.** Clicking the arena after typing in
   the chat left the keys in the text box (Phaser cancels the pointer's

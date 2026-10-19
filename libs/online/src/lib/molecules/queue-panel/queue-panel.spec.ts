@@ -29,6 +29,28 @@ describe('QueuePanelComponent', () => {
     return spy;
   };
 
+  it('lets a player of the round leave once it ends, and change their mind', () => {
+    const leaveAfter = watch('leaveAfterRound');
+    spectator.setInput({
+      phase: 'playing',
+      players: [seat('me'), seat('b')],
+      myId: 'me',
+    });
+    expect(spectator.query('[data-testid="queue-join"]')).not.toExist();
+
+    spectator.click('[data-testid="queue-leave-after"]');
+    expect(leaveAfter).toHaveBeenLastCalledWith(true);
+
+    spectator.setInput('leavingAfter', true);
+    expect(spectator.query('[data-testid="queue-leaving-after"]')).toExist();
+    spectator.click('[data-testid="queue-stay"]');
+    expect(leaveAfter).toHaveBeenLastCalledWith(false);
+
+    // Still offered while the result is on screen.
+    spectator.setInput({ phase: 'results', leavingAfter: false });
+    expect(spectator.query('[data-testid="queue-leave-after"]')).toExist();
+  });
+
   it('offers the queue, and says why when it cannot', () => {
     const join = watch('join');
     expect(spectator.query('[data-testid="queue-empty"]')).toExist();

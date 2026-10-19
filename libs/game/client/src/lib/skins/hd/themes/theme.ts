@@ -15,27 +15,34 @@ export interface ArenaTheme {
   readonly accent: string;
   /** What the place does on its own over a match — a blackout, rain. Visual only. */
   readonly moment?: ArenaMoment;
-  /** Paints every tile of the theme, keyed like `TEXTURE`. */
-  paint(doc: Document): Map<string, HTMLCanvasElement>;
+  /** Paints every tile of the theme, keyed like `TEXTURE`, at `resolution` pixels per art unit. */
+  paint(doc: Document, resolution?: number): Map<string, HTMLCanvasElement>;
 }
 
 export const TAU = Math.PI * 2;
 export const OUTLINE = 'rgba(8, 10, 16, 0.78)';
 
-/** Runs `draw` on a fresh tile-sized canvas and stores it under `key`. */
-export function tilePainter(doc: Document): {
+/**
+ * Runs `draw` on a fresh tile-sized canvas and stores it under `key`. The
+ * art is drawn in 64 units; `resolution` is how many pixels each gets.
+ */
+export function tilePainter(
+  doc: Document,
+  resolution = 1,
+): {
   paint: (key: string, draw: (ctx: Ctx) => void) => void;
   textures: Map<string, HTMLCanvasElement>;
 } {
   const textures = new Map<string, HTMLCanvasElement>();
   const paint = (key: string, draw: (ctx: Ctx) => void) => {
     const canvas = doc.createElement('canvas');
-    canvas.width = S;
-    canvas.height = S;
+    canvas.width = S * resolution;
+    canvas.height = S * resolution;
     const ctx = canvas.getContext('2d');
     if (!ctx) throw new Error('2D canvas is not available');
     ctx.lineJoin = 'round';
     ctx.lineCap = 'round';
+    ctx.scale(resolution, resolution);
     draw(ctx);
     textures.set(key, canvas);
   };

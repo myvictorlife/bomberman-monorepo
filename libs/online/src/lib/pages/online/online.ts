@@ -33,6 +33,7 @@ import {
 } from '@libs/game-core';
 import {
   FrameMessage,
+  peopleNeeded,
   Reaction,
   RoomRules,
   secondsLeft,
@@ -167,12 +168,21 @@ export class Online {
   private readonly clock = signal(Date.now());
 
   readonly myId = computed(() => this.user()?.id ?? null);
+  /** I asked to leave when this round ends. */
+  readonly leavingAfter = computed(() => {
+    const id = this.myId();
+    return id !== null && (this.lobby()?.leavingAfter ?? []).includes(id);
+  });
   readonly secondsLeft = computed(() => {
     const lobby = this.lobby();
     const endsAt = lobby?.phase === 'countdown' ? lobby.countdownEndsAt : null;
     return secondsLeft(endsAt, this.clock(), this.store.clockOffset());
   });
-  readonly minPlayers = computed(() => this.lobby()?.rules.minPlayers ?? 2);
+  /** People needed for the countdown: one when bots fill the rest. */
+  readonly minPlayers = computed(() => {
+    const rules = this.lobby()?.rules;
+    return rules ? peopleNeeded(rules) : 2;
+  });
   readonly maxPlayers = computed(() => this.lobby()?.rules.maxPlayers ?? 5);
   /** How many of the queue stand on the border during a round; 0 when the room has none. */
   readonly outsiders = computed(() => this.lobby()?.rules.outsiders ?? 0);
@@ -247,6 +257,10 @@ export class Online {
 
   leave(): void {
     this.store.leaveQueue();
+  }
+
+  leaveAfterRound(leave: boolean): void {
+    this.store.leaveAfterRound(leave);
   }
 
   /** The room's admin changed a rule; it applies now or from the next round. */

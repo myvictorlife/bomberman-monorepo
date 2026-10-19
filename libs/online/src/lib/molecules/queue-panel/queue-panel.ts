@@ -35,9 +35,13 @@ export class QueuePanelComponent {
   readonly blocked = input<JoinBlock>(null);
   /** The last round's winner, keeping a seat for the next: crowned, with their wins in a row. */
   readonly champion = input<Champion | null>(null);
+  /** I play this round out and then leave, instead of going back in line. */
+  readonly leavingAfter = input(false);
 
   readonly join = output<void>();
   readonly leave = output<void>();
+  /** `true`: leave when this round ends; `false`: stay after all. */
+  readonly leaveAfterRound = output<boolean>();
 
   readonly position = computed(() => {
     const index = this.queue().findIndex((s) => s.id === this.myId());
@@ -47,6 +51,13 @@ export class QueuePanelComponent {
     () =>
       this.phase() === 'playing' &&
       this.players().some((s) => s.id === this.myId()),
+  );
+  /** A player of the round being played or just decided: may leave once it ends. */
+  readonly ofThisRound = computed(
+    () =>
+      (this.phase() === 'playing' || this.phase() === 'results') &&
+      this.players().some((s) => s.id === this.myId()) &&
+      this.position() === null,
   );
   /** Queued within the first `maxPlayers`: plays the next round. */
   readonly nextUp = computed(() => {

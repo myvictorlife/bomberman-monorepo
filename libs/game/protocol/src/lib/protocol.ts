@@ -59,6 +59,13 @@ export interface RoomRules {
    * one stays, the round's players all go to the back.
    */
   winnerStays: number;
+  /**
+   * How many seats the computer may take: with nobody queued, this many bots
+   * play by themselves while someone watches; with people queued, bots fill
+   * the seats left up to `maxPlayers`. One person is then enough to start a
+   * round. `0`: no bots, and `minPlayers` people are needed.
+   */
+  bots: number;
 }
 
 /**
@@ -122,6 +129,12 @@ export const RULE_FIELDS: readonly RuleField[] = [
     options: [0, 2, 3, 5, 10],
     unit: 'wins',
   },
+  {
+    key: 'bots',
+    kind: 'number',
+    options: range(0, MAX_PLAYERS),
+    unit: 'count',
+  },
 ];
 
 /**
@@ -158,6 +171,7 @@ export const PUBLIC_ROOM_RULES: RoomRules = {
   roundTimerMs: 180_000,
   closingWalls: true,
   winnerStays: 5,
+  bots: MAX_PLAYERS,
 };
 
 /**
@@ -175,6 +189,16 @@ export interface Seat {
   characterId: CharacterId;
   /** The colour on their profile when they joined; the round may give the closest free one. */
   color?: PlayerColorId;
+  /** Played by the computer: never queued, never recorded, never kept between rounds. */
+  bot?: boolean;
+}
+
+/**
+ * How many people a round needs before the countdown runs: one when bots
+ * fill the rest, `minPlayers` otherwise.
+ */
+export function peopleNeeded(rules: RoomRules): number {
+  return rules.bots > 0 ? 1 : rules.minPlayers;
 }
 
 /** Connected but neither playing nor queued: the audience. */
@@ -208,6 +232,8 @@ export interface LobbySnapshot {
   /** Rules an admin changed during a round: they apply when the next one is set up. */
   nextRules?: RoomRules | null;
   watchers: Watchers;
+  /** Players of this round who leave when it ends: they are not put back in line. */
+  leavingAfter?: string[];
 }
 
 export interface Champion {
@@ -358,6 +384,11 @@ export const CLIENT_MESSAGE = {
   signOut: 'sign-out',
   joinQueue: 'queue:join',
   leaveQueue: 'queue:leave',
+  /**
+   * A player of the round in progress asks to leave when it ends — or, with
+   * `leave: false`, changes their mind. The round itself is played out.
+   */
+  leaveAfterRound: 'round:leave-after',
   input: 'input',
   /** An admin changes the room's rules; answered with `lobby` (or `error`). */
   setRules: 'rules:set',
@@ -455,6 +486,15 @@ export function parseJoinQueue(value: unknown): JoinQueueMessage {
   const id = isRecord(value) ? value['characterId'] : undefined;
   const known = CHARACTERS.find((c) => c.id === id);
   return { characterId: known?.id ?? DEFAULT_CHARACTER_ID };
+}
+
+export interface LeaveAfterRoundMessage {
+  leave: boolean;
+}
+
+/** Anything but an explicit `leave: false` asks to leave. */
+export function parseLeaveAfterRound(value: unknown): LeaveAfterRoundMessage {
+  return { leave: !(isRecord(value) && value['leave'] === false) };
 }
 
 export function parseInput(value: unknown): InputMessage | null {

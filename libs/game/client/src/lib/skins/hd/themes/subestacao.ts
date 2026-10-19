@@ -208,8 +208,8 @@ export const subestacaoTheme: ArenaTheme = {
   id: 'subestacao',
   accent: '#e9b83a',
   moment: BLACKOUT,
-  paint(doc) {
-    const { paint, textures } = tilePainter(doc);
+  paint(doc, resolution = 1) {
+    const { paint, textures } = tilePainter(doc, resolution);
     paint(TEXTURE.floor, (ctx) => floor(ctx, false, false));
     paint(TEXTURE.floorShadow, (ctx) => floor(ctx, false, true));
     paint(TEXTURE.wall, (ctx) => transformer(ctx, LED_RED));

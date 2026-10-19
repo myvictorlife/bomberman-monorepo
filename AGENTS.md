@@ -100,7 +100,8 @@ them into `withState` creates a second source of truth.
 `app.config.ts` may import them.
 
 **The game server shares the rules, never the browser.** `apps/game-server`
-imports `@libs/game-core`, `@libs/game-protocol` and `@libs/game-lobby` only;
+imports `@libs/game-core`, `@libs/game-protocol`, `@libs/game-lobby` and
+`@libs/game-ai` only;
 lint bans Angular, Phaser and the Firebase web SDK there. Queue logic belongs
 in `@libs/game-lobby`, where it is unit-tested without sockets; the room class
 is glue. See `.claude/skills/game-server/SKILL.md`.

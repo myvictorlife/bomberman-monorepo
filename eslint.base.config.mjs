@@ -113,6 +113,7 @@ const depConstraints = [
   {
     sourceTag: 'scope:game-server',
     onlyDependOnLibsWithTags: [
+      'scope:game-ai-lib',
       'scope:game-core-lib',
       'scope:game-lobby-lib',
       'scope:game-protocol-lib',

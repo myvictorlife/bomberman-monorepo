@@ -1,4 +1,5 @@
 import {
+  BOMB_FUSE_TICKS,
   CLOSING_STEP_TICKS,
   closingOrder,
   FLAME_TICKS,
@@ -28,7 +29,7 @@ export interface ThreatBomb {
   row: number;
   range: number;
   pierce: boolean;
-  /** Ticks from now until it explodes; `Infinity` for one that waits (a remote of our own). */
+  /** Ticks from now until it explodes; `Infinity` for one that never will. */
   at: number;
 }
 
@@ -68,10 +69,16 @@ export function blastCells(
   return cells;
 }
 
-/** Every bomb that can go off, with when — on the ground and in the air. */
+/**
+ * Every bomb that can go off, with when — on the ground and in the air.
+ * Someone else's remote may go at any moment. One of our own goes when we
+ * press the button, which a bot does about a fuse after laying it — so it
+ * reads like a fresh bomb, and the bot keeps out of its blast instead of
+ * strolling back in and leaving itself no way to set it off.
+ */
 export function threats(state: GameState, viewerId: string): ThreatBomb[] {
   const wait = (ownerId: string, remote: boolean, fuse: number) =>
-    !remote ? fuse : ownerId === viewerId ? Infinity : 0;
+    !remote ? fuse : ownerId === viewerId ? BOMB_FUSE_TICKS : 0;
   return [
     ...state.bombs.map((b) => ({
       col: b.col,

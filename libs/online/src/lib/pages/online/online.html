@@ -195,8 +195,10 @@
           [myId]="myId()"
           [blocked]="blocked()"
           [champion]="lobby()?.champion ?? null"
+          [leavingAfter]="leavingAfter()"
           (join)="join()"
           (leave)="leave()"
+          (leaveAfterRound)="leaveAfterRound($event)"
         />
         <p class="online__character" data-testid="online-character">
           {{ 'ONLINE.CHARACTER' | translate: { name:

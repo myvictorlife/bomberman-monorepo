@@ -1,11 +1,34 @@
 <section class="queue" data-testid="queue-panel">
   <h2 class="queue__title">{{ 'ONLINE.QUEUE.TITLE' | translate }}</h2>
 
-  @if (inRound()) {
+  @if (ofThisRound()) { @if (inRound()) {
   <p class="queue__status queue__status--live" data-testid="queue-in-round">
     {{ 'ONLINE.QUEUE.IN_ROUND' | translate }}
   </p>
-  } @else if (position(); as n) { @if (outside()) {
+  } @if (leavingAfter()) {
+  <p class="queue__status" data-testid="queue-leaving-after">
+    {{ 'ONLINE.QUEUE.LEAVING_AFTER' | translate }}
+  </p>
+  <button
+    type="button"
+    libButton
+    size="sm"
+    (click)="leaveAfterRound.emit(false)"
+    data-testid="queue-stay"
+  >
+    {{ 'ONLINE.QUEUE.STAY' | translate }}
+  </button>
+  } @else {
+  <button
+    type="button"
+    libButton
+    size="sm"
+    (click)="leaveAfterRound.emit(true)"
+    data-testid="queue-leave-after"
+  >
+    {{ 'ONLINE.QUEUE.LEAVE_AFTER' | translate }}
+  </button>
+  } } @else if (position(); as n) { @if (outside()) {
   <p class="queue__status queue__status--live" data-testid="queue-outside">
     {{ 'ONLINE.QUEUE.OUTSIDE' | translate }}
   </p>

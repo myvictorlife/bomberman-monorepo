@@ -1,5 +1,5 @@
 import { RoomRules, Seat } from '@libs/game-protocol';
-import { Lobby } from './lobby';
+import { BOT_NAMES, botId, isBotId, Lobby } from './lobby';
 
 const RULES: RoomRules = {
   maxPlayers: 5,
@@ -10,6 +10,7 @@ const RULES: RoomRules = {
   roundTimerMs: 180_000,
   closingWalls: true,
   winnerStays: 0,
+  bots: 0,
 };
 const seat = (id: string): Seat => ({
   id,
@@ -384,5 +385,160 @@ describe('Lobby, winner stays', () => {
     const start = lobby.update(1_000 + RULES.resultsMs);
 
     expect(start?.players.map((s) => s.id)).toEqual(['x', 'y', 'a', 'b', 'c']);
+  });
+
+  describe('leaving after the round', () => {
+    const started = (rules: RoomRules = RULES) => {
+      const lobby = new Lobby(rules);
+      ['a', 'b', 'c'].forEach((id) => lobby.join(seat(id)));
+      lobby.update(0);
+      lobby.update(RULES.countdownMs);
+      return lobby;
+    };
+    const queue = (lobby: Lobby) => lobby.snapshot(0).queue.map((s) => s.id);
+
+    it('plays the round out, then is not put back in line', () => {
+      const lobby = started();
+
+      expect(lobby.leaveAfterRound('b', true)).toBe(true);
+      expect(lobby.isPlaying('b')).toBe(true);
+      expect(lobby.snapshot(0).leavingAfter).toEqual(['b']);
+      lobby.finishRound('a', 20_000, ['a', 'c', 'b']);
+      lobby.update(20_000 + RULES.resultsMs, false);
+
+      expect(queue(lobby)).toEqual(['a', 'c']);
+      expect(lobby.snapshot(0).leavingAfter).toEqual([]);
+    });
+
+    it('can change their mind, during the round or its results', () => {
+      const lobby = started();
+      lobby.leaveAfterRound('b', true);
+      lobby.finishRound('a', 20_000, ['a', 'b', 'c']);
+
+      expect(lobby.leaveAfterRound('b', false)).toBe(true);
+      lobby.update(20_000 + RULES.resultsMs, false);
+
+      expect(queue(lobby)).toEqual(['a', 'b', 'c']);
+    });
+
+    it("gives a winner's seat up", () => {
+      const lobby = started({ ...RULES, winnerStays: 5 });
+      lobby.leaveAfterRound('a', true);
+
+      expect(lobby.finishRound('a', 20_000)?.stays).toBe(false);
+      expect(lobby.champion).toBeNull();
+    });
+
+    it('only takes players of the round, and only while it is on', () => {
+      const lobby = started();
+      lobby.join(seat('z'));
+
+      expect(lobby.leaveAfterRound('z', true)).toBe(false);
+      expect(new Lobby(RULES).leaveAfterRound('a', true)).toBe(false);
+    });
+  });
+
+  describe('with bots', () => {
+    const BOTS: RoomRules = { ...RULES, bots: 5 };
+    const ids = (seats: Seat[] | undefined) => seats?.map((s) => s.id);
+
+    it('plays five bots by themselves while someone watches', () => {
+      const lobby = new Lobby(BOTS);
+
+      lobby.update(0);
+      expect(lobby.phase).toBe('countdown');
+      const start = lobby.update(RULES.countdownMs);
+
+      expect(ids(start?.players)).toEqual([1, 2, 3, 4, 5].map(botId));
+      expect(start?.players.every((s) => s.bot)).toBe(true);
+      expect(lobby.people()).toEqual([]);
+    });
+
+    it('stays empty with nobody watching, and stops the countdown when the last one goes', () => {
+      const lobby = new Lobby(BOTS);
+      expect(lobby.update(0, false)).toBeNull();
+      expect(lobby.phase).toBe('waiting');
+
+      lobby.update(0);
+      expect(lobby.update(1_000, false)).toBeNull();
+      expect(lobby.phase).toBe('waiting');
+    });
+
+    it('starts with one person and fills the other seats with bots', () => {
+      const lobby = new Lobby(BOTS);
+      lobby.join(seat('a'));
+      lobby.join(seat('b'));
+      lobby.update(0);
+
+      const start = lobby.update(RULES.countdownMs);
+
+      expect(ids(start?.players)).toEqual(['a', 'b', 'cpu1', 'cpu2', 'cpu3']);
+      expect(ids(lobby.people())).toEqual(['a', 'b']);
+      // Nobody else in the round looks like the people.
+      const bots = start?.players.filter((s) => s.bot) ?? [];
+      expect(bots.map((s) => s.characterId)).not.toContain('faisca');
+    });
+
+    it('names the bots after people, never twice nor like a person in the round', () => {
+      const lobby = new Lobby(BOTS, () => 0);
+      lobby.join({ ...seat('a'), name: 'ana' });
+      lobby.update(0);
+
+      const names = lobby.update(RULES.countdownMs)?.players.map((s) => s.name);
+
+      expect(names).toEqual(['ana', ...BOT_NAMES.slice(1, 5)]);
+    });
+
+    it('counts the people for the countdown, not the bots', () => {
+      const lobby = new Lobby({ ...BOTS, minPlayers: 3 });
+      lobby.join(seat('a'));
+
+      lobby.update(0, false);
+
+      expect(lobby.phase).toBe('countdown');
+    });
+
+    it('fills only as many seats as the rule allows', () => {
+      const lobby = new Lobby({ ...BOTS, bots: 2 });
+      lobby.join(seat('a'));
+      lobby.update(0);
+
+      const start = lobby.update(RULES.countdownMs);
+
+      expect(ids(start?.players)).toEqual(['a', 'cpu1', 'cpu2']);
+    });
+
+    it('puts newcomers on the border of a bots round; a kill puts them in it', () => {
+      const lobby = new Lobby(BOTS);
+      lobby.update(0);
+      lobby.update(RULES.countdownMs);
+      lobby.join(seat('a'));
+
+      expect(ids(lobby.outsiders())).toEqual(['a']);
+      expect(lobby.enterRound('a')).toBe(true);
+      expect(ids(lobby.people())).toEqual(['a']);
+    });
+
+    it('never puts a bot in the queue, nor keeps its seat after a win', () => {
+      const lobby = new Lobby({ ...BOTS, winnerStays: 5 });
+      lobby.join(seat('a'));
+      lobby.update(0);
+      lobby.update(RULES.countdownMs);
+
+      expect(lobby.finishRound('cpu1', 20_000)).toEqual({
+        winnerId: 'cpu1',
+        streak: 1,
+        stays: false,
+      });
+      expect(lobby.champion).toBeNull();
+      lobby.update(20_000 + RULES.resultsMs, false);
+
+      expect(ids(lobby.snapshot(0).queue)).toEqual(['a']);
+    });
+
+    it('tells a bot id from an account id', () => {
+      expect(isBotId(botId(3))).toBe(true);
+      expect(isBotId('kq1Zr8cpu1')).toBe(false);
+    });
   });
 });

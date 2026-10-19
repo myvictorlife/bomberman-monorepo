@@ -11,6 +11,12 @@ export interface ArenaSkin {
   readonly id: string;
   /** Side of one tile, in texture pixels. */
   readonly tileSize: number;
+  /**
+   * Texture pixels per unit of the art, for skins painted at runtime: 2 on
+   * a dense screen paints every tile twice as fine, so the canvas is scaled
+   * down to the page instead of up. Absent, 1.
+   */
+  readonly resolution?: number;
   /** `true` for pixel art: nearest-neighbour scaling and no additive glow. */
   readonly pixelArt: boolean;
   /**

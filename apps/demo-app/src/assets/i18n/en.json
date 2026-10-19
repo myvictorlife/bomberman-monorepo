@@ -686,7 +686,9 @@
       "CLOSING_WALLS": "Closing walls",
       "CLOSING_WALLS_DESC": "When the clock runs out, walls fall in a spiral until one is left. Off: time-up is a draw.",
       "WINNER_STAYS": "Winner stays",
-      "WINNER_STAYS_DESC": "The winner plays the next round with the next in line, up to this many wins in a row; then to the back of the line. Off: every player goes to the back."
+      "WINNER_STAYS_DESC": "The winner plays the next round with the next in line, up to this many wins in a row; then to the back of the line. Off: every player goes to the back.",
+      "BOTS": "Bots",
+      "BOTS_DESC": "Seats the computer may take. With nobody in line, this many bots play while someone watches; with people in line, bots fill the empty seats and one person is enough to start. 0: no bots."
     },
     "STATUS": {
       "CONNECTING": "Connecting to the arena…",
@@ -713,6 +715,9 @@
       "POSITION": "You are number {{n}} in line.",
       "NEXT_UP": "You play the next round (#{{n}} in line).",
       "IN_ROUND": "You are in this round — go!",
+      "LEAVE_AFTER": "Leave after this round",
+      "LEAVING_AFTER": "You leave when this round ends and won't go back in line.",
+      "STAY": "Keep playing",
       "BLOCKED": {
         "sign-in": "Sign in to play. Watching is free.",
         "verify": "Confirm your e-mail to play.",

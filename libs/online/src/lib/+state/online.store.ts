@@ -241,6 +241,10 @@ export const OnlineStore = signalStore(
       leaveQueue(): void {
         send(CLIENT_MESSAGE.leaveQueue);
       },
+      /** Plays the round out, then is not put back in line; `false` stays after all. */
+      leaveAfterRound(leave: boolean): void {
+        send(CLIENT_MESSAGE.leaveAfterRound, { leave });
+      },
       /** An admin changes some rules; the server answers with the lobby (or `forbidden`). */
       setRules(rules: Partial<RoomRules>): void {
         patchState(store, { serverError: null });

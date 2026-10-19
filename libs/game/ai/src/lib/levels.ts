@@ -4,8 +4,13 @@
  * ahead and how often it lets a chance go. Balancing a level is editing a
  * number here.
  */
-export type BotLevel = 'easy' | 'medium' | 'hard';
+export type BotLevel = 'easy' | 'casual' | 'medium' | 'hard';
 
+/**
+ * The levels a player picks from on `/play`. `casual` is left out: it is the
+ * online room's, a notch under `medium`, so bots filling a room of people
+ * play more like people than like a machine.
+ */
 export const BOT_LEVELS: readonly BotLevel[] = ['easy', 'medium', 'hard'];
 
 export interface BotProfile {
@@ -19,7 +24,10 @@ export interface BotProfile {
   readsClosing: boolean;
   /** How much it wants to close in on an enemy, against breaking crates and picking items. */
   aggression: number;
-  /** Uses the remote's detonate button when an enemy stands in the blast. */
+  /**
+   * Sets a remote bomb off early, the moment an enemy stands in its blast.
+   * Every level presses the button anyway once the bomb has waited a fuse.
+   */
   detonates: boolean;
   /** Works out whether an enemy in the blast would have anywhere to run, and goes for the ones who would not. */
   setsTraps: boolean;
@@ -32,6 +40,15 @@ export const BOT_PROFILES: Readonly<Record<BotLevel, BotProfile>> = {
     readsChains: false,
     readsClosing: false,
     aggression: 0.4,
+    detonates: false,
+    setsTraps: false,
+  },
+  casual: {
+    replanTicks: 16,
+    bombChance: 0.5,
+    readsChains: true,
+    readsClosing: false,
+    aggression: 0.6,
     detonates: false,
     setsTraps: false,
   },
@@ -55,6 +72,7 @@ export const BOT_PROFILES: Readonly<Record<BotLevel, BotProfile>> = {
   },
 };
 
+/** A level offered on `/play`. */
 export function isBotLevel(value: string): value is BotLevel {
   return (BOT_LEVELS as readonly string[]).includes(value);
 }

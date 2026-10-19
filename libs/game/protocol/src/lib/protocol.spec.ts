@@ -7,9 +7,11 @@ import {
   parseHello,
   parseInput,
   parseJoinQueue,
+  parseLeaveAfterRound,
   parsePlayerName,
   parseProfileUpdate,
   parseReaction,
+  peopleNeeded,
   parseRules,
   PLAYER_NAME_LENGTH,
   PUBLIC_ROOM_RULES,
@@ -41,6 +43,14 @@ describe('parseHello', () => {
     { token: '   ' },
     { token: 'x'.repeat(9000) },
   ])('rejects %j', (value) => expect(parseHello(value)).toBeNull());
+});
+
+describe('parseLeaveAfterRound', () => {
+  it('leaves unless told explicitly to stay', () => {
+    expect(parseLeaveAfterRound({ leave: false })).toEqual({ leave: false });
+    expect(parseLeaveAfterRound({ leave: true })).toEqual({ leave: true });
+    expect(parseLeaveAfterRound(undefined)).toEqual({ leave: true });
+  });
 });
 
 describe('parseJoinQueue', () => {
@@ -114,6 +124,15 @@ describe('countdown clock', () => {
   });
 });
 
+describe('peopleNeeded', () => {
+  it('is one when bots fill the seats, minPlayers otherwise', () => {
+    expect(peopleNeeded({ ...PUBLIC_ROOM_RULES, bots: 2 })).toBe(1);
+    expect(peopleNeeded({ ...PUBLIC_ROOM_RULES, bots: 0, minPlayers: 3 })).toBe(
+      3,
+    );
+  });
+});
+
 describe('parseRules', () => {
   it('applies a change of offered values on top of the current rules', () => {
     expect(
@@ -131,7 +150,7 @@ describe('parseRules', () => {
   });
 
   it('refuses unknown keys, wrong types and values that are not offered', () => {
-    expect(parseRules({ bots: 3 }, PUBLIC_ROOM_RULES)).toBeNull();
+    expect(parseRules({ robots: 3 }, PUBLIC_ROOM_RULES)).toBeNull();
     expect(parseRules({ outsiders: '2' }, PUBLIC_ROOM_RULES)).toBeNull();
     expect(parseRules({ outsiders: 99 }, PUBLIC_ROOM_RULES)).toBeNull();
     expect(parseRules({ closingWalls: 'no' }, PUBLIC_ROOM_RULES)).toBeNull();

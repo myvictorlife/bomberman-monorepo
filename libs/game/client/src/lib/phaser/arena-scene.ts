@@ -102,7 +102,11 @@ export class ArenaScene extends Phaser.Scene {
     );
     // The arena's look comes from the map's theme; pixel skins keep their own tiles.
     if (!this.config.skin.pixelArt)
-      loadArenaTheme(this, this.config.session.state.mapId);
+      loadArenaTheme(
+        this,
+        this.config.session.state.mapId,
+        this.config.skin.resolution ?? 1,
+      );
   }
 
   create(): void {
@@ -294,10 +298,13 @@ export class ArenaScene extends Phaser.Scene {
   /** Rain over the track: thin streaks falling across, lit by what is under them. */
   private addRain(): Phaser.GameObjects.Particles.ParticleEmitter | null {
     const key = 'rain-drop';
+    // Everything here is in pixels, so the skin's resolution scales it all.
+    const r = this.config.skin.resolution ?? 1;
     if (!this.textures.exists(key)) {
-      const texture = this.textures.createCanvas(key, 4, 28);
+      const texture = this.textures.createCanvas(key, 4 * r, 28 * r);
       const ctx = texture?.getContext();
       if (!texture || !ctx) return null;
+      ctx.scale(r, r);
       const g = ctx.createLinearGradient(0, 0, 0, 28);
       g.addColorStop(0, 'rgba(210, 230, 255, 0)');
       g.addColorStop(0.7, 'rgba(210, 230, 255, 0.9)');
@@ -310,10 +317,10 @@ export class ArenaScene extends Phaser.Scene {
     const height = this.scale.height;
     const emitter = this.add.particles(0, 0, key, {
       x: { min: -width * 0.15, max: width },
-      y: -30,
+      y: -30 * r,
       lifespan: { min: 650, max: 900 },
-      speedY: { min: 900, max: 1200 },
-      speedX: { min: 180, max: 260 },
+      speedY: { min: 900 * r, max: 1200 * r },
+      speedX: { min: 180 * r, max: 260 * r },
       rotate: -12,
       scaleY: { min: 0.7, max: 1.2 },
       alpha: { start: 0.55, end: 0.25 },
