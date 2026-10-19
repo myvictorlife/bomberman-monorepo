@@ -164,6 +164,12 @@ config file. Ordinary app-level additions are minor.
   blurs the field on a pointer down on its canvas; Escape in the chat box
   does the same without leaving full screen, and the box says so while it
   has focus.
+- **Outsiders on the border are easy to see.** They were drawn under the
+  arena's vignette and tinted darker, so on the dark wall — and worst in the
+  corners — they nearly vanished. They now sit above the vignette with a pale
+  rim (WebGL filter), bob while they wait, and the one on the top wall is no
+  longer cut off at the canvas edge.
+
 - The expanded `/online` layout now sits above the site's fixed header for
   browsers that refuse full screen.
 

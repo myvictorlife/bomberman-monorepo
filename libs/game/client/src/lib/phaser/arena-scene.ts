@@ -46,12 +46,14 @@ const DEPTH = {
   flame: 5,
   player: 10,
   thrown: 40,
+  // Above the vignette (fx - 1): it darkens the border wall they stand on.
+  outsider: 99.5,
   fx: 100,
 };
 /** Players under a blackout: a silhouette, not gone. */
 const DARK_TINT = 0x1c2130;
-/** Outsiders are drawn a shade paler: outside, not on a team yet. */
-const OUTSIDER_TINT = 0xd4d9e2;
+/** A pale rim marks an outsider as outside the round and lifts them off the dark wall. */
+const OUTSIDER_GLOW = 0xf2f5ff;
 /** Alternate floor cells are slightly darker — the arena's checkerboard. */
 const CHECKER_TINT = 0xe6e6e6;
 /** Standing, step, standing, other step — four ticks-of-8 per cycle. */
@@ -573,17 +575,28 @@ export class ArenaScene extends Phaser.Scene {
       this.outsiders,
       state.outsiders,
       (o) => o.id,
-      (o) =>
-        this.add.image(0, 0, this.outsiderTexture(o, 0)).setTint(OUTSIDER_TINT),
+      (o) => {
+        const image = this.add.image(0, 0, this.outsiderTexture(o, 0));
+        // Filters exist on the WebGL renderer only; the canvas one draws no rim.
+        image.enableFilters?.();
+        image.filters?.internal.addGlow(OUTSIDER_GLOW, 3, 0, 1, false, 8, 6);
+        return image;
+      },
       (image, o) => {
         const [x, y] = this.cellToPixel(o.x, o.y);
         const frame = o.moving
           ? (WALK_CYCLE[Math.floor(state.tick / 8) % 4] ?? 0)
           : 0;
+        // Waiting outsiders bob a little, so the eye finds them on the wall.
+        const bob = o.moving ? 0 : Math.sin(state.tick * 0.12) * 0.03;
         image
-          .setPosition(x, y - this.tile * 0.12)
-          .setDepth(DEPTH.player + o.y)
+          .setDepth(DEPTH.outsider + o.y / 100)
           .setTexture(this.outsiderTexture(o, frame));
+        // On the top wall the usual lift would cut their head off at the canvas edge.
+        const top = image.displayHeight * image.originY;
+        image.setPosition(x, Math.max(y - this.tile * (0.12 + bob), top));
+        if (this.dark > 0.5) image.setTint(DARK_TINT);
+        else image.clearTint();
       },
     );
   }
