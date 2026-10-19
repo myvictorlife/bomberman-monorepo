@@ -3,6 +3,7 @@ import {
   convertToParamMap,
   provideRouter,
 } from '@angular/router';
+import { ANALYTICS } from '@libs/analytics';
 import { ArenaHandle, ArenaOptions, HudSnapshot } from '@libs/game-client';
 import { createComponentFactory, Spectator } from '@ngneat/spectator/vitest';
 import {
@@ -138,6 +139,13 @@ class FakeLauncher {
   }
 }
 
+/** What the page tells analytics. */
+const analytics = {
+  initialize: vi.fn(),
+  logEvent: vi.fn(),
+  logPageView: vi.fn(),
+};
+
 describe('Play', () => {
   let spectator: Spectator<Play>;
   let launcher: FakeLauncher;
@@ -146,6 +154,7 @@ describe('Play', () => {
     component: Play,
     providers: [
       PlayStore,
+      { provide: ANALYTICS, useValue: analytics },
       provideRouter([]),
       provideTranslateService({
         loader: [{ provide: TranslateLoader, useClass: StubTranslateLoader }],
@@ -263,6 +272,51 @@ describe('Play', () => {
     // Anything else is ignored.
     spectator.component.setKeyScheme('joystick');
     expect(spectator.component.keyScheme()).toBe('arrows');
+  });
+
+  it('tells analytics when a match starts and when each round ends', async () => {
+    analytics.logEvent.mockClear();
+    await settle();
+    await launcher.succeed();
+    await settle();
+    expect(analytics.logEvent).toHaveBeenCalledWith('match_start', {
+      map: 'subestacao',
+      bots: 1,
+      level: 'medium',
+      second_human: false,
+      touch: false,
+    });
+
+    launcher.hud({ phase: 'over', winnerId: 'p1' });
+    await settle();
+    expect(analytics.logEvent).toHaveBeenCalledWith('round_end', {
+      mode: 'local',
+      map: 'subestacao',
+      winner: 'human',
+      seconds: expect.any(Number),
+    });
+    // Still over: no second report. A new round, then a bot's win: one more.
+    launcher.hud({ phase: 'over', winnerId: 'p1' });
+    await settle();
+    expect(
+      analytics.logEvent.mock.calls.filter(([name]) => name === 'round_end'),
+    ).toHaveLength(1);
+    launcher.hud({ phase: 'playing', winnerId: null });
+    await settle();
+    const me = spectator.component.players()[0]!;
+    launcher.hud({
+      phase: 'over',
+      winnerId: 'cpu1',
+      players: [
+        me,
+        { ...me, id: 'cpu1', slot: 1, colorSlot: 1, name: 'CPU 1' },
+      ],
+    });
+    await settle();
+    expect(analytics.logEvent).toHaveBeenLastCalledWith(
+      'round_end',
+      expect.objectContaining({ winner: 'bot' }),
+    );
   });
 
   it('names the bots, and announces a bot that wins', async () => {

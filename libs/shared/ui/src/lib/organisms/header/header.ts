@@ -1,6 +1,8 @@
+import { ANALYTICS } from '@libs/analytics';
 import {
   ChangeDetectionStrategy,
   Component,
+  inject,
   input,
   signal,
   viewChild,
@@ -30,6 +32,13 @@ import { LanguageSelectComponent } from '../../molecules/language-select/languag
   },
 })
 export class HeaderComponent {
+  private readonly analytics = inject(ANALYTICS);
+
+  /** The header's "play now" was pressed. */
+  trackPlay(): void {
+    this.analytics.logEvent('play_click', { mode: 'local', from: 'header' });
+  }
+
   /**
    * URL of the repository this deployment was built from. `null` — the default,
    * and the state of any clone without `config/site.json` — renders no GitHub

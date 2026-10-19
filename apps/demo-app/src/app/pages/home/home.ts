@@ -12,6 +12,7 @@ import {
 import { RouterLink } from '@angular/router';
 import { DemoVideos, paintSprites, TEXTURE } from '@libs/game-client';
 import { PowerUpKind } from '@libs/game-core';
+import { ANALYTICS } from '@libs/analytics';
 import { ButtonComponent } from '@libs/ui';
 import { TranslatePipe } from '@ngx-translate/core';
 import { PodiumComponent } from './podium/podium';
@@ -68,6 +69,7 @@ interface ControlScheme {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HomePage {
+  private readonly analytics = inject(ANALYTICS);
   private readonly sprites =
     viewChildren<ElementRef<HTMLCanvasElement>>('sprite');
   private readonly videos =
@@ -77,6 +79,11 @@ export class HomePage {
   readonly podiumStatus = computed(() => this.podium().status());
 
   readonly facts = ['HOME.FACT_1', 'HOME.FACT_2', 'HOME.FACT_3'];
+
+  /** A "play" button was pressed: which mode, and which of the page's buttons. */
+  trackPlay(mode: 'local' | 'online', from: 'hero' | 'band'): void {
+    this.analytics.logEvent('play_click', { mode, from });
+  }
   readonly ticker = [
     'HOME.TICKER_1',
     'HOME.TICKER_2',

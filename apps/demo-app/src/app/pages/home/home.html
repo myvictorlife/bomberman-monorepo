@@ -23,6 +23,7 @@
             variant="primary"
             size="lg"
             class="home-cta w-full sm:w-auto"
+            (click)="trackPlay('online', 'hero')"
             data-testid="home-online"
           >
             {{ 'HOME.CTA_ONLINE' | translate }}
@@ -33,6 +34,7 @@
             variant="secondary"
             size="lg"
             class="home-ghost w-full sm:w-auto"
+            (click)="trackPlay('local', 'hero')"
             data-testid="home-play"
           >
             {{ 'HOME.CTA_LOCAL' | translate }}
@@ -309,6 +311,7 @@
         variant="primary"
         size="lg"
         class="home-band__cta mt-9"
+        (click)="trackPlay('local', 'band')"
       >
         {{ 'HOME.CTA_PLAY' | translate }}
       </a>

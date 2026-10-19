@@ -1,3 +1,4 @@
+import { ANALYTICS } from '@libs/analytics';
 import { signal } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { AUTH, AuthError, AuthErrorCode, AuthUser } from '@libs/auth';
@@ -22,6 +23,13 @@ import { FakeConnection } from '../../testing/fake-connection';
 import { Online, roundKey } from './online';
 
 const flush = () => new Promise((r) => setTimeout(r, 0));
+
+/** What the page tells analytics. */
+const analytics = {
+  initialize: vi.fn(),
+  logEvent: vi.fn(),
+  logPageView: vi.fn(),
+};
 
 function lobby(over: Partial<LobbySnapshot> = {}): LobbySnapshot {
   return {
@@ -86,6 +94,7 @@ describe('Online', () => {
       provideRouter([]),
       provideTranslateService(),
       { provide: AUTH, useValue: auth },
+      { provide: ANALYTICS, useValue: analytics },
       {
         provide: ARENA_CONNECTOR,
         useValue: async () => {
@@ -264,6 +273,50 @@ describe('Online', () => {
     expect(connection.sent).toContainEqual({
       type: CLIENT_MESSAGE.input,
       payload: { direction: 'left' },
+    });
+  });
+
+  it('tells analytics about a queue join, and one round end per round', async () => {
+    analytics.logEvent.mockClear();
+    await render();
+    spectator.component.join();
+    expect(analytics.logEvent).toHaveBeenCalledWith('queue_join', {
+      character: spectator.component.characterId(),
+    });
+
+    const players = [{ id: 'a', name: 'Ana', characterId: 'lia' as const }];
+    connection.push(SERVER_MESSAGE.lobby, lobby({ phase: 'playing', players }));
+    spectator.detectChanges();
+    connection.push(
+      SERVER_MESSAGE.lobby,
+      lobby({ phase: 'results', players, winnerId: 'a' }),
+    );
+    spectator.detectChanges();
+    expect(analytics.logEvent).toHaveBeenCalledWith('round_end', {
+      mode: 'online',
+      winner: 'other',
+      watching: true,
+    });
+    // The same results again is the same round; a draw after a new round is another.
+    connection.push(
+      SERVER_MESSAGE.lobby,
+      lobby({ phase: 'results', players, winnerId: 'a' }),
+    );
+    spectator.detectChanges();
+    expect(
+      analytics.logEvent.mock.calls.filter(([name]) => name === 'round_end'),
+    ).toHaveLength(1);
+    connection.push(SERVER_MESSAGE.lobby, lobby({ phase: 'playing', players }));
+    spectator.detectChanges();
+    connection.push(
+      SERVER_MESSAGE.lobby,
+      lobby({ phase: 'results', players, winnerId: null }),
+    );
+    spectator.detectChanges();
+    expect(analytics.logEvent).toHaveBeenLastCalledWith('round_end', {
+      mode: 'online',
+      winner: 'draw',
+      watching: true,
     });
   });
 

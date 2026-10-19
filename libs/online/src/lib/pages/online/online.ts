@@ -1,3 +1,4 @@
+import { ANALYTICS } from '@libs/analytics';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -206,7 +207,24 @@ export class Online {
   /** Which account (and verification state) the connection has been told about. */
   private announced: string | null = null;
 
+  private readonly analytics = inject(ANALYTICS);
+
   constructor() {
+    // One `round_end` per round the room decides, whether we played or watched.
+    let lastPhase = this.phase();
+    effect(() => {
+      const phase = this.phase();
+      if (phase === 'results' && lastPhase !== 'results') {
+        const winner = this.winner();
+        const me = this.myId();
+        this.analytics.logEvent('round_end', {
+          mode: 'online',
+          winner: !winner ? 'draw' : winner.id === me ? 'me' : 'other',
+          watching: !this.players().some((p) => p.id === me),
+        });
+      }
+      lastPhase = phase;
+    });
     const url = environment.gameServerUrl;
     if (url) void this.store.connect(url);
     else this.store.markUnavailable();
@@ -253,6 +271,7 @@ export class Online {
 
   join(): void {
     this.store.joinQueue(this.characterId());
+    this.analytics.logEvent('queue_join', { character: this.characterId() });
   }
 
   leave(): void {

@@ -131,6 +131,15 @@ config file. Ordinary app-level additions are minor.
   hands drive player 1, as online. `PLAY.CONTROLS_P1/P2` became
   `PLAY.KEYS_WASD_HINT/KEYS_ARROWS_HINT`.
 
+- **Analytics events for what players do.** Beyond the automatic
+  `page_view`, the app now logs `play_click` (`mode`, `from`: hero, band
+  or header), `match_start` on `/play` (`map`, `bots`, `level`,
+  `second_human`, `touch`), `queue_join` on `/online` (`character`) and
+  `round_end` on both (`mode`, `winner` — human/bot/draw locally,
+  me/other/draw online — plus `map` and `seconds` locally, `watching`
+  online). All through the `ANALYTICS` token, so a build without Firebase
+  logs nothing and needs no guards.
+
 - **Gramado, the plain arena.** A third map (`gramado`, no extra walls):
   a mown lawn in a walled yard — cut stone cubes for pillars, clay-brick
   blocks for crates, a dry-stone wall with a hedge along the top, an old

@@ -21,6 +21,7 @@ import {
   PlayerController,
   WASD_KEYS,
 } from '@libs/game-client';
+import { ANALYTICS } from '@libs/analytics';
 import { CharacterSelectionService } from '@libs/character-select';
 import { ControlsSettingsService, KeyScheme } from '@libs/controls-settings';
 import { DEFAULT_MAP_ID, isMapId, MapId, PlayerSetup } from '@libs/game-core';
@@ -165,6 +166,9 @@ export class Play {
   private readonly launch = inject(ARENA_LAUNCHER);
   private readonly selection = inject(CharacterSelectionService);
   private readonly controls = inject(ControlsSettingsService);
+  private readonly analytics = inject(ANALYTICS);
+  /** When the current round began, for `round_end`'s length; `null` between matches. */
+  private roundStartedAt: number | null = null;
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly arena = viewChild.required<ElementRef<HTMLElement>>('arena');
@@ -242,6 +246,24 @@ export class Play {
       const own = host as { getBoundingClientRect?: () => DOMRect };
       if (this.sideways()) own.getBoundingClientRect = () => turnedRect(host);
       else delete own.getBoundingClientRect;
+    });
+    // One `round_end` per round: when the arena reports it over, and once a
+    // restart has started a new one, the next.
+    effect(() => {
+      if (!this.isOver()) {
+        if (this.status() === 'ready' && this.roundStartedAt === null)
+          this.roundStartedAt = Date.now();
+        return;
+      }
+      if (this.roundStartedAt === null) return;
+      const winner = this.winner();
+      this.analytics.logEvent('round_end', {
+        mode: 'local',
+        map: this.mapId,
+        winner: winner ? (isBotId(winner.id) ? 'bot' : 'human') : 'draw',
+        seconds: Math.round((Date.now() - this.roundStartedAt) / 1000),
+      });
+      this.roundStartedAt = null;
     });
     // The canvas needs a laid-out host element, and only exists in a browser.
     afterNextRender(() => {
@@ -469,6 +491,13 @@ export class Play {
       this.handle = handle;
       this.controller = handle.controller('p1');
       this.store.setStatus('ready');
+      this.analytics.logEvent('match_start', {
+        map: mapId,
+        bots: bots.length,
+        level: setup.level,
+        second_human: setup.secondHuman,
+        touch: this.touch(),
+      });
     } catch {
       if (launch === this.launches) this.store.setStatus('error');
     }

@@ -74,6 +74,20 @@ snake_case (`user_signed_up`, `file_downloaded`), no spaces or special character
 
 ---
 
+## 2a. The events this app logs
+
+| Event                         | Where                               | Params                                                                                               |
+| ----------------------------- | ----------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `page_view`                   | every navigation (app initializer)  | `page_path`, `page_title`                                                                            |
+| `play_click`                  | home hero/band, header "play now"   | `mode` (`local`/`online`), `from` (`hero`/`band`/`header`)                                           |
+| `match_start`                 | `/play` once the arena is up        | `map`, `bots`, `level`, `second_human`, `touch`                                                      |
+| `queue_join`                  | `/online` join button               | `character`                                                                                          |
+| `round_end`                   | `/play` and `/online`, once a round | `mode`; local: `map`, `winner` human/bot/draw, `seconds`; online: `winner` me/other/draw, `watching` |
+| `app_exception`, `http_error` | error handler, interceptor          | see `libs/shared/ui/src/lib/core`                                                                    |
+
+Keep one event per user action and report a round once (the pages track
+the phase transition, not every snapshot). A new event goes in this table.
+
 ## 3. Why call sites need no guards
 
 Every layer degrades to inert rather than throwing:

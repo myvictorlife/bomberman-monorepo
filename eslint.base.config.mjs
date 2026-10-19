@@ -145,6 +145,7 @@ const depConstraints = [
   {
     sourceTag: 'scope:play',
     onlyDependOnLibsWithTags: [
+      'scope:analytics-lib',
       'scope:audio-settings-lib',
       'scope:controls-settings-lib',
       'scope:character-select-lib',
@@ -215,6 +216,7 @@ const depConstraints = [
   {
     sourceTag: 'scope:online',
     onlyDependOnLibsWithTags: [
+      'scope:analytics-lib',
       'scope:audio-settings-lib',
       'scope:controls-settings-lib',
       'scope:auth-lib',
