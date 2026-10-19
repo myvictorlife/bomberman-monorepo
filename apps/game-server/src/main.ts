@@ -50,7 +50,15 @@ const verify = config.firebaseProjectId
   : null;
 const httpServer = createServer();
 const server = new Server({
-  transport: new WebSocketTransport({ server: httpServer }),
+  transport: new WebSocketTransport({
+    server: httpServer,
+    // Phones in a pocket miss pings: three misses five seconds apart (~20 s)
+    // before a client is dropped, not two at three (~9 s). A dropped one
+    // keeps its place for `RECONNECT_GRACE_MS` and may come back on the
+    // same session.
+    pingInterval: 5_000,
+    pingMaxRetries: 3,
+  }),
   greet: false,
   gracefullyShutdown: false,
 });

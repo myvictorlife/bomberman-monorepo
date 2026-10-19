@@ -194,7 +194,7 @@ describe('Online', () => {
       // The socket drops; the fresh one is the same guest, without queuing twice.
       connection.close();
       spectator.detectChanges();
-      spectator.click('[data-testid="online-retry"]');
+      spectator.click('[data-testid="online-retry-now"]');
       await flush();
       spectator.detectChanges();
       expect(connection.sent).toEqual([
@@ -260,12 +260,20 @@ describe('Online', () => {
     });
   });
 
-  it('offers a retry when the server drops', async () => {
+  it('reconnects on its own when the server drops, sooner when the tab comes back or the button is pressed', async () => {
     await render();
     connection.close();
     spectator.detectChanges();
+    expect(spectator.component.status()).toBe('reconnecting');
+    expect(spectator.query('[data-testid="online-reconnecting"]')).toExist();
 
-    spectator.click('[data-testid="online-retry"]');
+    spectator.click('[data-testid="online-retry-now"]');
+    await flush();
+    expect(spectator.component.status()).toBe('online');
+
+    connection.close();
+    spectator.detectChanges();
+    document.dispatchEvent(new Event('visibilitychange'));
     await flush();
     expect(spectator.component.status()).toBe('online');
   });

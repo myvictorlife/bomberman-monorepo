@@ -31,6 +31,7 @@ describe('OnlineStore', () => {
   let connector: ReturnType<typeof vi.fn>;
 
   const setup = () => {
+    sessionStorage.clear();
     connections = [];
     connector = vi.fn(async () => {
       const c = new FakeConnection();
@@ -69,7 +70,7 @@ describe('OnlineStore', () => {
     await pending;
 
     const c = connections[0] as FakeConnection;
-    expect(connector).toHaveBeenCalledWith('http://server');
+    expect(connector).toHaveBeenCalledWith('http://server', undefined);
     expect(store.status()).toBe('online');
 
     c.push(
@@ -187,15 +188,82 @@ describe('OnlineStore', () => {
     expect(store.guest()).toBeNull();
   });
 
-  it('goes offline when the socket drops, and comes back on reconnect', async () => {
-    const store = setup();
-    await store.connect('http://server');
-    connections[0]?.close();
-    expect(store.status()).toBe('offline');
+  it('gets back on its own when the socket drops: doubling pauses, the session token, then online', async () => {
+    vi.useFakeTimers();
+    try {
+      const store = setup();
+      await store.connect('http://server');
+      connections[0]?.close();
+      expect(store.status()).toBe('reconnecting');
+      expect(store.reconnectAttempt()).toBe(0);
 
-    await store.reconnect();
-    expect(store.status()).toBe('online');
-    expect(connections).toHaveLength(2);
+      // First attempt after about a second, asking for the same session back.
+      connector.mockRejectedValueOnce(new Error('still down'));
+      await vi.advanceTimersByTimeAsync(1_200);
+      expect(connector).toHaveBeenLastCalledWith(
+        'http://server',
+        'session-token',
+      );
+      expect(store.reconnectAttempt()).toBe(1);
+      expect(store.status()).toBe('reconnecting');
+
+      // Second after about two seconds; this one gets through.
+      await vi.advanceTimersByTimeAsync(1_000);
+      expect(connector).toHaveBeenCalledTimes(2);
+      await vi.advanceTimersByTimeAsync(1_400);
+      expect(connector).toHaveBeenCalledTimes(3);
+      expect(store.status()).toBe('online');
+      expect(store.reconnectAttempt()).toBe(0);
+      expect(connections).toHaveLength(2);
+      store.disconnect();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('tries sooner after the server announced a restart, and at once when asked', async () => {
+    vi.useFakeTimers();
+    try {
+      const store = setup();
+      await store.connect('http://server');
+      connections[0]?.push(SERVER_MESSAGE.restarting, { inMs: 1_000 });
+      expect(store.restarting()).toBe(true);
+      connections[0]?.close();
+      await vi.advanceTimersByTimeAsync(1_500);
+      expect(connector).toHaveBeenCalledTimes(1);
+      await vi.advanceTimersByTimeAsync(600);
+      expect(connector).toHaveBeenCalledTimes(2);
+      expect(store.status()).toBe('online');
+      expect(store.restarting()).toBe(false);
+
+      connections[1]?.close();
+      store.reconnectNow();
+      await vi.advanceTimersByTimeAsync(0);
+      expect(connector).toHaveBeenCalledTimes(3);
+      expect(store.status()).toBe('online');
+      // Online already: nothing to do.
+      store.reconnectNow();
+      expect(connector).toHaveBeenCalledTimes(3);
+      store.disconnect();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('stops trying once the page leaves, and forgets the session token', async () => {
+    vi.useFakeTimers();
+    try {
+      const store = setup();
+      await store.connect('http://server');
+      expect(sessionStorage.getItem('online.session')).toBe('session-token');
+      connections[0]?.close();
+      store.disconnect();
+      await vi.advanceTimersByTimeAsync(60_000);
+      expect(connector).toHaveBeenCalledTimes(1);
+      expect(sessionStorage.getItem('online.session')).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('ignores the close of a connection it already replaced', async () => {
@@ -209,13 +277,14 @@ describe('OnlineStore', () => {
     expect(store.status()).toBe('online');
   });
 
-  it('goes offline when the server cannot be reached', async () => {
+  it('keeps trying when the server cannot be reached', async () => {
     const store = setup();
     connector.mockRejectedValueOnce(new Error('refused'));
 
     await store.connect('http://server');
 
-    expect(store.status()).toBe('offline');
+    expect(store.status()).toBe('reconnecting');
+    store.disconnect();
   });
 
   it('does nothing on reconnect before a first connect, and sends nothing while disconnected', async () => {
@@ -238,8 +307,14 @@ describe('OnlineStore', () => {
     expect(connections).toHaveLength(2);
     expect(connections[0]?.left).toBe(true);
 
-    connections[0]?.push(SERVER_MESSAGE.frame, { round: 1, state: { tick: 9 } });
-    connections[1]?.push(SERVER_MESSAGE.frame, { round: 1, state: { tick: 10 } });
+    connections[0]?.push(SERVER_MESSAGE.frame, {
+      round: 1,
+      state: { tick: 9 },
+    });
+    connections[1]?.push(SERVER_MESSAGE.frame, {
+      round: 1,
+      state: { tick: 10 },
+    });
     expect(frames).toEqual([10]);
   });
 

@@ -31,7 +31,12 @@ export const DEFAULT_GAME_SERVER_PORT = 8086;
  * How long a dropped connection keeps its place — the character in the round,
  * or the spot in the queue. A reload comes back well within it.
  */
-export const RECONNECT_GRACE_MS = 15_000;
+/**
+ * How long a dropped player keeps their place — the socket may come back on
+ * the same session (the client reconnects by token), or a reload may say
+ * hello on a new one. A minute covers a locked phone or a change of network.
+ */
+export const RECONNECT_GRACE_MS = 60_000;
 
 /** Tuning of a room. The public room uses {@link PUBLIC_ROOM_RULES}; rooms people create later pick their own. */
 export interface RoomRules {
@@ -484,6 +489,8 @@ export const SERVER_MESSAGE = {
   chatRemoved: 'chat:removed',
   /** Someone reacted. */
   reaction: 'reaction',
+  /** The server is going down for a restart: reconnect in `inMs`, not at once. */
+  restarting: 'server:restarting',
   /** After `guest`: who this connection plays as. */
   guest: 'guest',
 } as const;
@@ -711,4 +718,9 @@ export function secondsLeft(
 ): number {
   if (endsAt === null) return 0;
   return Math.max(0, Math.ceil((endsAt - (localNow + offset)) / 1000));
+}
+
+export interface RestartingMessage {
+  /** How soon the server expects to be back, in ms. */
+  inMs: number;
 }

@@ -706,7 +706,9 @@
       "CONNECTING": "Connecting to the arena…",
       "OFFLINE": "Lost the connection to the game server.",
       "RETRY": "Reconnect",
-      "UNAVAILABLE": "Online play is not available in this build: no game server is configured."
+      "UNAVAILABLE": "Online play is not available in this build: no game server is configured.",
+      "RECONNECTING": "Connection lost — reconnecting (attempt {{n}})…",
+      "RESTARTING": "The server is restarting; back in a moment…"
     },
     "STAGE": {
       "WAITING": "Waiting for players",

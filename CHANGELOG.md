@@ -156,6 +156,19 @@ config file. Ordinary app-level additions are minor.
   hands drive player 1, as online. `PLAY.CONTROLS_P1/P2` became
   `PLAY.KEYS_WASD_HINT/KEYS_ARROWS_HINT`.
 
+- **The online room reconnects on its own.** A dropped socket no longer
+  ends in "the connection fell" and a button: the store tries again after
+  a pause that doubles from 1 s to 30 s (with jitter), at once when the tab
+  comes back into view or the network returns, and sooner when the server
+  announced a restart (`server:restarting`, broadcast by the room before
+  it lets everyone go). It asks for the same session back by Colyseus
+  reconnection token — kept in memory and `sessionStorage`, so a reload
+  gets it too — and the room holds a dropped player's session for the
+  grace, now 60 s instead of 15 (`allowReconnection`), welcoming them back
+  with the room's state, identity and place intact and no `hello` needed;
+  a watcher just rejoins. Pings are gentler on phones: five seconds apart,
+  three misses before a drop (~20 s, was ~9 s).
+
 - **One way in: "Jogar".** The home hero has a single button, Jogar, to
   the online room (the offline and guest buttons are gone), and so does the
   closing band; the header's first link is Jogar, to /online, the Início

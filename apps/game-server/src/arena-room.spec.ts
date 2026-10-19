@@ -142,7 +142,16 @@ afterAll(async () => {
 /** Collects every message a room receives, so a test can wait for one that matches. */
 async function connect(roomName = 'arena') {
   const client = new Client(`http://localhost:${PORT}`);
-  const room = await client.joinOrCreate(roomName);
+  return wrap(await client.joinOrCreate(roomName));
+}
+
+/** Back on a dropped peer's session, by its reconnection token. */
+async function reconnectAs(peer: { room: Room }) {
+  const client = new Client(`http://localhost:${PORT}`);
+  return wrap(await client.reconnect(peer.room.reconnectionToken));
+}
+
+function wrap(room: Room) {
   rooms.push(room);
   const inbox: { type: string; payload: unknown }[] = [];
   const waiters: (() => void)[] = [];
@@ -688,6 +697,60 @@ describe('ArenaRoom', () => {
       (f) => f.state.tick > 5,
     );
     expect(frame.state.outsiders).toEqual([]);
+  });
+
+  it('holds a dropped player’s session: back by token within the grace, place and identity kept', async () => {
+    const fay = await signedIn('fay');
+    const gil = await signedIn('gil');
+    fay.room.send(CLIENT_MESSAGE.joinQueue, {});
+    await gil.next<LobbySnapshot>(
+      SERVER_MESSAGE.lobby,
+      (l) => l.queue.length === 1,
+    );
+
+    // The socket goes, with no goodbye: a phone in a pocket.
+    await fay.room.leave(false);
+    const back = await reconnectAs(fay);
+    // Welcomed again with the room as it is; no hello needed, the spot is kept.
+    const still = await back.next<LobbySnapshot>(SERVER_MESSAGE.lobby);
+    expect(still.queue.map((q) => q.id)).toEqual(['fay']);
+    back.room.send(CLIENT_MESSAGE.leaveQueue);
+    await gil.next<LobbySnapshot>(
+      SERVER_MESSAGE.lobby,
+      (l) => l.queue.length === 0,
+    );
+  });
+
+  it('gives a dropped player’s place up once the grace runs out', async () => {
+    const fay = await signedIn('fay');
+    const gil = await signedIn('gil');
+    fay.room.send(CLIENT_MESSAGE.joinQueue, {});
+    await gil.next<LobbySnapshot>(
+      SERVER_MESSAGE.lobby,
+      (l) => l.queue.length === 1,
+    );
+    await fay.room.leave(false);
+    const empty = await gil.next<LobbySnapshot>(
+      SERVER_MESSAGE.lobby,
+      (l) => l.queue.length === 0,
+      2_000,
+    );
+    expect(empty.phase).toBe('waiting');
+  });
+
+  it('announces a restart before letting everyone go', async () => {
+    const fay = await signedIn('fay');
+    const room = matchMaker.getLocalRoomById(fay.room.roomId) as unknown as {
+      onBeforeShutdown(): void;
+    };
+    const gone = new Promise<number>((resolve) =>
+      fay.room.onLeave((code) => resolve(code)),
+    );
+    room.onBeforeShutdown();
+    expect(await fay.next<{ inMs: number }>(SERVER_MESSAGE.restarting)).toEqual(
+      { inMs: 300 },
+    );
+    expect(await gone).toBeGreaterThan(0);
   });
 
   it('drops a player who disconnects, but not while another tab is open', async () => {

@@ -706,7 +706,9 @@
       "CONNECTING": "Conectando à arena…",
       "OFFLINE": "A conexão com o servidor do jogo caiu.",
       "RETRY": "Reconectar",
-      "UNAVAILABLE": "O modo online não está disponível nesta versão: nenhum servidor de jogo configurado."
+      "UNAVAILABLE": "O modo online não está disponível nesta versão: nenhum servidor de jogo configurado.",
+      "RECONNECTING": "A conexão caiu — reconectando (tentativa {{n}})…",
+      "RESTARTING": "O servidor está reiniciando; voltamos em instantes…"
     },
     "STAGE": {
       "WAITING": "Aguardando jogadores",

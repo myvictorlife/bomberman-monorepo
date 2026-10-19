@@ -2,6 +2,12 @@ import { ARENA_ROOM } from '@libs/game-protocol';
 
 /** A live connection to the public room — the only part of the client that knows the network library. */
 export interface ArenaConnection {
+  /**
+   * What gets this session back after a drop (`connectToArena(url, token)`),
+   * for as long as the server holds the place. A credential: kept in memory
+   * and session storage only, never logged or put in a URL.
+   */
+  readonly token?: string;
   send(type: string, payload?: unknown): void;
   /** Subscribes to one server message type; returns the unsubscribe function. */
   on<T>(type: string, listener: (payload: T) => void): () => void;
@@ -48,15 +54,24 @@ async function loadSdk() {
 
 /**
  * Joins the public room — the server creates it and refuses to make another.
- * The Colyseus client is imported here, dynamically, so it is downloaded only
- * when someone opens the online room.
+ * With a `reconnectionToken` from a dropped connection it asks for that
+ * session back first (the place, the identity), and joins afresh if the
+ * server no longer holds it. The Colyseus client is imported here,
+ * dynamically, so it is downloaded only when someone opens the online room.
  */
 export async function connectToArena(
   serverUrl: string,
+  reconnectionToken?: string,
 ): Promise<ArenaConnection> {
   const { Client } = await loadSdk();
-  const room = await new Client(serverUrl).join(ARENA_ROOM);
+  const client = new Client(serverUrl);
+  const room = reconnectionToken
+    ? await client
+        .reconnect(reconnectionToken)
+        .catch(() => client.join(ARENA_ROOM))
+    : await client.join(ARENA_ROOM);
   return {
+    token: room.reconnectionToken,
     send: (type, payload) => room.send(type, payload),
     on: (type, listener) => room.onMessage(type, listener),
     onClose: (listener) => {

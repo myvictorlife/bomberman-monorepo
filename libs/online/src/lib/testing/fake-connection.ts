@@ -3,9 +3,15 @@ import { ArenaConnection } from '@libs/game-client';
 /** A connection with no socket: tests push server messages and read what was sent. */
 export class FakeConnection implements ArenaConnection {
   readonly sent: { type: string; payload: unknown }[] = [];
+  /** The session's reconnection token, as a server would hand it out. */
+  readonly token: string;
   readonly listeners = new Map<string, ((payload: unknown) => void)[]>();
   closeListener: ((code: number) => void) | null = null;
   left = false;
+
+  constructor(token = 'session-token') {
+    this.token = token;
+  }
 
   send(type: string, payload?: unknown): void {
     this.sent.push({ type, payload });

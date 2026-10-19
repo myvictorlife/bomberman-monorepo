@@ -11,7 +11,7 @@ import {
  * connection — no socket, no server.
  */
 export const ARENA_CONNECTOR = new InjectionToken<
-  (url: string) => Promise<ArenaConnection>
+  (url: string, reconnectionToken?: string) => Promise<ArenaConnection>
 >('ARENA_CONNECTOR', { factory: () => connectToArena });
 
 /** How the page draws the round. A token because Phaser needs a canvas the test DOM lacks. */

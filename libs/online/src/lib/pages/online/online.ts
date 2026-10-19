@@ -144,6 +144,8 @@ export function roundKey(frame: FrameMessage): string {
   host: {
     '(document:keydown.escape)': 'collapse()',
     '(document:fullscreenchange)': 'onFullscreenChange()',
+    '(document:visibilitychange)': 'onBackInView()',
+    '(window:online)': 'onBackInView()',
   },
 })
 export class Online {
@@ -159,6 +161,8 @@ export class Online {
   readonly status = this.store.status;
   readonly lobby = this.store.lobby;
   readonly phase = this.store.phase;
+  readonly reconnectAttempt = this.store.reconnectAttempt;
+  readonly restarting = this.store.restarting;
   readonly queue = this.store.queue;
   readonly players = this.store.players;
   readonly ranking = this.store.ranking;
@@ -398,8 +402,16 @@ export class Online {
     this.store.muteChat(accountId);
   }
 
+  /** The button: try now rather than at the scheduled time. */
   retry(): void {
-    void this.store.reconnect();
+    this.store.reconnectNow();
+  }
+
+  /** The tab is visible again, or the network is back: no reason to wait out the pause. */
+  onBackInView(): void {
+    if (document.visibilityState === 'hidden') return;
+    if (this.status() === 'reconnecting' || this.status() === 'offline')
+      this.store.reconnectNow();
   }
 
   toggleExpanded(): void {

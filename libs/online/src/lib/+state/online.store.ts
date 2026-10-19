@@ -15,6 +15,7 @@ import {
   RankingEntry,
   Reaction,
   ReactionMessage,
+  RestartingMessage,
   SERVER_MESSAGE,
   NO_WATCHERS,
   PUBLIC_ROOM_RULES,
@@ -60,10 +61,29 @@ export type ConnectionStatus =
   | 'unavailable'
   | 'connecting'
   | 'online'
+  /** The socket dropped; the store is trying again on its own. */
+  | 'reconnecting'
   | 'offline';
+
+/** Reconnect delays: doubling from one second, capped, with a little jitter on top. */
+export const RECONNECT_BASE_MS = 1_000;
+export const RECONNECT_MAX_MS = 30_000;
+/** After the server announced a restart: give it a moment to come back first. */
+export const RESTART_RETRY_MS = 2_000;
+/** sessionStorage key for the reconnection token, so a reload gets the same session back. */
+export const SESSION_TOKEN_KEY = 'online.session';
+
+export function reconnectDelay(attempt: number, random = Math.random): number {
+  const base = Math.min(RECONNECT_MAX_MS, RECONNECT_BASE_MS * 2 ** attempt);
+  return Math.round(base * (0.85 + random() * 0.3));
+}
 
 export interface OnlineState {
   status: ConnectionStatus;
+  /** How many times the store has tried to get back since the socket dropped; 0 once it is back. */
+  reconnectAttempt: number;
+  /** The server said it is restarting: the drop that follows is expected. */
+  restarting: boolean;
   lobby: LobbySnapshot | null;
   ranking: RankingEntry[];
   /** What the server knows about the signed-in account; `null` until it answers. */
@@ -85,6 +105,8 @@ export interface OnlineState {
 
 export const initialOnlineState: OnlineState = {
   status: 'idle',
+  reconnectAttempt: 0,
+  restarting: false,
   lobby: null,
   ranking: [],
   profile: null,
@@ -118,9 +140,35 @@ export const OnlineStore = signalStore(
   withMethods((store, connect = inject(ARENA_CONNECTOR)) => {
     let connection: ArenaConnection | null = null;
     let url: string | null = null;
+    /** Whether the page wants to be connected: drops are retried only while it does. */
+    let wanted = false;
+    /** The pending retry, between a drop and the next attempt. */
+    let retry: ReturnType<typeof setTimeout> | null = null;
     const frameListeners = new Set<(frame: FrameMessage) => void>();
     let reactionKey = 0;
     const timers = new Set<ReturnType<typeof setTimeout>>();
+
+    const readToken = (): string | undefined => {
+      try {
+        return (
+          globalThis.sessionStorage?.getItem(SESSION_TOKEN_KEY) ?? undefined
+        );
+      } catch {
+        return undefined;
+      }
+    };
+    const keepToken = (token: string | undefined): void => {
+      try {
+        if (token) globalThis.sessionStorage?.setItem(SESSION_TOKEN_KEY, token);
+        else globalThis.sessionStorage?.removeItem(SESSION_TOKEN_KEY);
+      } catch {
+        // Storage off: a reload is a fresh session, which still works.
+      }
+    };
+    const cancelRetry = (): void => {
+      if (retry !== null) clearTimeout(retry);
+      retry = null;
+    };
 
     const float = (emoji: Reaction): void => {
       const key = ++reactionKey;
@@ -139,8 +187,30 @@ export const OnlineStore = signalStore(
       timers.add(timer);
     };
 
+    /**
+     * The socket is gone and the page still wants it: try again after a
+     * pause that doubles each time — at once if the page asks, sooner when
+     * the server said it was restarting. Never gives up: the next attempt
+     * is always scheduled.
+     */
+    const scheduleReconnect = (): void => {
+      if (!wanted || retry !== null) return;
+      const attempt = store.reconnectAttempt();
+      const delay = store.restarting()
+        ? RESTART_RETRY_MS
+        : reconnectDelay(attempt);
+      patchState(store, { status: 'reconnecting' });
+      retry = setTimeout(() => {
+        retry = null;
+        patchState(store, { reconnectAttempt: attempt + 1 });
+        void open();
+      }, delay);
+    };
+
     const open = async (): Promise<void> => {
       if (!url) return;
+      wanted = true;
+      cancelRetry();
       // One connection per store. The router keeps a route's providers — and
       // so this store — alive across visits, so coming back to the page must
       // not open a second socket beside the first: both would feed the same
@@ -149,7 +219,7 @@ export const OnlineStore = signalStore(
       const previous = connection;
       connection = null;
       patchState(store, {
-        status: 'connecting',
+        status: store.reconnectAttempt() ? 'reconnecting' : 'connecting',
         serverError: null,
         profile: null,
         guest: null,
@@ -159,8 +229,15 @@ export const OnlineStore = signalStore(
       });
       await previous?.leave().catch(() => undefined);
       try {
-        const opened = await connect(url);
+        // Back on the same session when the server still holds it; fresh otherwise.
+        const opened = await connect(url, readToken());
+        if (!wanted) {
+          // The page left while the socket was opening.
+          void opened.leave().catch(() => undefined);
+          return;
+        }
         connection = opened;
+        keepToken(opened.token);
         // A connection the store let go of may still deliver what was in
         // flight: only the current one speaks for the room.
         const on = <T>(
@@ -215,15 +292,24 @@ export const OnlineStore = signalStore(
         on<FrameMessage>(SERVER_MESSAGE.frame, (frame) =>
           frameListeners.forEach((l) => l(frame)),
         );
+        on<RestartingMessage>(SERVER_MESSAGE.restarting, () =>
+          patchState(store, { restarting: true }),
+        );
         opened.onClose(() => {
-          if (connection === opened) {
-            connection = null;
-            patchState(store, { status: 'offline' });
-          }
+          if (connection !== opened) return;
+          // Dropped, not left: get it back.
+          connection = null;
+          patchState(store, { status: 'offline' });
+          scheduleReconnect();
         });
-        patchState(store, { status: 'online' });
+        patchState(store, {
+          status: 'online',
+          reconnectAttempt: 0,
+          restarting: false,
+        });
       } catch {
         patchState(store, { status: 'offline' });
+        scheduleReconnect();
       }
     };
 
@@ -243,13 +329,26 @@ export const OnlineStore = signalStore(
       async reconnect(): Promise<void> {
         const old = connection;
         connection = null;
+        keepToken(undefined);
         await old?.leave().catch(() => undefined);
         await open();
       },
+      /** Tries now instead of at the scheduled time: the page is back in view, the network is back, or someone pressed the button. */
+      reconnectNow(): void {
+        if (!wanted || connection) return;
+        cancelRetry();
+        patchState(store, { reconnectAttempt: store.reconnectAttempt() + 1 });
+        void open();
+      },
+      /** Leaves for good: no retries, and the place is given up at the server's grace. */
       disconnect(): void {
+        wanted = false;
+        cancelRetry();
+        keepToken(undefined);
         const old = connection;
         connection = null;
         void old?.leave().catch(() => undefined);
+        patchState(store, { reconnectAttempt: 0, restarting: false });
       },
       hello(token: string): void {
         patchState(store, { serverError: null });

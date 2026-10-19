@@ -18,6 +18,24 @@
   <lib-alert tone="info" data-testid="online-unavailable"
     >{{ 'ONLINE.STATUS.UNAVAILABLE' | translate }}</lib-alert
   >
+  } @case ('reconnecting') {
+  <div class="online__offline" data-testid="online-reconnecting" role="status">
+    <lib-alert tone="warning">
+      @if (restarting()) { {{ 'ONLINE.STATUS.RESTARTING' | translate }} } @else
+      { {{ 'ONLINE.STATUS.RECONNECTING' | translate: { n: reconnectAttempt() }
+      }} }
+    </lib-alert>
+    <button
+      type="button"
+      libButton
+      variant="secondary"
+      size="sm"
+      (click)="retry()"
+      data-testid="online-retry-now"
+    >
+      {{ 'ONLINE.STATUS.RETRY' | translate }}
+    </button>
+  </div>
   } @case ('offline') {
   <div class="online__offline" data-testid="online-offline">
     <lib-alert tone="danger"

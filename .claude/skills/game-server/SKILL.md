@@ -188,6 +188,20 @@ forgets all of it, along with who was silenced.
   arrows). The keyboard choice in `@libs/controls-settings` only matters
   on `/play`, where player 1 takes the chosen hand and a second player the
   other — alone, both.
+- **Reconnection.** The store never gives up a dropped socket: it retries
+  with a doubling pause (`reconnectDelay`, 1–30 s), at once on
+  `visibilitychange`/`online` or the button, and after `RESTART_RETRY_MS`
+  when the room broadcast `server:restarting` (`onBeforeShutdown`, 300 ms
+  before `disconnect()`). It passes the connection's reconnection token
+  (`ArenaConnection.token`, also in `sessionStorage` under
+  `online.session`, never logged or in a URL) and `connectToArena` tries
+  `client.reconnect(token)` before a fresh `join`. Server side, `onLeave`
+  gets the close code: a drop (not `CloseCode.CONSENTED`) of a player or
+  guest awaits `allowReconnection(client, RECONNECT_GRACE_MS)` (60 s) and,
+  when they are back, `welcome`s them again — identity, queue spot or seat
+  kept, no `hello`. A reserved seat counts toward `maxClients` (500) for
+  the grace. Consented leaves keep the timer-based grace for a reload that
+  says hello on a new session. Pings: 5 s apart, 3 misses.
 - `OnlineStore` is provided on the route, but Angular keeps a route's
   providers — the store and its socket — alive across visits. So `connect`
   always leaves the store's previous connection first, and the page calls

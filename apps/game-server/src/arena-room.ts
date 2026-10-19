@@ -1,4 +1,4 @@
-import { AuthContext, Client, Delayed, Room } from '@colyseus/core';
+import { AuthContext, Client, CloseCode, Delayed, Room } from '@colyseus/core';
 import { BotDirector, BotLevel } from '@libs/game-ai';
 import {
   addOutsider,
@@ -145,6 +145,8 @@ export function createArenaRoom(deps: ArenaRoomDeps) {
   const now = deps.now ?? Date.now;
   const random = deps.random ?? Math.random;
   const graceMs = deps.reconnectGraceMs ?? RECONNECT_GRACE_MS;
+  /** How long clients get the restart notice before they are let go. */
+  const RESTART_NOTICE_MS = 300;
   /** The one instance: it never disposes itself, so a second would only pile up. */
   let liveId: string | null = null;
 
@@ -240,6 +242,13 @@ export function createArenaRoom(deps: ArenaRoomDeps) {
     }
 
     override onJoin(client: Client): void {
+      this.welcome(client);
+      // Everyone else sees one more viewer.
+      this.refreshLobby();
+    }
+
+    /** Everything a connection needs to draw the room: on arrival, and again when a dropped one is back. */
+    private welcome(client: Client): void {
       client.send(
         SERVER_MESSAGE.lobby,
         this.lobby.snapshot(now(), this.watchers()),
@@ -250,12 +259,32 @@ export function createArenaRoom(deps: ArenaRoomDeps) {
       );
       if (this.game) client.send(SERVER_MESSAGE.frame, this.frame([]));
       client.send(SERVER_MESSAGE.chatHistory, this.chat.backlog(now()));
-      // Everyone else sees one more viewer.
-      this.refreshLobby();
     }
 
-    override onLeave(client: Client): void {
+    override async onLeave(client: Client, code?: number): Promise<void> {
       const account = this.player(client);
+      // Colyseus hands the socket's close code: 4000 is a leave the client
+      // asked for (`room.leave()`); anything else is a drop.
+      const consented = code === CloseCode.CONSENTED;
+      // Dropped rather than left — a phone in a pocket, a change of network,
+      // this server restarting — and a player, not a watcher: hold the session
+      // itself for the grace. The client comes back on it by token and keeps
+      // identity, queue spot or seat, no hello needed. (While it waits, the
+      // seat counts toward `maxClients`.)
+      if (!consented && account && !this.hasSession(account.id, client)) {
+        this.heldInputs.delete(account.id);
+        this.refreshLobby();
+        try {
+          // Resolves with the new socket, on the same session.
+          const back = await this.allowReconnection(client, graceMs / 1_000);
+          // Its page starts blank: everything again, as on arrival.
+          this.welcome(back);
+          this.refreshLobby();
+          return;
+        } catch {
+          // The grace ran out: gone for good, like a consented leave below.
+        }
+      }
       this.accounts.delete(client.sessionId);
       this.guests.delete(client.sessionId);
       this.chat.forget(client.sessionId);
@@ -264,6 +293,15 @@ export function createArenaRoom(deps: ArenaRoomDeps) {
       // Another tab of the same account keeps the place. Otherwise the place is
       // held for a grace period: a reload reconnects and carries on.
       if (!account || this.hasSession(account.id)) return;
+      if (!consented) {
+        // The grace was already spent waiting for the socket.
+        if (
+          !this.lobby.isQueued(account.id) &&
+          !this.lobby.isPlaying(account.id)
+        )
+          return this.forgetGuest(account.id);
+        return this.drop(account.id);
+      }
       if (!this.lobby.isQueued(account.id) && !this.lobby.isPlaying(account.id))
         return this.forgetGuest(account.id);
       // Stand still while away, rather than keep walking into a flame.
@@ -342,6 +380,16 @@ export function createArenaRoom(deps: ArenaRoomDeps) {
       const { id, name, token } = guest;
       client.send(SERVER_MESSAGE.guest, { id, name, token });
       this.refreshLobby();
+    }
+
+    /**
+     * The process is going down for a restart. Everyone hears it first, so
+     * their client waits a moment and reconnects instead of treating the drop
+     * as a failure; then they are let go.
+     */
+    override onBeforeShutdown(): void {
+      this.broadcast(SERVER_MESSAGE.restarting, { inMs: RESTART_NOTICE_MS });
+      setTimeout(() => void this.disconnect(), RESTART_NOTICE_MS);
     }
 
     override onDispose(): void {
@@ -752,10 +800,15 @@ export function createArenaRoom(deps: ArenaRoomDeps) {
       };
     }
 
-    private hasSession(accountId: string): boolean {
-      return [...this.accounts.values(), ...this.guests.values()].some(
-        (a) => a.id === accountId,
-      );
+    /** Whether the account (or guest) is on any connection — other than `except`, when given. */
+    private hasSession(accountId: string, except?: Client): boolean {
+      const other = (sessionId: string) =>
+        !except || sessionId !== except.sessionId;
+      for (const [sessionId, a] of this.accounts)
+        if (a.id === accountId && other(sessionId)) return true;
+      for (const [sessionId, g] of this.guests)
+        if (g.id === accountId && other(sessionId)) return true;
+      return false;
     }
 
     /** Who plays on this connection: the signed-in account, or the guest. */
