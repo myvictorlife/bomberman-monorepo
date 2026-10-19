@@ -77,11 +77,17 @@
   min-width: 0;
 }
 
+.online__screen {
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: #0b0b12;
+}
+
 .online__stage {
   position: relative;
   aspect-ratio: 15 / 13;
-  border-radius: var(--radius-lg);
-  overflow: hidden;
   background: #0b0b12;
 }
 
@@ -184,11 +190,16 @@
     gap: 0;
   }
 
+  .online__screen {
+    flex: 1;
+    min-height: 0;
+    border-radius: 0;
+  }
+
   .online__stage {
     flex: 1;
     min-height: 0;
     aspect-ratio: auto;
-    border-radius: 0;
   }
 
   .online__side {
@@ -218,6 +229,10 @@
 
     .online__main {
       height: auto;
+    }
+
+    .online__screen {
+      flex: none;
     }
 
     .online__stage {
@@ -302,18 +317,30 @@
 /* A thin strip along the top of the stage: the clock, then who is in with
    what. Fades into the arena and never takes a click. */
 .online__hud {
-  position: absolute;
-  top: 0;
-  right: 0;
-  left: 0;
-  z-index: 2;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-2);
-  padding: var(--space-1) 3rem var(--space-3) var(--space-2);
-  background: linear-gradient(rgb(0 0 0 / 0.65), rgb(0 0 0 / 0));
-  pointer-events: none;
+  // Held open between rounds too, so the page does not jump when one starts.
+  min-height: 2.5rem;
+  padding: var(--space-1) var(--space-2);
+  border-bottom: 1px solid rgb(255 255 255 / 0.08);
+
+  lib-players-panel {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  // One row on a phone, swiped sideways, instead of a pill per line.
+  @media (max-width: 40rem) {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+
+    lib-players-panel {
+      flex: none;
+    }
+  }
 }
 
 .online__clock {

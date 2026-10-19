@@ -70,57 +70,11 @@
     </aside>
 
     <div class="online__main">
-      <div class="online__stage" data-testid="online-stage">
-        <div #arena class="online__arena" data-testid="online-arena"></div>
-
-        @if (status() === 'connecting' || status() === 'idle') {
-        <div class="online__overlay">
-          <lib-spinner
-            size="lg"
-            [label]="'ONLINE.STATUS.CONNECTING' | translate"
-          />
-        </div>
-        } @else if (phase() === 'countdown') {
-        <div
-          class="online__overlay"
-          data-testid="online-countdown"
-          role="status"
-        >
-          <p class="online__big">
-            {{ 'ONLINE.STAGE.COUNTDOWN' | translate: { s: secondsLeft() } }}
-          </p>
-          <p class="online__small">
-            {{ 'ONLINE.STAGE.COUNTDOWN_HINT' | translate: { n: queue().length,
-            max: maxPlayers() } }}
-          </p>
-        </div>
-        } @else if (phase() === 'results') {
-        <div class="online__overlay" data-testid="online-results" role="status">
-          <p class="online__big">
-            @if (winner(); as w) { {{ 'ONLINE.STAGE.WINNER' | translate: { name:
-            w.name } }} } @else { {{ 'ONLINE.STAGE.DRAW' | translate }} }
-          </p>
-          @if (guestWon()) {
-          <p class="online__small" data-testid="online-guest-won">
-            {{ 'ONLINE.STAGE.GUEST_WON' | translate }}
-          </p>
-          }
-        </div>
-        } @else if (phase() === 'waiting' && status() === 'online') {
-        <div
-          class="online__overlay"
-          [class.online__overlay--soft]="watching()"
-          data-testid="online-waiting"
-        >
-          <p class="online__big">{{ 'ONLINE.STAGE.WAITING' | translate }}</p>
-          <p class="online__small">
-            {{ 'ONLINE.STAGE.WAITING_HINT' | translate: { n: queue().length,
-            min: minPlayers() } }}
-          </p>
-        </div>
-        } @if (hudPlayers().length) {
-        <div class="online__hud" data-testid="online-hud">
-          @if (roundClosing()) {
+      <div class="online__screen">
+        <!-- The round's clock and players, on a strip of their own above the
+             arena: over it, a full round wrapped onto the board's top row. -->
+        <div class="online__hud" data-testid="online-hud-bar">
+          @if (hudPlayers().length) { @if (roundClosing()) {
           <p
             class="online__clock online__clock--closing"
             role="status"
@@ -134,43 +88,99 @@
           </p>
           }
           <lib-players-panel
+            data-testid="online-hud"
             [players]="hudPlayers()"
             [colors]="colors"
             [myId]="myId()"
             [compact]="true"
           />
-        </div>
-        }
-
-        <div
-          class="online__reactions"
-          aria-hidden="true"
-          data-testid="online-reactions"
-        >
-          @for (reaction of reactions(); track reaction.key) {
-          <span class="online__reaction" [style.left.%]="reaction.x"
-            >{{ reaction.emoji }}</span
-          >
           }
         </div>
+        <div class="online__stage" data-testid="online-stage">
+          <div #arena class="online__arena" data-testid="online-arena"></div>
 
-        <button
-          type="button"
-          class="online__expand"
-          [attr.aria-label]="
+          @if (status() === 'connecting' || status() === 'idle') {
+          <div class="online__overlay">
+            <lib-spinner
+              size="lg"
+              [label]="'ONLINE.STATUS.CONNECTING' | translate"
+            />
+          </div>
+          } @else if (phase() === 'countdown') {
+          <div
+            class="online__overlay"
+            data-testid="online-countdown"
+            role="status"
+          >
+            <p class="online__big">
+              {{ 'ONLINE.STAGE.COUNTDOWN' | translate: { s: secondsLeft() } }}
+            </p>
+            <p class="online__small">
+              {{ 'ONLINE.STAGE.COUNTDOWN_HINT' | translate: { n: queue().length,
+              max: maxPlayers() } }}
+            </p>
+          </div>
+          } @else if (phase() === 'results') {
+          <div
+            class="online__overlay"
+            data-testid="online-results"
+            role="status"
+          >
+            <p class="online__big">
+              @if (winner(); as w) { {{ 'ONLINE.STAGE.WINNER' | translate: {
+              name: w.name } }} } @else { {{ 'ONLINE.STAGE.DRAW' | translate }}
+              }
+            </p>
+            @if (guestWon()) {
+            <p class="online__small" data-testid="online-guest-won">
+              {{ 'ONLINE.STAGE.GUEST_WON' | translate }}
+            </p>
+            }
+          </div>
+          } @else if (phase() === 'waiting' && status() === 'online') {
+          <div
+            class="online__overlay"
+            [class.online__overlay--soft]="watching()"
+            data-testid="online-waiting"
+          >
+            <p class="online__big">{{ 'ONLINE.STAGE.WAITING' | translate }}</p>
+            <p class="online__small">
+              {{ 'ONLINE.STAGE.WAITING_HINT' | translate: { n: queue().length,
+              min: minPlayers() } }}
+            </p>
+          </div>
+          }
+
+          <div
+            class="online__reactions"
+            aria-hidden="true"
+            data-testid="online-reactions"
+          >
+            @for (reaction of reactions(); track reaction.key) {
+            <span class="online__reaction" [style.left.%]="reaction.x"
+              >{{ reaction.emoji }}</span
+            >
+            }
+          </div>
+
+          <button
+            type="button"
+            class="online__expand"
+            [attr.aria-label]="
             (expanded() ? 'ONLINE.STAGE.COLLAPSE' : 'ONLINE.STAGE.EXPAND')
               | translate
           "
-          [title]="
+            [title]="
             (expanded() ? 'ONLINE.STAGE.COLLAPSE' : 'ONLINE.STAGE.EXPAND')
               | translate
           "
-          [attr.aria-pressed]="expanded()"
-          (click)="toggleExpanded()"
-          data-testid="online-expand"
-        >
-          <span aria-hidden="true">{{ expanded() ? '✕' : '⛶' }}</span>
-        </button>
+            [attr.aria-pressed]="expanded()"
+            (click)="toggleExpanded()"
+            data-testid="online-expand"
+          >
+            <span aria-hidden="true">{{ expanded() ? '✕' : '⛶' }}</span>
+          </button>
+        </div>
       </div>
     </div>
 

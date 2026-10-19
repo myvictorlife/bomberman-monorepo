@@ -68,13 +68,15 @@ export class PlayerBadgesComponent {
         tip: t('PLAY.BOMBS'),
       },
       { key: 'fire', icon: '🔥', value: String(s.fire), tip: t('PLAY.FIRE') },
-      {
+    ];
+    // The strip over the arena leaves out a speed nobody has picked up yet.
+    if (s.speed > 0 || this.size() === 'md')
+      list.push({
         key: 'speed',
         icon: '🛼',
         value: String(s.speed),
         tip: t('PLAY.SPEED'),
-      },
-    ];
+      });
     if (s.pierce)
       list.push({
         key: 'pierce',

@@ -184,6 +184,13 @@ config file. Ordinary app-level additions are minor.
 
 ### Fixed
 
+- **The online scoreboard no longer covers the arena.** The round's clock
+  and players sat over the top of the board, and a full round wrapped onto
+  its first playable row. They now have a strip of their own above the
+  arena (kept open between rounds, so the page does not jump), a phone
+  shows them as one row swiped sideways, and the strip leaves out a speed
+  of 0.
+
 - **Outsiders on the border are easy to see.** They were drawn under the
   arena's vignette and tinted darker, so on the dark wall — and worst in the
   corners — they nearly vanished. They now sit above the vignette with a pale

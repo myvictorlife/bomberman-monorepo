@@ -61,7 +61,7 @@
   color: var(--color-text-secondary);
 }
 
-/* Compact: one row of translucent pills to lay over the arena, each player's
+/* Compact: one row of translucent pills for the strip above the arena, each player's
    colour as a left edge, the name cut short. Reads at a glance, hides little. */
 :host(.compact) {
   .players {
@@ -72,6 +72,15 @@
     flex-direction: row;
     flex-wrap: wrap;
     gap: var(--space-2);
+
+    // On a phone a pill per line would stack five deep: one row, scrolled.
+    @media (max-width: 40rem) {
+      flex-wrap: nowrap;
+    }
+  }
+
+  .players__item {
+    flex: none;
   }
 
   .players__item {
