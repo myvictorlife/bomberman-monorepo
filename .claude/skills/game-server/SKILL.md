@@ -239,16 +239,17 @@ forgets all of it, along with who was silenced.
   laid over a full-screen game mode (`play--game`, fixed over the page at
   `--z-modal`). A touch screen — `(pointer: coarse)` or the first touch
   pointer — goes straight to game mode behind "tap to play" and drops the
-  second keyboard player. Held upright it turns the whole game sideways by
+  second keyboard player. `/online` does the same once expanded on a touch
+  screen (`online__layout--touch`/`--sideways`, the controller on
+  `ONLINE_CONTROLS[0]`'s tracker, the chat hidden meanwhile; joining the
+  queue expands). Held upright it turns the whole game sideways by
   CSS (`play--sideways`): full screen is asked of `document.documentElement`,
   never of the page element, because a full-screen element gets the
   browser's `transform: none !important`. Phaser's `autoCenter` is off —
   the host centres the canvas (`::ng-deep canvas { inset: 0; margin: auto }`)
   — and the host's `getBoundingClientRect` is swapped while sideways, since
-  Phaser measures the parent through the turn. The expanded `/online`
-  layout should take the same component and `handle.controller(myId)` when
-  the room gets touch support; both layouts must sit above the site header,
-  since an iPhone refuses the Fullscreen API.
+  Phaser measures the parent through the turn. Both layouts sit above the
+  site header, since an iPhone refuses the Fullscreen API.
 
 ## HTTP routes
 

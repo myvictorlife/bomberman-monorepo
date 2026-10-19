@@ -58,6 +58,8 @@
     #layout
     class="online__layout"
     [class.online__layout--expanded]="expanded()"
+    [class.online__layout--touch]="touch()"
+    [class.online__layout--sideways]="sideways()"
     data-testid="online-layout"
   >
     <aside class="online__rank" data-testid="online-ranking">
@@ -181,6 +183,19 @@
             }
           </div>
 
+          @if (expanded() && touch() && portrait()) {
+          <button
+            type="button"
+            class="online__expand online__expand--turn"
+            [attr.aria-label]="(upright() ? 'PLAY.SIDEWAYS' : 'PLAY.UPRIGHT') | translate"
+            [title]="(upright() ? 'PLAY.SIDEWAYS' : 'PLAY.UPRIGHT') | translate"
+            [attr.aria-pressed]="upright()"
+            (click)="toggleUpright()"
+            data-testid="online-turn"
+          >
+            <span aria-hidden="true">🔄</span>
+          </button>
+          }
           <button
             type="button"
             class="online__expand"
@@ -200,6 +215,19 @@
           </button>
         </div>
       </div>
+      @if (pad()) {
+      <lib-virtual-gamepad
+        class="online__gamepad"
+        [ability]="!!me()?.mount"
+        [detonate]="!!me()?.remote"
+        [turned]="sideways()"
+        (direction)="onPadDirection($event)"
+        (bombPress)="padBomb()"
+        (abilityPress)="padAbility()"
+        (detonatePress)="padDetonate()"
+        data-testid="online-gamepad"
+      />
+      }
     </div>
 
     <aside class="online__side">

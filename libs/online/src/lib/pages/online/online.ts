@@ -19,6 +19,7 @@ import { environment } from '@libs/environment';
 import {
   ARROW_KEYS,
   ArenaHandle,
+  PlayerController,
   colorSlot,
   ControlScheme,
   formatClock,
@@ -44,9 +45,11 @@ import {
 import {
   AlertComponent,
   ButtonComponent,
+  PadDirection,
   PodiumComponent,
   PodiumPainter,
   SpinnerComponent,
+  VirtualGamepadComponent,
 } from '@libs/ui';
 import { TranslatePipe } from '@ngx-translate/core';
 import { OnlineStore } from '../../+state/online.store';
@@ -122,6 +125,44 @@ export function roundKey(frame: FrameMessage): string {
  * confirmed) is what lets the server count your wins, lets you write in the
  * chat, and notices when you come back.
  */
+
+/** Where the "play upright" choice is kept — the same key as `/play`, so it is one choice. */
+const UPRIGHT_KEY = 'play.upright';
+
+function readUpright(): boolean {
+  try {
+    return localStorage.getItem(UPRIGHT_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
+/** The element's screen rectangle with width and height swapped: its own size, a quarter turn later. */
+function turnedRect(element: HTMLElement): DOMRect {
+  const rect = HTMLElement.prototype.getBoundingClientRect.call(element);
+  return new DOMRect(rect.x, rect.y, rect.height, rect.width);
+}
+
+/** `screen.orientation.lock` where it exists; a refusal is nothing to report. */
+function lockOrientation(orientation: 'landscape'): void {
+  const screenOrientation = globalThis.screen?.orientation as
+    | { lock?: (o: string) => Promise<void> }
+    | undefined;
+  try {
+    screenOrientation?.lock?.(orientation).catch(() => undefined);
+  } catch {
+    // Not a thing on this browser.
+  }
+}
+
+function unlockOrientation(): void {
+  try {
+    globalThis.screen?.orientation?.unlock?.();
+  } catch {
+    // Nothing was locked.
+  }
+}
+
 @Component({
   selector: 'lib-online',
   imports: [
@@ -137,6 +178,7 @@ export function roundKey(frame: FrameMessage): string {
     RulesPanelComponent,
     ChatPanelComponent,
     PodiumComponent,
+    VirtualGamepadComponent,
   ],
   templateUrl: './online.html',
   styleUrls: ['./online.scss'],
@@ -145,6 +187,7 @@ export function roundKey(frame: FrameMessage): string {
     '(document:keydown.escape)': 'collapse()',
     '(document:fullscreenchange)': 'onFullscreenChange()',
     '(document:visibilitychange)': 'onBackInView()',
+    '(document:pointerdown)': 'onPointerDown($event)',
     '(window:online)': 'onBackInView()',
   },
 })
@@ -208,6 +251,25 @@ export class Online {
   readonly watching = signal(false);
   /** The arena fills the screen with the chat docked beside it. */
   readonly expanded = signal(false);
+  /** A touch screen: a coarse pointer at load, or the first touch. Brings the on-screen controller. */
+  readonly touch = signal(false);
+  /** The screen is taller than wide: a phone held upright. */
+  readonly portrait = signal(false);
+  /** The player asked to play upright; the same choice as on `/play`. */
+  readonly upright = signal(readUpright());
+  /** Expanded on a touch screen held upright: the whole room turns a quarter clockwise, like `/play`. */
+  readonly sideways = computed(
+    () => this.expanded() && this.touch() && this.portrait() && !this.upright(),
+  );
+  /** The on-screen controller: with the room filling a touch screen. */
+  readonly pad = computed(() => this.expanded() && this.touch());
+  /** My stats this round, for which controller buttons are worth showing. */
+  readonly me = computed(() => {
+    const id = this.myId();
+    return this.store.hud()?.players.find((p) => p.id === id) ?? null;
+  });
+  private padHeld: PadDirection | null = null;
+  private unwatchOrientation: (() => void) | null = null;
   /** Ticks while the page is open, so the countdown re-renders each second. */
   private readonly clock = signal(Date.now());
 
@@ -275,6 +337,20 @@ export class Online {
   private readonly analytics = inject(ANALYTICS);
 
   constructor() {
+    if (typeof window !== 'undefined') {
+      this.watchOrientation();
+      if (window.matchMedia?.('(pointer: coarse)').matches)
+        this.touch.set(true);
+    }
+    // Phaser fits the canvas to the host's `getBoundingClientRect`, which a
+    // turned ancestor reports with width and height swapped: give it the
+    // host's own terms while the room is sideways (as `/play` does).
+    effect(() => {
+      const host = this.arena().nativeElement;
+      const own = host as { getBoundingClientRect?: () => DOMRect };
+      if (this.sideways()) own.getBoundingClientRect = () => turnedRect(host);
+      else delete own.getBoundingClientRect;
+    });
     // One `round_end` per round the room decides, whether we played or watched.
     let lastPhase = this.phase();
     effect(() => {
@@ -351,6 +427,7 @@ export class Online {
       stop();
       clearInterval(timer);
       globalThis.removeEventListener?.('focus', onFocus);
+      this.unwatchOrientation?.();
       this.handle?.destroy();
       // Leave the room with the page: the store outlives it (route providers
       // are kept by the router), and a watcher who left should not count.
@@ -361,6 +438,64 @@ export class Online {
   join(): void {
     this.store.joinQueue(this.characterId());
     this.analytics.logEvent('queue_join', { character: this.characterId() });
+    // On a touch screen the round is played full screen with the controller;
+    // this tap is the gesture the browser wants for it.
+    if (this.touch() && !this.expanded()) this.expand();
+  }
+
+  /** A finger on the page, anywhere: this is a touch screen after all. */
+  onPointerDown(event: PointerEvent): void {
+    if (event.pointerType === 'touch' && !this.touch()) this.touch.set(true);
+  }
+
+  /** Upright or sideways on a phone held upright; the choice sticks, shared with `/play`. */
+  toggleUpright(): void {
+    this.upright.set(!this.upright());
+    this.releasePad();
+    try {
+      localStorage.setItem(UPRIGHT_KEY, this.upright() ? '1' : '0');
+    } catch {
+      // Private mode, or storage blocked: the choice lasts the visit.
+    }
+  }
+
+  /** The pad points somewhere new: let go of the old direction, hold the new one. */
+  onPadDirection(direction: PadDirection | null): void {
+    this.releasePad();
+    this.padHeld = direction;
+    if (direction) this.controller()?.press(direction);
+  }
+
+  padBomb(): void {
+    this.controller()?.bomb();
+  }
+
+  padAbility(): void {
+    this.controller()?.ability();
+  }
+
+  padDetonate(): void {
+    this.controller()?.detonate();
+  }
+
+  /** My hands on the round: the same tracker the first keyboard scheme feeds. */
+  private controller(): PlayerController | null {
+    const scheme = ONLINE_CONTROLS[0];
+    return scheme ? (this.handle?.controller(scheme.playerId) ?? null) : null;
+  }
+
+  private releasePad(): void {
+    if (this.padHeld) this.controller()?.release(this.padHeld);
+    this.padHeld = null;
+  }
+
+  private watchOrientation(): void {
+    const query = window.matchMedia?.('(orientation: portrait)');
+    if (!query) return;
+    const sync = () => this.portrait.set(query.matches);
+    sync();
+    query.addEventListener?.('change', sync);
+    this.unwatchOrientation = () => query.removeEventListener?.('change', sync);
   }
 
   /** Plays without an account: the server names us, then we queue. */
@@ -426,14 +561,18 @@ export class Online {
    */
   expand(): void {
     this.expanded.set(true);
-    const element = this.layout().nativeElement;
-    element.requestFullscreen?.()?.catch(() => undefined);
+    // The document, not the layout: a full-screen element gets the browser's
+    // own `transform: none !important`, which would undo the sideways turn.
+    const fullscreen = document.documentElement.requestFullscreen?.();
+    fullscreen?.then(() => lockOrientation('landscape')).catch(() => undefined);
   }
 
   /** Back to the page. Also what Escape does — the browser's own exit is caught below. */
   collapse(): void {
     if (!this.expanded()) return;
     this.expanded.set(false);
+    this.releasePad();
+    unlockOrientation();
     if (document.fullscreenElement)
       document.exitFullscreen?.()?.catch(() => undefined);
   }

@@ -24,6 +24,16 @@ import { Online, roundKey, savedGuest } from './online';
 
 const flush = () => new Promise((r) => setTimeout(r, 0));
 
+/** My hands on the round, as the arena hands them out for the on-screen controller. */
+const padController = {
+  press: vi.fn(),
+  release: vi.fn(),
+  clear: vi.fn(),
+  bomb: vi.fn(),
+  ability: vi.fn(),
+  detonate: vi.fn(),
+};
+
 /** What the page tells analytics. */
 const analytics = {
   initialize: vi.fn(),
@@ -114,7 +124,7 @@ describe('Online', () => {
             restart: vi.fn(),
             setMuted: vi.fn(),
             setMusic: vi.fn(),
-            controller: vi.fn(),
+            controller: vi.fn(() => padController),
           };
           handles.push(handle);
           return handle;
@@ -258,6 +268,45 @@ describe('Online', () => {
       expect(spectator.component.ranked()).toBe(false);
       expect(spectator.query('[data-testid="online-guest-won"]')).toExist();
     });
+  });
+
+  it('on a touch screen, joining fills the screen with the controller, which drives my hands', async () => {
+    await render();
+    expect(spectator.query('[data-testid="online-gamepad"]')).toBeNull();
+    document.dispatchEvent(
+      Object.assign(new MouseEvent('pointerdown', { bubbles: true }), {
+        pointerType: 'touch',
+      }),
+    );
+    spectator.detectChanges();
+    expect(spectator.component.touch()).toBe(true);
+    expect(spectator.component.expanded()).toBe(false);
+
+    const requestFullscreen = vi.fn().mockResolvedValue(undefined);
+    document.documentElement.requestFullscreen = requestFullscreen;
+    spectator.component.join();
+    spectator.detectChanges();
+    expect(spectator.component.expanded()).toBe(true);
+    expect(requestFullscreen).toHaveBeenCalled();
+    expect(spectator.query('[data-testid="online-layout"]')).toHaveClass(
+      'online__layout--touch',
+    );
+    expect(spectator.query('[data-testid="online-gamepad"]')).toExist();
+
+    // A round on: the pad presses go to my first keyboard scheme's tracker.
+    connection.push(SERVER_MESSAGE.frame, frame(['a', 'b']));
+    await flush();
+    spectator.component.onPadDirection('up');
+    expect(padController.press).toHaveBeenCalledWith('up');
+    spectator.component.onPadDirection(null);
+    expect(padController.release).toHaveBeenCalledWith('up');
+    spectator.component.padBomb();
+    expect(padController.bomb).toHaveBeenCalled();
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    spectator.detectChanges();
+    expect(spectator.component.expanded()).toBe(false);
+    expect(spectator.query('[data-testid="online-gamepad"]')).toBeNull();
   });
 
   it('reconnects on its own when the server drops, sooner when the tab comes back or the button is pressed', async () => {
@@ -743,8 +792,8 @@ describe('Online', () => {
       '[data-testid="online-layout"]',
     ) as HTMLElement;
     const request = vi.fn(async () => undefined);
-    (layout as HTMLElement & { requestFullscreen: unknown }).requestFullscreen =
-      request;
+    // Full screen is asked of the document, so a sideways turn of the layout survives it.
+    document.documentElement.requestFullscreen = request;
     const exit = vi.fn(async () => undefined);
     document.exitFullscreen = exit;
     // jsdom has no Fullscreen API: stand one in for the test.

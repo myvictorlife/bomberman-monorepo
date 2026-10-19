@@ -156,6 +156,15 @@ config file. Ordinary app-level additions are minor.
   hands drive player 1, as online. `PLAY.CONTROLS_P1/P2` became
   `PLAY.KEYS_WASD_HINT/KEYS_ARROWS_HINT`.
 
+- **Phones play online too.** `/online` now has what `/play` had: on a
+  touch screen, joining the queue fills the screen with the room and the
+  on-screen controller (`lib-virtual-gamepad`, driving the first keyboard
+  scheme's tracker through `handle.controller`), held upright the room
+  turns sideways with 🔄 to play upright (the same remembered choice as
+  `/play`), and full screen is asked of the document so the turn survives
+  it. The chat steps aside while the screen is the arena; collapsing
+  brings it back.
+
 - **The online room reconnects on its own.** A dropped socket no longer
   ends in "the connection fell" and a button: the store tries again after
   a pause that doubles from 1 s to 30 s (with jitter), at once when the tab
