@@ -1,0 +1,199 @@
+.sounds__stage {
+  display: grid;
+  gap: var(--space-6);
+  justify-items: center;
+  width: 100%;
+  padding: var(--space-8) var(--space-4);
+}
+
+/* The theme's big play button: the one control that matters on the stage. */
+.sounds__theme {
+  display: grid;
+  gap: var(--space-1);
+  justify-items: center;
+  min-width: 14rem;
+  padding: var(--space-6) var(--space-8);
+  border: 1px solid rgb(255 255 255 / 0.14);
+  border-radius: var(--radius-xl);
+  background: rgb(255 255 255 / 0.05);
+  color: #f3f5f9;
+  cursor: pointer;
+  transition:
+    background 200ms ease,
+    border-color 200ms ease;
+
+  &:hover {
+    background: rgb(255 255 255 / 0.09);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-info);
+    outline-offset: 2px;
+  }
+}
+
+.sounds__theme--on {
+  border-color: color-mix(in srgb, var(--color-warning) 60%, transparent);
+  box-shadow: 0 0 40px -10px var(--color-warning);
+}
+
+.sounds__theme-icon {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.sounds__theme-name {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+}
+
+.sounds__theme-meta {
+  font-size: var(--font-size-xs);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgb(243 245 249 / 0.6);
+}
+
+/* Eight bars, one per bar of the loop, that dance while it plays. */
+.sounds__bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.35rem;
+  height: 2.5rem;
+}
+
+.sounds__bar {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 0.25rem;
+  background: var(--color-warning);
+  opacity: 0.35;
+}
+
+.sounds__bar--on {
+  opacity: 1;
+  animation: sounds-bounce 0.8s ease-in-out infinite alternate;
+}
+
+@keyframes sounds-bounce {
+  from {
+    height: 0.5rem;
+  }
+  to {
+    height: 2.5rem;
+  }
+}
+
+.sounds__fact {
+  display: grid;
+  gap: var(--space-1);
+  padding-left: var(--space-3);
+  border-left: 3px solid var(--color-warning);
+  color: var(--color-text-primary);
+}
+
+.sounds__label {
+  font-size: var(--font-size-xs);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
+.sounds__muted {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.sounds__grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.sounds__moments {
+  display: grid;
+  gap: var(--space-4);
+
+  @media (min-width: 46rem) {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.sounds__moment {
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg-surface);
+}
+
+.sounds__moment-title {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
+.sounds__lines {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+
+/* A spoken line: a chip you press to hear it. */
+.sounds__line {
+  padding: 0.35rem 0.8rem;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-full);
+  background: var(--color-bg-base);
+  color: var(--color-text-primary);
+  font: inherit;
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+
+  &:hover {
+    border-color: var(--color-info);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-info);
+    outline-offset: 2px;
+  }
+}
+
+.sounds__notes {
+  display: grid;
+  gap: var(--space-3);
+
+  @media (min-width: 46rem) {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sounds__bar--on {
+    animation: none;
+    height: 1.5rem;
+  }
+}
+
+.sounds__pointer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.sounds__select {
+  max-width: 100%;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-base);
+  color: var(--color-text-primary);
+  font: inherit;
+  font-size: var(--font-size-sm);
+}

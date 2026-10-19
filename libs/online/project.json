@@ -1,0 +1,28 @@
+{
+  "name": "online",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/online/src",
+  "prefix": "lib",
+  "projectType": "library",
+  "tags": ["scope:online"],
+  "targets": {
+    "test": {
+      "executor": "@angular/build:unit-test",
+      "options": {
+        "coverageInclude": ["libs/online/src/**/*.ts"],
+        "coverageExclude": [
+          "libs/online/src/**/index.ts",
+          "libs/online/src/**/*.routes.ts",
+          "libs/online/src/**/*.spec.ts",
+          "libs/online/src/**/testing/**"
+        ],
+        "coverageThresholds": {
+          "statements": 95,
+          "branches": 90,
+          "functions": 90,
+          "lines": 95
+        }
+      }
+    }
+  }
+}

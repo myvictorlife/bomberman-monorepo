@@ -1,0 +1,164 @@
+.arenas {
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: var(--space-6) var(--space-4) var(--space-10);
+}
+
+.arenas__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.arenas__title {
+  color: var(--color-text-primary);
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-bold);
+}
+
+.arenas__lead {
+  margin-top: var(--space-1);
+  max-width: 40rem;
+  color: var(--color-text-secondary);
+}
+
+.arenas__grid {
+  display: grid;
+  gap: var(--space-6);
+  margin-top: var(--space-8);
+
+  @media (min-width: 900px) {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* One card per arena: the picture on top, the sheet below. The accent is the
+   theme's own colour, so the card already hints at the place. */
+.arena {
+  --arena-accent: var(--color-warning);
+
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  background: var(--color-bg-surface);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+  transition:
+    border-color 200ms ease,
+    box-shadow 200ms ease,
+    transform 200ms ease;
+
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-lg);
+  }
+}
+
+.arena--selected {
+  border-color: color-mix(in srgb, var(--arena-accent) 60%, transparent);
+  box-shadow:
+    var(--shadow-card),
+    0 0 0 1px color-mix(in srgb, var(--arena-accent) 35%, transparent),
+    0 24px 50px -30px var(--arena-accent);
+}
+
+.arenas__live {
+  margin-top: var(--space-1);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.arena__stage {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: #0b0d13;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid var(--arena-accent);
+    outline-offset: -2px;
+  }
+}
+
+.arena__preview {
+  display: block;
+  width: 100%;
+  aspect-ratio: 15 / 13;
+}
+
+.arena__body {
+  padding: var(--space-5);
+}
+
+.arena__owner {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--arena-accent);
+}
+
+.arena__name {
+  margin-top: var(--space-1);
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: -0.02em;
+  color: var(--color-text-primary);
+}
+
+.arena__desc {
+  margin-top: var(--space-2);
+  font-size: var(--font-size-sm);
+  line-height: 1.55;
+  color: var(--color-text-secondary);
+}
+
+.arena__moment {
+  display: grid;
+  gap: 0.15rem;
+  margin-top: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border-left: 3px solid var(--arena-accent);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--arena-accent) 8%, transparent);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-sm);
+}
+
+.arena__moment-label {
+  font-size: var(--font-size-xs);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
+.arena__moment-desc {
+  color: var(--color-text-secondary);
+}
+
+.arena__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-5);
+}
+
+.arena__url {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
+.arena__link {
+  color: inherit;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}

@@ -1,0 +1,54 @@
+<section class="items">
+  <header class="items__header">
+    <h1 class="items__title" data-testid="items-title">
+      {{ 'ITEMS.TITLE' | translate }}
+    </h1>
+    <p class="items__lead">{{ 'ITEMS.LEAD' | translate }}</p>
+  </header>
+
+  <ul class="items__grid" role="list">
+    @for (id of items(); track id) {
+    <li
+      class="item"
+      [class.item--selected]="id === selected()"
+      data-testid="item-card"
+      [attr.data-item]="id"
+    >
+      <a
+        [routerLink]="['/items', id]"
+        class="item__stage"
+        (click)="select(id)"
+        [attr.aria-label]="itemKey(id, 'NAME') | translate"
+      >
+        <lib-sprite-tile [paint]="sprite(id)" [size]="128" />
+      </a>
+      <div class="item__body">
+        <h2 class="item__name">{{ itemKey(id, 'NAME') | translate }}</h2>
+        <p class="item__effect">{{ itemKey(id, 'EFFECT') | translate }}</p>
+        <div class="item__actions">
+          <a
+            [routerLink]="['/items', id]"
+            libButton
+            variant="secondary"
+            size="sm"
+            data-testid="item-detail-link"
+          >
+            {{ 'ITEMS.DETAILS' | translate }}
+          </a>
+          <button
+            type="button"
+            libButton
+            variant="secondary"
+            size="sm"
+            (click)="hear(id)"
+            data-testid="item-hear"
+          >
+            <span aria-hidden="true">🔊</span> {{ 'ITEMS.PLAY_SOUND' | translate
+            }}
+          </button>
+        </div>
+      </div>
+    </li>
+    }
+  </ul>
+</section>

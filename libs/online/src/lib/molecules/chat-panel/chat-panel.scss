@@ -1,0 +1,183 @@
+:host {
+  display: block;
+  min-height: 0;
+}
+
+/* The host takes the height so the section inside can fill it. */
+:host(.dock) {
+  height: 100%;
+}
+
+.chat {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  color: var(--color-text-primary);
+}
+
+.chat__title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+}
+
+.chat__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  height: 16rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: var(--space-1);
+}
+
+.chat__line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  overflow-wrap: anywhere;
+}
+
+.chat__line--me {
+  background: var(--color-brand-subtle);
+}
+
+.chat__line--event {
+  justify-content: center;
+  color: var(--color-text-secondary);
+  font-style: italic;
+}
+
+.chat__name {
+  font-weight: var(--font-weight-semibold);
+}
+
+.chat__role {
+  padding: 0 var(--space-1);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-base);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-xs);
+  text-transform: uppercase;
+}
+
+.chat__role--playing {
+  color: var(--color-success);
+}
+
+.chat__role--queued {
+  color: var(--color-brand);
+}
+
+.chat__text {
+  flex-basis: 100%;
+}
+
+.chat__tools {
+  display: inline-flex;
+  gap: var(--space-1);
+  margin-left: auto;
+}
+
+.chat__tool {
+  padding: 0 var(--space-1);
+  border: 0;
+  background: none;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+
+  &:hover,
+  &:focus-visible {
+    color: var(--color-danger);
+  }
+}
+
+.chat__empty,
+.chat__hint,
+.chat__count {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.chat__count {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.chat__reactions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+.chat__reaction {
+  min-width: 2.5rem;
+  min-height: 2.5rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-base);
+  font-size: 1.25rem;
+  cursor: pointer;
+  transition: transform 120ms ease;
+
+  &:hover:not(:disabled) {
+    transform: scale(1.12);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-brand);
+    outline-offset: 1px;
+  }
+}
+
+.chat__form {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.chat__input {
+  flex: 1;
+  min-width: 0;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-base);
+  color: var(--color-text-primary);
+  font: inherit;
+  font-size: var(--font-size-md, 1rem);
+
+  &:focus-visible {
+    outline: 2px solid var(--color-brand);
+    outline-offset: 1px;
+  }
+}
+
+.chat__error {
+  color: var(--color-danger);
+  font-size: var(--font-size-sm);
+}
+
+/* Docked beside the arena: the list takes the height the host gives, the
+   newest line sits at the bottom and older ones climb away from it. */
+.chat--dock {
+  height: 100%;
+  min-height: 0;
+
+  .chat__list {
+    flex: 1;
+    height: auto;
+    min-height: 0;
+
+    > :first-child {
+      margin-top: auto;
+    }
+  }
+}

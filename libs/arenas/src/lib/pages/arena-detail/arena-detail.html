@@ -1,0 +1,96 @@
+<lib-showcase
+  [eyebrow]="mapKey('OWNER') | translate"
+  [title]="mapKey('NAME') | translate"
+  [lead]="mapKey('DESC') | translate"
+  [style.--arena-accent]="accent"
+>
+  <a
+    showcase-actions
+    routerLink="/arenas"
+    libButton
+    variant="secondary"
+    size="sm"
+  >
+    {{ 'ARENAS.BACK' | translate }}
+  </a>
+  <a
+    showcase-actions
+    routerLink="/play"
+    [queryParams]="{ map: id }"
+    libButton
+    variant="primary"
+    size="sm"
+    data-testid="arena-detail-play"
+  >
+    {{ 'ARENAS.PLAY_HERE' | translate }}
+  </a>
+
+  <canvas
+    #preview
+    showcase-stage
+    class="detail__preview"
+    [attr.data-video]="'arena:' + id"
+    role="img"
+    [attr.aria-label]="mapKey('NAME') | translate"
+    data-testid="arena-detail-preview"
+  ></canvas>
+
+  <div showcase-panel class="detail__panel">
+    <div class="detail__fact">
+      <span class="detail__label">{{ 'ARENAS.MOMENT' | translate }}</span>
+      <strong>{{ mapKey('MOMENT') | translate }}</strong>
+      <span class="detail__muted">{{ mapKey('MOMENT_DESC') | translate }}</span>
+    </div>
+    <div class="detail__fact">
+      <span class="detail__label">{{ 'ARENAS.LINK' | translate }}</span>
+      <code class="detail__url">/play?map={{ id }}</code>
+      <span class="detail__muted">{{ 'ARENAS.LINK_HINT' | translate }}</span>
+    </div>
+    <div class="detail__fact">
+      <span class="detail__label">{{ 'ARENAS.OTHERS' | translate }}</span>
+      <div class="detail__others">
+        @for (other of others; track other) {
+        <a
+          [routerLink]="['/arenas', other]"
+          libButton
+          variant="secondary"
+          size="sm"
+          data-testid="arena-detail-other"
+        >
+          {{ mapKey('NAME', other) | translate }}
+        </a>
+        }
+      </div>
+    </div>
+  </div>
+
+  <lib-showcase-section
+    [title]="'ARENAS.PIECES' | translate"
+    [lead]="'ARENAS.PIECES_LEAD' | translate"
+  >
+    @for (size of sizes; track size.px) {
+    <div class="detail__tiles">
+      @for (piece of pieces; track piece.key) {
+      <lib-sprite-tile
+        [paint]="tileOf(piece.key)"
+        [size]="size.px"
+        [label]="(piece.nameKey | translate) + ' · ' + (size.labelKey | translate)"
+      />
+      }
+    </div>
+    }
+  </lib-showcase-section>
+
+  <lib-showcase-section [title]="'ARENAS.NOTES' | translate">
+    <div class="detail__notes">
+      @for (note of notes; track note; let i = $index) {
+      <lib-showcase-note [title]="note + '_TITLE' | translate"
+        >{{ note | translate }}</lib-showcase-note
+      >
+      }
+      <lib-showcase-note [title]="mapKey('MOMENT') | translate" tone="warning"
+        >{{ mapKey('MOMENT_DESC') | translate }}</lib-showcase-note
+      >
+    </div>
+  </lib-showcase-section>
+</lib-showcase>

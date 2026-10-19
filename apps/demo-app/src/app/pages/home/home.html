@@ -1,233 +1,317 @@
-<main>
-  <!-- Hero -->
-  <section
-    class="relative overflow-hidden border-b border-[var(--color-border)] bg-gradient-to-b from-[var(--color-bg-surface)] to-[var(--color-bg-base)]"
-  >
+<main class="home">
+  <!-- Hero: the pitch on the left, the game itself on the right -->
+  <section class="home-hero">
     <div
-      class="max-w-5xl mx-auto px-4 sm:px-6 py-16 sm:py-24 lg:py-28 text-center"
+      class="home-wrap grid lg:grid-cols-[1fr_1.05fr] gap-12 lg:gap-12 items-center py-16 sm:py-20 lg:py-24"
     >
-      <h1
-        class="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-[var(--color-text-primary)] max-w-3xl mx-auto leading-[1.1]"
-      >
-        {{ 'HOME.HERO_TITLE' | translate }}
-      </h1>
-      <p
-        class="mt-5 text-lg sm:text-xl text-[var(--color-text-secondary)] max-w-2xl mx-auto leading-relaxed"
-      >
-        {{ 'HOME.HERO_SUBTITLE' | translate }}
-      </p>
-      <div
-        class="mt-8 sm:mt-10 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4"
-      >
-        <a
-          routerLink="/profile"
-          libButton
-          variant="primary"
-          class="w-full sm:w-auto"
+      <div class="text-center lg:text-left">
+        <span class="home-pill home-pill--accent"
+          >{{ 'HOME.HERO_BADGE' | translate }}</span
         >
-          {{ 'HOME.CTA_START' | translate }}
-        </a>
-        <a
-          href="#como-funciona"
-          libButton
-          variant="secondary"
-          class="w-full sm:w-auto"
+        <h1 class="home-hero__title mt-6">
+          {{ 'HOME.HERO_TITLE' | translate }}
+        </h1>
+        <p class="home-hero__lead mt-6">
+          {{ 'HOME.HERO_SUBTITLE' | translate }}
+        </p>
+        <div
+          class="mt-9 flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3"
         >
-          {{ 'HOME.CTA_HOW' | translate }}
-        </a>
+          <a
+            routerLink="/online"
+            libButton
+            variant="primary"
+            size="lg"
+            class="home-cta w-full sm:w-auto"
+            data-testid="home-online"
+          >
+            {{ 'HOME.CTA_ONLINE' | translate }}
+          </a>
+          <a
+            routerLink="/play"
+            libButton
+            variant="secondary"
+            size="lg"
+            class="home-ghost w-full sm:w-auto"
+            data-testid="home-play"
+          >
+            {{ 'HOME.CTA_LOCAL' | translate }}
+          </a>
+          <a href="#como-jogar" class="home-hero__how"
+            >{{ 'HOME.CTA_HOW' | translate }}</a
+          >
+        </div>
+        <div class="mt-5 flex justify-center lg:justify-start">
+          <app-presence />
+        </div>
+        <ul class="home-facts mt-9" role="list">
+          @for (fact of facts; track fact) {
+          <li>{{ fact | translate }}</li>
+          }
+        </ul>
       </div>
-      <p class="mt-6 text-sm text-[var(--color-text-muted)]">
-        {{ 'HOME.ENV_LABEL' | translate }}:
-        <span class="font-medium text-[var(--color-text-secondary)]"
-          >{{ environmentName() }}</span
+
+      <div class="home-stage-wrap">
+        <div class="home-stage">
+          <canvas
+            #modeVideo
+            data-video="hero"
+            class="home-stage__preview"
+            role="img"
+            [attr.aria-label]="'HOME.PREVIEW_ALT' | translate"
+          ></canvas>
+        </div>
+        @for (key of floaters; track key; let i = $index) {
+        <canvas
+          #sprite
+          class="home-floater"
+          [class]="'home-floater home-floater--' + (i + 1)"
+          [attr.data-sprites]="key"
+          aria-hidden="true"
+        ></canvas>
+        }
+      </div>
+    </div>
+
+    <!-- Ticker -->
+    <div class="home-ticker" aria-hidden="true">
+      <div class="home-ticker__track">
+        @for (pass of [0, 1]; track pass) { @for (item of ticker; track item) {
+        <span class="home-ticker__item">{{ item | translate }}</span>
+        } }
+      </div>
+    </div>
+  </section>
+
+  <!-- Game modes -->
+  <section class="home-section">
+    <div class="home-wrap">
+      <p class="home-eyebrow">{{ 'HOME.MODES_EYEBROW' | translate }}</p>
+      <h2 class="home-h2">{{ 'HOME.MODES_TITLE' | translate }}</h2>
+      <p class="home-sub">{{ 'HOME.MODES_LIVE' | translate }}</p>
+      <ul class="mt-10 grid md:grid-cols-3 gap-5" role="list">
+        @for (mode of modes; track mode.titleKey) {
+        <li
+          class="home-card home-mode"
+          [class.home-card--live]="mode.link"
+          [class.home-card--soon]="!mode.link"
         >
-      </p>
-    </div>
-  </section>
-
-  <!-- Value proposition -->
-  <section class="py-16 sm:py-20 bg-[var(--color-bg-base)]">
-    <div class="max-w-5xl mx-auto px-4 sm:px-6">
-      <h2
-        class="text-2xl sm:text-3xl font-bold text-[var(--color-text-primary)] text-center"
-      >
-        {{ 'HOME.VALUE_TITLE' | translate }}
-      </h2>
-      <p
-        class="mt-3 text-[var(--color-text-secondary)] text-center max-w-2xl mx-auto"
-      >
-        {{ 'HOME.VALUE_SUBTITLE' | translate }}
-      </p>
-      <ul
-        class="mt-12 grid sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8"
-        role="list"
-      >
-        @for (item of valueProps; track item.step; let last = $last) {
-        <li [class]="last ? 'sm:col-span-2 lg:col-span-1' : ''">
-          <lib-card padding="lg" class="h-full">
-            <div class="flex items-center gap-3">
-              <span
-                class="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--color-brand)] text-[var(--color-text-on-brand)] font-bold text-sm"
-                aria-hidden="true"
-                >{{ item.step }}</span
-              >
-              <h3
-                class="text-lg font-semibold text-[var(--color-text-primary)]"
-              >
-                {{ item.titleKey | translate }}
-              </h3>
-            </div>
-            <p
-              class="mt-3 text-[var(--color-text-secondary)] text-sm leading-relaxed"
-            >
-              {{ item.descKey | translate }}
-            </p>
-          </lib-card>
-        </li>
-        }
-      </ul>
-    </div>
-  </section>
-
-  <!-- Built with -->
-  <section
-    class="py-12 sm:py-16 bg-[var(--color-bg-surface)] border-t border-[var(--color-border)]"
-  >
-    <div class="max-w-5xl mx-auto px-4 sm:px-6">
-      <h2
-        class="text-xl sm:text-2xl font-bold text-[var(--color-text-primary)] text-center"
-      >
-        {{ 'HOME.STACK_TITLE' | translate }}
-      </h2>
-      <ul
-        class="mt-6 flex flex-wrap items-center justify-center gap-2 sm:gap-3"
-        role="list"
-      >
-        @for (item of stack; track item.labelKey) {
-        <li>
-          <lib-badge
-            tone="neutral"
-            [variant]="item.highlight ? 'solid' : 'soft'"
-            [pill]="true"
-            >{{ item.labelKey | translate }}</lib-badge
-          >
-        </li>
-        }
-      </ul>
-    </div>
-  </section>
-
-  <!-- How it works -->
-  <section
-    id="como-funciona"
-    class="py-16 sm:py-20 bg-[var(--color-bg-surface)] border-t border-[var(--color-border)]"
-  >
-    <div class="max-w-5xl mx-auto px-4 sm:px-6">
-      <h2
-        class="text-2xl sm:text-3xl font-bold text-[var(--color-text-primary)] text-center"
-      >
-        {{ 'HOME.HOW_TITLE' | translate }}
-      </h2>
-      <p
-        class="mt-3 text-[var(--color-text-secondary)] text-center max-w-2xl mx-auto"
-      >
-        {{ 'HOME.HOW_SUBTITLE' | translate }}
-      </p>
-      <ol class="mt-12 space-y-8 sm:space-y-10" role="list">
-        @for (item of howSteps; track item.step) {
-        <li class="flex gap-4 sm:gap-6">
-          <span
-            class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--color-brand)] text-[var(--color-text-on-brand)] text-sm font-semibold"
-            aria-hidden="true"
-            >{{ item.step }}</span
-          >
-          <div>
-            <h3 class="text-lg font-semibold text-[var(--color-text-primary)]">
-              {{ item.titleKey | translate }}
-            </h3>
-            <p
-              class="mt-1 text-[var(--color-text-secondary)] text-sm leading-relaxed"
-            >
-              {{ item.descKey | translate }}
-            </p>
+          <div class="home-mode__screen">
+            <canvas
+              #modeVideo
+              [attr.data-video]="mode.video"
+              role="img"
+              [attr.aria-label]="mode.titleKey + '_VIDEO' | translate"
+              data-testid="home-mode-video"
+            ></canvas>
           </div>
+          <div class="flex items-start justify-between gap-3">
+            <span class="home-card__icon" aria-hidden="true">
+              @switch (mode.icon) { @case ('keyboard') {
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+              >
+                <rect x="2.5" y="6" width="19" height="12" rx="2.5" />
+                <path
+                  d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M8 14h8"
+                  stroke-linecap="round"
+                />
+              </svg>
+              } @case ('globe') {
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+              >
+                <circle cx="12" cy="12" r="9" />
+                <path
+                  d="M3 12h18M12 3c3 3.5 3 14.5 0 18M12 3c-3 3.5-3 14.5 0 18"
+                />
+              </svg>
+              } @case ('trophy') {
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+              >
+                <path d="M7 4h10v5a5 5 0 0 1-10 0z" />
+                <path
+                  d="M7 6H4a3 3 0 0 0 3 4M17 6h3a3 3 0 0 1-3 4M12 14v3M8 20h8"
+                  stroke-linecap="round"
+                />
+              </svg>
+              } }
+            </span>
+            <span class="home-pill" [class.home-pill--live]="mode.link">
+              {{ (mode.link ? 'HOME.AVAILABLE' : 'HOME.SOON') | translate }}
+            </span>
+          </div>
+          <h3 class="home-card__title mt-5">{{ mode.titleKey | translate }}</h3>
+          <p class="home-card__text mt-2">{{ mode.descKey | translate }}</p>
+          @if (mode.link; as link) {
+          <a
+            [routerLink]="link"
+            libButton
+            variant="primary"
+            size="md"
+            class="home-cta mt-6"
+          >
+            {{ 'HOME.CTA_PLAY' | translate }}
+          </a>
+          }
+        </li>
+        }
+      </ul>
+    </div>
+  </section>
+
+  <!-- The top three online, on a podium. Hidden when there is no server to ask. -->
+  <section
+    class="home-section home-section--alt"
+    [hidden]="podiumStatus() === 'off'"
+    data-testid="home-podium"
+    [attr.data-status]="podiumStatus()"
+  >
+    <div class="home-wrap">
+      <p class="home-eyebrow">{{ 'HOME.PODIUM_EYEBROW' | translate }}</p>
+      <h2 class="home-h2">{{ 'HOME.PODIUM_TITLE' | translate }}</h2>
+      <p class="home-sub">{{ 'HOME.PODIUM_LEAD' | translate }}</p>
+      <app-podium />
+    </div>
+  </section>
+
+  <!-- How to play -->
+  <section id="como-jogar" class="home-section home-section--alt">
+    <div class="home-wrap">
+      <p class="home-eyebrow">{{ 'HOME.HOW_EYEBROW' | translate }}</p>
+      <h2 class="home-h2">{{ 'HOME.HOW_TITLE' | translate }}</h2>
+      <p class="home-sub">{{ 'HOME.HOW_SUBTITLE' | translate }}</p>
+      <ol class="mt-10 grid sm:grid-cols-2 lg:grid-cols-4 gap-5" role="list">
+        @for (rule of rules; track rule.step) {
+        <li class="home-card home-rule">
+          <div class="home-rule__art">
+            <canvas
+              #sprite
+              [attr.data-sprites]="rule.sprites.join(',')"
+              aria-hidden="true"
+            ></canvas>
+            <span class="home-rule__step" aria-hidden="true"
+              >{{ rule.step }}</span
+            >
+          </div>
+          <h3 class="home-card__title mt-5">{{ rule.titleKey | translate }}</h3>
+          <p class="home-card__text mt-2">{{ rule.descKey | translate }}</p>
         </li>
         }
       </ol>
     </div>
   </section>
 
-  <!-- Documentation -->
-  <section
-    class="py-16 sm:py-20 bg-[var(--color-bg-base)] border-t border-[var(--color-border)]"
-  >
-    <div class="max-w-3xl mx-auto px-4 sm:px-6">
-      <h2
-        class="text-2xl sm:text-3xl font-bold text-[var(--color-text-primary)] text-center"
-      >
-        {{ 'HOME.DOCS_TITLE' | translate }}
-      </h2>
-      <p class="mt-3 text-[var(--color-text-secondary)] text-center">
-        {{ 'HOME.DOCS_INTRO' | translate }}
-      </p>
-      <ul
-        class="mt-8 space-y-3 text-sm sm:text-base text-[var(--color-text-secondary)]"
-        role="list"
-      >
-        @for (docKey of docs; track docKey) {
-        <li class="flex items-start gap-2">
-          <span
-            class="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--color-border-strong)]"
-            aria-hidden="true"
-          ></span>
-          <span>{{ docKey | translate }}</span>
-        </li>
-        }
-      </ul>
+  <!-- Power-ups and controls -->
+  <section class="home-section">
+    <div class="home-wrap grid lg:grid-cols-2 gap-12 lg:gap-16">
+      <div>
+        <p class="home-eyebrow home-eyebrow--left">
+          {{ 'HOME.POWERUPS_EYEBROW' | translate }}
+        </p>
+        <h2 class="home-h2 home-h2--left">
+          {{ 'HOME.POWERUPS_TITLE' | translate }}
+        </h2>
+        <ul class="mt-8 space-y-4" role="list">
+          @for (powerUp of powerUps; track powerUp.kind) {
+          <li
+            class="home-card home-powerup"
+            [class]="'home-card home-powerup home-powerup--' + powerUp.kind"
+          >
+            <canvas
+              #sprite
+              class="home-powerup__icon"
+              [attr.data-sprites]="powerUpTexture(powerUp.kind)"
+              aria-hidden="true"
+            ></canvas>
+            <div>
+              <p class="home-card__title">{{ powerUp.titleKey | translate }}</p>
+              <p class="home-card__text mt-1">
+                {{ powerUp.descKey | translate }}
+              </p>
+            </div>
+          </li>
+          }
+        </ul>
+      </div>
+      <div>
+        <p class="home-eyebrow home-eyebrow--left">
+          {{ 'HOME.CONTROLS_EYEBROW' | translate }}
+        </p>
+        <h2 class="home-h2 home-h2--left">
+          {{ 'HOME.CONTROLS_TITLE' | translate }}
+        </h2>
+        <div class="mt-8 grid sm:grid-cols-2 gap-4">
+          @for (scheme of controls; track scheme.player) {
+          <div class="home-card home-keys">
+            <p class="home-card__title">
+              {{ 'PLAY.PLAYER' | translate: { n: scheme.player } }}
+            </p>
+            <div
+              class="home-keys__cluster"
+              role="img"
+              [attr.aria-label]="'HOME.CONTROLS_MOVE' | translate"
+            >
+              @for (row of scheme.rows; track $index) { @for (key of row; track
+              $index) { @if (key) { <kbd class="home-key">{{ key }}</kbd> }
+              @else { <span></span> } } }
+            </div>
+            <p class="home-keys__label">
+              {{ 'HOME.CONTROLS_MOVE' | translate }}
+            </p>
+            <kbd class="home-key home-key--wide"
+              >{{ scheme.bombKey | translate }}</kbd
+            >
+            <p class="home-keys__label">
+              {{ 'HOME.CONTROLS_BOMB' | translate }}
+            </p>
+            <div class="home-keys__pair">
+              <div>
+                <kbd class="home-key">{{ scheme.detonateKey | translate }}</kbd>
+                <p class="home-keys__label">
+                  {{ 'HOME.CONTROLS_DETONATE' | translate }}
+                </p>
+              </div>
+              <div>
+                <kbd class="home-key">{{ scheme.abilityKey | translate }}</kbd>
+                <p class="home-keys__label">
+                  {{ 'HOME.CONTROLS_ABILITY' | translate }}
+                </p>
+              </div>
+            </div>
+          </div>
+          }
+        </div>
+      </div>
     </div>
   </section>
 
-  <!-- CTA -->
-  <section class="home-inverted py-16 sm:py-20">
-    <div class="max-w-3xl mx-auto px-4 sm:px-6 text-center">
-      <h2 class="text-2xl sm:text-3xl font-bold">
-        {{ 'HOME.CTA_FINAL_TITLE' | translate }}
-      </h2>
-      <p class="mt-3 opacity-80">{{ 'HOME.CTA_FINAL_SUBTITLE' | translate }}</p>
-      <div
-        class="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4"
+  <!-- Closing band -->
+  <section class="home-band">
+    <div class="home-wrap py-16 sm:py-20 text-center">
+      <h2 class="home-band__title">{{ 'HOME.CTA_FINAL_TITLE' | translate }}</h2>
+      <p class="home-band__text mt-4">
+        {{ 'HOME.CTA_FINAL_SUBTITLE' | translate }}
+      </p>
+      <a
+        routerLink="/play"
+        libButton
+        variant="primary"
+        size="lg"
+        class="home-band__cta mt-9"
       >
-        <button
-          type="button"
-          libButton
-          variant="primary"
-          class="w-full sm:w-auto"
-          (click)="viewProfile()"
-        >
-          {{ 'HOME.CTA_VIEW_PROFILE' | translate }}
-        </button>
-        <a
-          routerLink="/design"
-          libButton
-          variant="secondary"
-          class="w-full sm:w-auto"
-        >
-          {{ 'HOME.CTA_DESIGN' | translate }}
-        </a>
-        @if (repoUrl) {
-        <a
-          [href]="repoUrl"
-          target="_blank"
-          rel="noopener noreferrer"
-          libButton
-          variant="secondary"
-          class="w-full sm:w-auto"
-        >
-          <lib-icon name="github" size="md" />
-          {{ 'HOME.CTA_GITHUB' | translate }}
-        </a>
-        }
-      </div>
+        {{ 'HOME.CTA_PLAY' | translate }}
+      </a>
     </div>
   </section>
 </main>

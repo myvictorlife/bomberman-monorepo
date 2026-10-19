@@ -1,3 +1,5 @@
+import { AudioSettingsService } from '@libs/audio-settings';
+import { provideRouter } from '@angular/router';
 import { Language } from '@libs/entity';
 import { ThemeService } from '@libs/theme';
 import { UpdateLanguageService } from '@libs/translation';
@@ -27,6 +29,15 @@ class StubTranslateLoader implements TranslateLoader {
         LANGUAGE_DESC: 'Applies immediately.',
         REDUCE_MOTION: 'Reduce motion',
         REDUCE_MOTION_DESC: 'Minimises transitions.',
+        MUSIC: 'Arena music',
+        MUSIC_DESC: 'The theme that loops during a match.',
+        SFX: 'Sound effects',
+        SFX_DESC: 'Bombs, pickups, mounts.',
+        SECTION_GENERAL: 'General',
+        SECTION_AUDIO: 'Audio',
+        SOUNDS: 'Sounds and announcer',
+        SOUNDS_DESC: 'Hear every sound.',
+        SOUNDS_OPEN: 'Open',
       },
     });
   }
@@ -53,6 +64,7 @@ describe('Settings', () => {
       // Normally provided by the settings route, so a component-level test has to
       // register it explicitly.
       SettingsStore,
+      provideRouter([]),
       provideTranslateService({
         loader: [{ provide: TranslateLoader, useClass: StubTranslateLoader }],
         lang: 'en',
@@ -71,7 +83,7 @@ describe('Settings', () => {
   });
 
   it('renders one row per setting', () => {
-    expect(spectator.queryAll('lib-setting-row')).toHaveLength(3);
+    expect(spectator.queryAll('lib-setting-row')).toHaveLength(6);
   });
 
   it('renders the translated labels rather than raw keys', () => {
@@ -100,7 +112,7 @@ describe('Settings', () => {
     spectator.click(
       spectator
         .queryAll('[role="radiogroup"]')[1]
-        .querySelectorAll('button')[3],
+        .querySelectorAll('button')[1],
     );
 
     expect(languageService.changeLanguage).toHaveBeenCalledWith(
@@ -122,5 +134,33 @@ describe('Settings', () => {
     expect(document.documentElement.classList.contains('reduce-motion')).toBe(
       true,
     );
+  });
+
+  it('turns the arena music on and the effects off through AudioSettingsService', () => {
+    const audio = spectator.inject(AudioSettingsService);
+    const music = () =>
+      spectator.query('[data-testid="settings-music"] [role="switch"]');
+    const sfx = () =>
+      spectator.query('[data-testid="settings-sfx"] [role="switch"]');
+    expect(music()).toHaveAttribute('aria-checked', 'false');
+    expect(sfx()).toHaveAttribute('aria-checked', 'true');
+
+    spectator.click(music() as Element);
+    spectator.click(sfx() as Element);
+    spectator.detectChanges();
+
+    expect(audio.music()).toBe(true);
+    expect(audio.sfx()).toBe(false);
+    expect(music()).toHaveAttribute('aria-checked', 'true');
+    expect(sfx()).toHaveAttribute('aria-checked', 'false');
+  });
+
+  it('groups audio in its own section, with the way to every sound', () => {
+    expect(spectator.query('[data-testid="settings-audio"]')).toHaveText(
+      'Audio',
+    );
+    const link = spectator.query('[data-testid="settings-sounds"]');
+    expect(link).toHaveText('Open');
+    expect(link).toHaveAttribute('href', '/settings/audio');
   });
 });

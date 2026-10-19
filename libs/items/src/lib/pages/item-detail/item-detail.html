@@ -1,0 +1,182 @@
+<lib-showcase
+  [eyebrow]="'ITEMS.EYEBROW' | translate"
+  [title]="itemKey('NAME') | translate"
+  [lead]="itemKey('DESC') | translate"
+>
+  <a
+    showcase-actions
+    routerLink="/items"
+    libButton
+    variant="secondary"
+    size="sm"
+  >
+    {{ 'ITEMS.BACK' | translate }}
+  </a>
+
+  <div
+    showcase-stage
+    class="detail__stage"
+    (click)="isEgg && hatch()"
+    [attr.role]="isEgg ? 'button' : null"
+    [attr.tabindex]="isEgg ? 0 : null"
+    (keydown.enter)="isEgg && hatch()"
+    (keydown.space)="isEgg && hatch()"
+    data-testid="item-stage"
+  >
+    <lib-sprite-tile [paint]="stagePainter()" [size]="256" />
+    @if (isEgg) {
+    <span class="detail__hint">{{ 'ITEMS.HATCH_HINT' | translate }}</span>
+    }
+  </div>
+
+  <div showcase-panel class="detail__panel">
+    <div class="detail__fact">
+      <span class="detail__label">{{ 'ITEMS.EFFECT_LABEL' | translate }}</span>
+      <strong>{{ itemKey('EFFECT') | translate }}</strong>
+    </div>
+    @for (key of keys; track key.labelKey) {
+    <div class="detail__fact" data-testid="item-keys">
+      <span class="detail__label">{{ key.labelKey | translate }}</span>
+      <div class="detail__keys">
+        @for (cap of key.caps; track $index; let i = $index) {
+        <span class="detail__keycap"
+          ><kbd class="detail__key">{{ cap }}</kbd
+          ><small>{{ 'PLAY.PLAYER' | translate: { n: i + 1 } }}</small></span
+        >
+        }
+      </div>
+      @if (key.hintKey) {
+      <span class="detail__muted">{{ key.hintKey | translate }}</span>
+      }
+    </div>
+    } @if (isEgg) {
+    <div class="detail__fact">
+      <span class="detail__label">{{ 'ITEMS.MOUNTS' | translate }}</span>
+      <ul class="detail__mounts" role="list">
+        @for (mount of mounts; track mount) {
+        <li>{{ mountKey(mount) | translate }}</li>
+        }
+      </ul>
+    </div>
+    <div class="detail__fact">
+      <span class="detail__label">{{ 'ITEMS.ANIMATION' | translate }}</span>
+      <div>
+        <button
+          type="button"
+          libButton
+          variant="primary"
+          size="sm"
+          (click)="hatch()"
+          data-testid="item-hatch"
+        >
+          {{ 'ITEMS.HATCH' | translate }}
+        </button>
+      </div>
+    </div>
+    }
+    <div class="detail__fact">
+      <span class="detail__label">{{ 'ITEMS.OTHERS' | translate }}</span>
+      <div class="detail__others">
+        @for (other of others; track other) {
+        <a
+          [routerLink]="['/items', other]"
+          libButton
+          variant="secondary"
+          size="sm"
+          data-testid="item-other"
+        >
+          {{ itemKey('NAME', other) | translate }}
+        </a>
+        }
+      </div>
+    </div>
+  </div>
+
+  <lib-showcase-section
+    [title]="'ITEMS.SIZES' | translate"
+    [lead]="'ITEMS.SIZES_LEAD' | translate"
+  >
+    <div class="detail__tiles">
+      @for (size of sizes; track size.px) {
+      <lib-sprite-tile
+        [paint]="still()"
+        [size]="size.px"
+        [label]="size.labelKey | translate"
+      />
+      }
+    </div>
+  </lib-showcase-section>
+
+  @if (isEgg) {
+  <lib-showcase-section
+    [title]="'ITEMS.STAGES' | translate"
+    [lead]="'ITEMS.STAGES_LEAD' | translate"
+  >
+    <div class="detail__tiles">
+      @for (stage of stages; track stage) {
+      <lib-sprite-tile
+        [paint]="still(stage)"
+        [size]="96"
+        [label]="'ITEMS.STAGE' | translate: { n: stage }"
+      />
+      }
+    </div>
+  </lib-showcase-section>
+  }
+
+  <lib-showcase-section
+    [title]="'ITEMS.SOUNDS' | translate"
+    [lead]="'ITEMS.SOUNDS_LEAD' | translate"
+  >
+    <div class="detail__sounds">
+      <div class="detail__sound-group">
+        <h3 class="detail__sound-title">{{ 'ITEMS.EFFECTS' | translate }}</h3>
+        <div class="detail__chips">
+          @for (effect of effects; track effect) {
+          <button
+            type="button"
+            libButton
+            variant="secondary"
+            size="sm"
+            (click)="playEffect(effect)"
+            data-testid="item-effect"
+            [attr.data-effect]="effect"
+          >
+            <span aria-hidden="true">🔊</span> {{ effectKey(effect) | translate
+            }}
+          </button>
+          }
+        </div>
+      </div>
+      @for (moment of moments; track moment) {
+      <div class="detail__sound-group">
+        <h3 class="detail__sound-title">
+          {{ 'ITEMS.LINES' | translate }} · {{ momentKey(moment) | translate }}
+        </h3>
+        <div class="detail__chips">
+          @for (line of quips[moment]; track line) {
+          <button
+            type="button"
+            class="detail__line"
+            (click)="say(line)"
+            data-testid="item-line"
+          >
+            <span aria-hidden="true">🗣</span> {{ line }}
+          </button>
+          }
+        </div>
+      </div>
+      }
+    </div>
+  </lib-showcase-section>
+
+  <lib-showcase-section [title]="'ITEMS.NOTES' | translate">
+    <div class="detail__notes">
+      @for (note of notes; track note) {
+      <lib-showcase-note [title]="note + '_TITLE' | translate"
+        >{{ note | translate }}</lib-showcase-note
+      >
+      }
+    </div>
+  </lib-showcase-section>
+</lib-showcase>

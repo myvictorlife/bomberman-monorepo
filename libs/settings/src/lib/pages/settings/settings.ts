@@ -1,7 +1,9 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { LANGUAGE_METADATA, Language } from '@libs/entity';
 import { ThemePreference } from '@libs/theme';
 import {
+  ButtonComponent,
   PageHeaderComponent,
   SegmentedControlComponent,
   SegmentedControlOption,
@@ -34,6 +36,8 @@ const LANGUAGE_OPTIONS: readonly SegmentedControlOption<Language>[] = (
 @Component({
   selector: 'lib-settings',
   imports: [
+    ButtonComponent,
+    RouterLink,
     PageHeaderComponent,
     SegmentedControlComponent,
     SettingRowComponent,
@@ -55,6 +59,8 @@ export class Settings {
   readonly themePreference = this.store.themePreference;
   readonly currentLanguage = this.store.currentLanguage;
   readonly reduceMotion = this.store.reduceMotion;
+  readonly music = this.store.music;
+  readonly sfx = this.store.sfx;
 
   setTheme(preference: ThemePreference): void {
     this.store.setThemePreference(preference);
@@ -66,5 +72,13 @@ export class Settings {
 
   setReduceMotion(enabled: boolean): void {
     this.store.setReduceMotion(enabled);
+  }
+
+  setMusic(on: boolean): void {
+    this.store.setMusic(on);
+  }
+
+  setSfx(on: boolean): void {
+    this.store.setSfx(on);
   }
 }

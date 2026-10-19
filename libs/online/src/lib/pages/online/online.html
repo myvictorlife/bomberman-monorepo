@@ -1,0 +1,270 @@
+<section class="online">
+  <header class="online__header">
+    <div>
+      <h1 class="online__title" data-testid="online-title">
+        {{ 'ONLINE.TITLE' | translate }}
+      </h1>
+      <p class="online__lead">
+        {{ 'ONLINE.LEAD' | translate: { max: maxPlayers(), min: minPlayers() }
+        }}
+      </p>
+    </div>
+    <a routerLink="/play" libButton size="sm"
+      >{{ 'ONLINE.LOCAL' | translate }}</a
+    >
+  </header>
+
+  @switch (status()) { @case ('unavailable') {
+  <lib-alert tone="info" data-testid="online-unavailable"
+    >{{ 'ONLINE.STATUS.UNAVAILABLE' | translate }}</lib-alert
+  >
+  } @case ('offline') {
+  <div class="online__offline" data-testid="online-offline">
+    <lib-alert tone="danger"
+      >{{ 'ONLINE.STATUS.OFFLINE' | translate }}</lib-alert
+    >
+    <button
+      type="button"
+      libButton
+      variant="primary"
+      size="sm"
+      (click)="retry()"
+      data-testid="online-retry"
+    >
+      {{ 'ONLINE.STATUS.RETRY' | translate }}
+    </button>
+  </div>
+  } }
+
+  <div
+    #layout
+    class="online__layout"
+    [class.online__layout--expanded]="expanded()"
+    data-testid="online-layout"
+  >
+    <aside class="online__rank" data-testid="online-ranking">
+      <h2 class="online__card-title">
+        {{ 'ONLINE.RANKING.TITLE' | translate }}
+      </h2>
+      @if (ranking().length) {
+      <lib-podium
+        [entries]="ranking()"
+        [paint]="paintFace"
+        [myId]="myId()"
+        [size]="128"
+      />
+      @if (ranking().length > 3) {
+      <lib-ranking-list
+        [entries]="ranking().slice(3)"
+        [myId]="myId()"
+        [start]="4"
+        [titled]="false"
+      />
+      } } @else {
+      <lib-ranking-list
+        [entries]="ranking()"
+        [myId]="myId()"
+        [titled]="false"
+      />
+      }
+    </aside>
+
+    <div class="online__main">
+      <div class="online__stage" data-testid="online-stage">
+        <div #arena class="online__arena" data-testid="online-arena"></div>
+
+        @if (status() === 'connecting' || status() === 'idle') {
+        <div class="online__overlay">
+          <lib-spinner
+            size="lg"
+            [label]="'ONLINE.STATUS.CONNECTING' | translate"
+          />
+        </div>
+        } @else if (phase() === 'countdown') {
+        <div
+          class="online__overlay"
+          data-testid="online-countdown"
+          role="status"
+        >
+          <p class="online__big">
+            {{ 'ONLINE.STAGE.COUNTDOWN' | translate: { s: secondsLeft() } }}
+          </p>
+          <p class="online__small">
+            {{ 'ONLINE.STAGE.COUNTDOWN_HINT' | translate: { n: queue().length,
+            max: maxPlayers() } }}
+          </p>
+        </div>
+        } @else if (phase() === 'results') {
+        <div class="online__overlay" data-testid="online-results" role="status">
+          <p class="online__big">
+            @if (winner(); as w) { {{ 'ONLINE.STAGE.WINNER' | translate: { name:
+            w.name } }} } @else { {{ 'ONLINE.STAGE.DRAW' | translate }} }
+          </p>
+        </div>
+        } @else if (phase() === 'waiting' && status() === 'online') {
+        <div
+          class="online__overlay"
+          [class.online__overlay--soft]="watching()"
+          data-testid="online-waiting"
+        >
+          <p class="online__big">{{ 'ONLINE.STAGE.WAITING' | translate }}</p>
+          <p class="online__small">
+            {{ 'ONLINE.STAGE.WAITING_HINT' | translate: { n: queue().length,
+            min: minPlayers() } }}
+          </p>
+        </div>
+        } @if (hudPlayers().length) {
+        <div class="online__hud" data-testid="online-hud">
+          @if (roundClosing()) {
+          <p
+            class="online__clock online__clock--closing"
+            role="status"
+            data-testid="online-clock"
+          >
+            <span aria-hidden="true">⚠️</span> {{ 'PLAY.CLOSING' | translate }}
+          </p>
+          } @else if (roundClock(); as time) {
+          <p class="online__clock" data-testid="online-clock">
+            <span aria-hidden="true">⏱</span> {{ time }}
+          </p>
+          }
+          <lib-players-panel
+            [players]="hudPlayers()"
+            [colors]="colors"
+            [myId]="myId()"
+            [compact]="true"
+          />
+        </div>
+        }
+
+        <div
+          class="online__reactions"
+          aria-hidden="true"
+          data-testid="online-reactions"
+        >
+          @for (reaction of reactions(); track reaction.key) {
+          <span class="online__reaction" [style.left.%]="reaction.x"
+            >{{ reaction.emoji }}</span
+          >
+          }
+        </div>
+
+        <button
+          type="button"
+          class="online__expand"
+          [attr.aria-label]="
+            (expanded() ? 'ONLINE.STAGE.COLLAPSE' : 'ONLINE.STAGE.EXPAND')
+              | translate
+          "
+          [title]="
+            (expanded() ? 'ONLINE.STAGE.COLLAPSE' : 'ONLINE.STAGE.EXPAND')
+              | translate
+          "
+          [attr.aria-pressed]="expanded()"
+          (click)="toggleExpanded()"
+          data-testid="online-expand"
+        >
+          <span aria-hidden="true">{{ expanded() ? '✕' : '⛶' }}</span>
+        </button>
+      </div>
+    </div>
+
+    <aside class="online__side">
+      <div class="online__card online__card--chat">
+        <lib-chat-panel
+          [messages]="chat()"
+          [myId]="myId()"
+          [admin]="admin()"
+          [blocked]="blocked()"
+          [error]="chatError()"
+          [dock]="expanded()"
+          (send)="sendChat($event)"
+          (react)="react($event)"
+          (remove)="deleteChat($event)"
+          (mute)="muteChat($event)"
+        />
+      </div>
+
+      <div class="online__card">
+        <lib-queue-panel
+          [phase]="phase()"
+          [queue]="queue()"
+          [players]="players()"
+          [maxPlayers]="maxPlayers()"
+          [outsiders]="outsiders()"
+          [myId]="myId()"
+          [blocked]="blocked()"
+          [champion]="lobby()?.champion ?? null"
+          (join)="join()"
+          (leave)="leave()"
+        />
+        <p class="online__character" data-testid="online-character">
+          {{ 'ONLINE.CHARACTER' | translate: { name:
+          (characterKey(characterId()) | translate) } }}
+          <a routerLink="/characters"
+            >{{ 'ONLINE.CHANGE_CHARACTER' | translate }}</a
+          >
+        </p>
+        @if (serverError(); as code) { @if (code !== 'email-not-verified') {
+        <p class="online__error" role="alert" data-testid="online-server-error">
+          {{ 'ONLINE.SERVER_ERROR.' + code | translate }}
+        </p>
+        } }
+      </div>
+
+      <div class="online__card">
+        <lib-account-panel
+          [available]="auth.available"
+          [ready]="auth.ready()"
+          [user]="user()"
+          [profile]="profile()"
+          [busy]="authBusy()"
+          [error]="authError()"
+          [notice]="notice()"
+          (signIn)="signIn($event)"
+          (signUp)="signUp($event)"
+          (signInWith)="signInWith($event)"
+          (signOut)="signOut()"
+          (resendVerification)="resendVerification()"
+          (checkVerification)="checkVerification()"
+          (resetPassword)="resetPassword($event)"
+        />
+      </div>
+
+      <div class="online__card">
+        <lib-rules-panel
+          [rules]="rules()"
+          [nextRules]="nextRules()"
+          [admin]="admin()"
+          (ruleChange)="setRules($event)"
+        />
+      </div>
+
+      <div class="online__card" data-testid="online-watchers">
+        <h2 class="online__card-title">
+          {{ 'ONLINE.WATCHERS.TITLE' | translate: { n: watchers().names.length +
+          watchers().anonymous } }}
+        </h2>
+        @if (watchers().names.length || watchers().anonymous) {
+        <p class="online__watchers">
+          @for (name of watchers().names; track name; let last = $last) {
+          <span class="online__watcher">{{ name }}</span>
+          } @if (watchers().anonymous) {
+          <span
+            class="online__watcher online__watcher--anon"
+            data-testid="online-watchers-anonymous"
+          >
+            {{ 'ONLINE.WATCHERS.ANONYMOUS' | translate: { n:
+            watchers().anonymous } }}
+          </span>
+          }
+        </p>
+        } @else {
+        <p class="online__muted">{{ 'ONLINE.WATCHERS.NONE' | translate }}</p>
+        }
+      </div>
+    </aside>
+  </div>
+
+  <p class="online__controls">{{ 'ONLINE.CONTROLS' | translate }}</p>
+</section>

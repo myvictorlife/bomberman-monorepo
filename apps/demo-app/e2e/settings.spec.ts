@@ -38,17 +38,18 @@ test.describe('settings', () => {
   });
 
   test('language survives a reload', async ({ page }) => {
-    await page.getByRole('radio', { name: /french|français/i }).click();
-    await expect(page.locator('html')).toHaveAttribute('lang', 'fr');
+    await page.getByRole('radio', { name: /portuguese|português/i }).click();
+    await expect(page.locator('html')).toHaveAttribute('lang', 'pt');
 
     await page.reload();
-    await expect(page.locator('html')).toHaveAttribute('lang', 'fr');
+    await expect(page.locator('html')).toHaveAttribute('lang', 'pt');
   });
 
   test('reduce motion toggles the document class and persists', async ({
     page,
   }) => {
-    const toggle = page.getByRole('switch');
+    // Settings now has several switches; this test is about the motion one.
+    const toggle = page.getByRole('switch', { name: /reduce motion/i });
     await expect(toggle).toHaveAttribute('aria-checked', 'false');
 
     await toggle.click();

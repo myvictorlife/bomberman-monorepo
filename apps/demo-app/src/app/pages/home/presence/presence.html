@@ -1,0 +1,21 @@
+@if (presence(); as p) {
+<p
+  class="presence"
+  [class.presence--live]="p.online > 0"
+  role="status"
+  data-testid="home-presence"
+>
+  <span class="presence__dot" aria-hidden="true"></span>
+  @if (p.online > 0) {
+  <span class="presence__count"
+    >{{ 'HOME.PRESENCE_ONLINE' | translate: { n: p.online } }}</span
+  >
+  <span class="presence__sep" aria-hidden="true">·</span>
+  <span class="presence__state"
+    >{{ stateKey(p) | translate: { n: p.playing, queued: p.queued } }}</span
+  >
+  } @else {
+  <span class="presence__count">{{ 'HOME.PRESENCE_NONE' | translate }}</span>
+  }
+</p>
+}

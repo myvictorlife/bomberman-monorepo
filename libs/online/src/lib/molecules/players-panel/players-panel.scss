@@ -1,0 +1,109 @@
+.players {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  color: var(--color-text-primary);
+}
+
+.players__title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+}
+
+.players__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.players__item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-left: 4px solid var(--player-color, var(--color-border-strong));
+  border-radius: var(--radius-md);
+  background: var(--color-bg-base);
+  font-size: var(--font-size-sm);
+}
+
+.players__item--me {
+  background: var(--color-brand-subtle);
+}
+
+.players__item--out {
+  opacity: 0.5;
+}
+
+.players__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.players__swatch {
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 50%;
+  background: var(--player-color, var(--color-border-strong));
+}
+
+.players__name {
+  flex: 1;
+  font-weight: var(--font-weight-semibold);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.players__out {
+  color: var(--color-text-secondary);
+}
+
+/* Compact: one row of translucent pills to lay over the arena, each player's
+   colour as a left edge, the name cut short. Reads at a glance, hides little. */
+:host(.compact) {
+  .players {
+    gap: 0;
+  }
+
+  .players__list {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+
+  .players__item {
+    flex-direction: row;
+    align-items: center;
+    gap: var(--space-2);
+    padding: 0.125rem var(--space-2);
+    border: 0;
+    border-left: 3px solid var(--player-color, var(--color-border-strong));
+    border-radius: var(--radius-sm);
+    background: rgb(0 0 0 / 0.5);
+    color: #fff;
+    font-size: var(--font-size-xs);
+  }
+
+  .players__item--me {
+    outline: 1px solid var(--player-color, var(--color-border-strong));
+  }
+
+  .players__head {
+    gap: var(--space-1);
+  }
+
+  .players__swatch {
+    display: none;
+  }
+
+  .players__name {
+    max-width: 8rem;
+  }
+
+  .players__out {
+    color: rgb(255 255 255 / 0.7);
+  }
+}

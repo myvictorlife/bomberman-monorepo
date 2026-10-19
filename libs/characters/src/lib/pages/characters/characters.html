@@ -1,0 +1,215 @@
+<section class="characters">
+  <header class="characters__header">
+    <h1 class="characters__title" data-testid="characters-title">
+      {{ 'CHARACTERS.TITLE' | translate }}
+    </h1>
+    <p class="characters__lead">{{ 'CHARACTERS.LEAD' | translate }}</p>
+    <a
+      routerLink="/mounts"
+      class="characters__mounts-link"
+      data-testid="characters-mounts-link"
+    >
+      {{ 'CHARACTERS.SEE_MOUNTS' | translate }}
+    </a>
+  </header>
+
+  <div class="characters__layout">
+    <!-- Roster -->
+    <div>
+      <h2 class="characters__subtitle">
+        {{ 'CHARACTERS.ROSTER' | translate }}
+      </h2>
+      @for (group of groups(); track group.id) {
+      <section
+        class="characters__group"
+        [attr.data-group]="group.id"
+        data-testid="characters-group"
+      >
+        <h3 class="characters__group-title">
+          {{ groupKey(group.id) | translate }}
+        </h3>
+        <ul class="characters__roster" role="list">
+          @for (character of group.characters; track character.id) {
+          <li>
+            <button
+              type="button"
+              class="characters__card"
+              [class.characters__card--selected]="character.id === selected().id"
+              [attr.aria-pressed]="character.id === selected().id"
+              (click)="select(character.id)"
+              [attr.data-character]="character.id"
+              data-testid="characters-card"
+            >
+              <lib-character-sprite [characterId]="character.id" [size]="72" />
+              <span class="characters__card-text">
+                <span class="characters__card-name"
+                  >{{ characterKey(character.id, 'NAME') | translate }}</span
+                >
+                <span class="characters__card-job"
+                  >{{ characterKey(character.id, 'JOB') | translate }}</span
+                >
+              </span>
+              @if (character.id === selected().id) {
+              <span class="characters__card-badge">
+                <lib-badge tone="success" [pill]="true"
+                  >{{ 'CHARACTERS.SELECTED' | translate }}</lib-badge
+                >
+              </span>
+              }
+            </button>
+          </li>
+          }
+        </ul>
+      </section>
+      }
+    </div>
+
+    <!-- Preview -->
+    <lib-card padding="lg" [elevated]="true">
+      <div class="characters__preview-head">
+        <div>
+          <h2
+            class="characters__subtitle"
+            data-testid="characters-selected-name"
+          >
+            {{ characterKey(selected().id, 'NAME') | translate }}
+          </h2>
+          <p class="characters__job">
+            {{ characterKey(selected().id, 'JOB') | translate }}
+          </p>
+        </div>
+        <a
+          routerLink="/play"
+          libButton
+          variant="primary"
+          size="sm"
+          data-testid="characters-play"
+        >
+          {{ 'CHARACTERS.PLAY_WITH' | translate: { name:
+          (characterKey(selected().id, 'NAME') | translate) } }}
+        </a>
+      </div>
+
+      <!-- The stage, with the eight poses around it -->
+      <div
+        class="characters__ring"
+        role="group"
+        [attr.aria-label]="'CHARACTERS.FACING' | translate"
+      >
+        @for (pose of poses; track pose.cell) {
+        <button
+          type="button"
+          class="characters__pose"
+          [class]="'characters__pose characters__pose--' + pose.cell"
+          [class.characters__pose--active]="isActive(pose)"
+          [attr.aria-pressed]="isActive(pose)"
+          [attr.aria-label]="(pose.walking ? 'CHARACTERS.POSE_WALKING' : 'CHARACTERS.POSE_STANDING') | translate: { side: (facingKey(pose.facing) | translate) }"
+          [attr.data-facing]="pose.facing"
+          [attr.data-walking]="pose.walking"
+          (click)="strike(pose.facing, pose.walking)"
+          data-testid="characters-pose"
+        >
+          <lib-character-sprite
+            [characterId]="selected().id"
+            [facing]="pose.facing"
+            [frame]="pose.walking ? walkFrame() : 0"
+            [mountId]="mountId()"
+            [size]="56"
+          />
+        </button>
+        }
+        <button
+          type="button"
+          class="characters__stage"
+          (click)="turn()"
+          [attr.aria-label]="'CHARACTERS.TURN_HINT' | translate"
+          data-testid="characters-stage"
+        >
+          <lib-character-sprite
+            [characterId]="selected().id"
+            [facing]="facing()"
+            [frame]="frame()"
+            [mountId]="mountId()"
+            [size]="176"
+          />
+          <span class="characters__stage-hint" aria-hidden="true">
+            {{ 'CHARACTERS.TURN_HINT' | translate }}
+          </span>
+        </button>
+      </div>
+
+      <div class="characters__poses">
+        <button
+          type="button"
+          libButton
+          [variant]="walking() ? 'primary' : 'secondary'"
+          size="sm"
+          class="characters__walk"
+          [attr.aria-pressed]="walking()"
+          (click)="toggleWalking()"
+          data-testid="characters-walk"
+        >
+          {{ (walking() ? 'CHARACTERS.STAND' : 'CHARACTERS.WALK') | translate }}
+        </button>
+      </div>
+
+      <div
+        class="characters__mounts"
+        role="group"
+        [attr.aria-label]="'CHARACTERS.MOUNT' | translate"
+      >
+        <button
+          type="button"
+          class="characters__mount"
+          [class.characters__mount--active]="mountId() === null"
+          [attr.aria-pressed]="mountId() === null"
+          (click)="setMount(null)"
+          data-testid="characters-on-foot"
+        >
+          <span class="characters__mount-foot" aria-hidden="true">🚶</span>
+          <span>{{ 'CHARACTERS.ON_FOOT' | translate }}</span>
+        </button>
+        @for (mount of mounts(); track mount.id) {
+        <button
+          type="button"
+          class="characters__mount"
+          [class.characters__mount--active]="mountId() === mount.id"
+          [attr.aria-pressed]="mountId() === mount.id"
+          (click)="setMount(mount.id)"
+          [attr.data-mount]="mount.id"
+          data-testid="characters-mount"
+        >
+          <lib-mount-icon [mountId]="mount.id" [size]="36" />
+          <span>{{ mountKey(mount.id, 'NAME') | translate }}</span>
+        </button>
+        }
+      </div>
+
+      <div class="characters__story">
+        <h3 class="characters__story-title">
+          {{ 'CHARACTERS.STORY' | translate }}
+        </h3>
+        <p data-testid="characters-story">
+          {{ characterKey(selected().id, 'STORY') | translate }}
+        </p>
+      </div>
+
+      <dl class="characters__stats" data-testid="characters-stats">
+        <div>
+          <dt>{{ 'CHARACTERS.BOMBS' | translate }}</dt>
+          <dd>💣 {{ stats.bombs }}</dd>
+        </div>
+        <div>
+          <dt>{{ 'CHARACTERS.FIRE' | translate }}</dt>
+          <dd>🔥 {{ stats.fire }}</dd>
+        </div>
+        <div>
+          <dt>{{ 'CHARACTERS.SPEED' | translate }}</dt>
+          <dd>
+            🛼 {{ 'CHARACTERS.SPEED_VALUE' | translate: { n: stats.speed } }}
+          </dd>
+        </div>
+      </dl>
+    </lib-card>
+  </div>
+</section>

@@ -1,0 +1,26 @@
+<section class="ranking" data-testid="ranking">
+  @if (titled()) {
+  <h2 class="ranking__title">{{ 'ONLINE.RANKING.TITLE' | translate }}</h2>
+  } @if (entries().length) {
+  <ol class="ranking__list">
+    @for (entry of entries(); track entry.id; let i = $index) {
+    <li
+      class="ranking__item"
+      [class.ranking__item--me]="entry.id === myId()"
+      data-testid="ranking-item"
+    >
+      <span class="ranking__place">{{ start() + i }}</span>
+      <span class="ranking__name">{{ entry.name }}</span>
+      <span class="ranking__score"
+        >{{ 'ONLINE.RANKING.SCORE' | translate: { wins: entry.wins, matches:
+        entry.matches } }}</span
+      >
+    </li>
+    }
+  </ol>
+  } @else {
+  <p class="ranking__empty" data-testid="ranking-empty">
+    {{ 'ONLINE.RANKING.EMPTY' | translate }}
+  </p>
+  }
+</section>

@@ -1,0 +1,27 @@
+{
+  "name": "play",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/play/src",
+  "prefix": "lib",
+  "projectType": "library",
+  "tags": ["scope:play"],
+  "targets": {
+    "test": {
+      "executor": "@angular/build:unit-test",
+      "options": {
+        "coverageInclude": ["libs/play/src/**/*.ts"],
+        "coverageExclude": [
+          "libs/play/src/**/index.ts",
+          "libs/play/src/**/*.routes.ts",
+          "libs/play/src/**/*.spec.ts"
+        ],
+        "coverageThresholds": {
+          "statements": 95,
+          "branches": 90,
+          "functions": 90,
+          "lines": 95
+        }
+      }
+    }
+  }
+}

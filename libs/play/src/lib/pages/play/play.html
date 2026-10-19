@@ -1,0 +1,177 @@
+<section class="play">
+  <header class="play__header">
+    <div>
+      <h1 class="play__title" data-testid="play-title">
+        {{ 'PLAY.TITLE' | translate }}
+      </h1>
+      <p class="play__lead">{{ 'PLAY.LEAD' | translate }}</p>
+    </div>
+    <div class="play__actions">
+      <button
+        type="button"
+        libButton
+        variant="secondary"
+        size="sm"
+        [attr.aria-pressed]="music()"
+        (click)="toggleMusic()"
+        data-testid="play-music"
+      >
+        <span aria-hidden="true">{{ music() ? '🎵' : '🔕' }}</span>
+        {{ (music() ? 'PLAY.MUSIC_ON' : 'PLAY.MUSIC_OFF') | translate }}
+      </button>
+      <button
+        type="button"
+        libButton
+        variant="secondary"
+        size="sm"
+        [attr.aria-pressed]="!muted()"
+        (click)="toggleSound()"
+        data-testid="play-sound"
+      >
+        <span aria-hidden="true">{{ muted() ? '🔇' : '🔊' }}</span>
+        {{ (muted() ? 'PLAY.SOUND_OFF' : 'PLAY.SOUND_ON') | translate }}
+      </button>
+      <a routerLink="/" libButton variant="secondary" size="sm">
+        {{ 'PLAY.BACK' | translate }}
+      </a>
+    </div>
+  </header>
+
+  <!-- Who plays: bots, how hard, and a second person on the keyboard -->
+  <section
+    class="play__setup"
+    aria-labelledby="play-setup-title"
+    data-testid="play-setup"
+  >
+    <h2 id="play-setup-title" class="play__setup-title">
+      {{ 'PLAY.SETUP_TITLE' | translate }}
+    </h2>
+    <div class="play__setup-field" data-testid="play-setup-bots">
+      <span class="play__setup-label">{{ 'PLAY.SETUP_BOTS' | translate }}</span>
+      <lib-segmented-control
+        [options]="botCountOptions()"
+        [value]="'' + setup().bots"
+        [label]="'PLAY.SETUP_BOTS' | translate"
+        (valueChange)="setBots($event)"
+      />
+    </div>
+    @if (setup().bots > 0) {
+    <div class="play__setup-field" data-testid="play-setup-level">
+      <span class="play__setup-label"
+        >{{ 'PLAY.SETUP_LEVEL' | translate }}</span
+      >
+      <lib-segmented-control
+        [options]="levelOptions"
+        [value]="setup().level"
+        [label]="'PLAY.SETUP_LEVEL' | translate"
+        (valueChange)="setLevel($event)"
+      />
+    </div>
+    }
+    <label class="play__setup-check">
+      <input
+        type="checkbox"
+        [checked]="setup().secondHuman"
+        (change)="setSecondHuman($any($event.target).checked)"
+        data-testid="play-setup-p2"
+      />
+      {{ 'PLAY.SETUP_P2' | translate }}
+    </label>
+    <p class="play__setup-hint">{{ 'PLAY.SETUP_HINT' | translate }}</p>
+  </section>
+
+  <!-- Where and when: the arena, and the round's clock -->
+  <div class="play__status">
+    <span class="play__pill" data-testid="play-arena-name">
+      <span aria-hidden="true">🗺️</span
+      ><span class="sr-only">{{ 'PLAY.ARENA' | translate }}:</span> {{
+      mapKey(mapId) | translate }}
+    </span>
+    @if (closing()) {
+    <span
+      class="play__pill play__pill--closing"
+      role="status"
+      data-testid="play-clock"
+    >
+      <span aria-hidden="true">⚠️</span> {{ 'PLAY.CLOSING' | translate }}
+    </span>
+    } @else if (clock(); as time) {
+    <span class="play__pill play__pill--clock" data-testid="play-clock">
+      <span aria-hidden="true">⏱</span
+      ><span class="sr-only">{{ 'PLAY.TIME' | translate }}</span> {{ time }}
+    </span>
+    }
+  </div>
+
+  <ul class="play__hud" data-testid="play-hud" role="list">
+    @for (player of players(); track player.id) {
+    <li
+      class="play__player"
+      [class.play__player--out]="!player.alive"
+      [style.--player-color]="colors[player.slot]"
+      data-testid="play-hud-player"
+    >
+      <div class="play__player-head">
+        <span class="play__swatch" aria-hidden="true"></span>
+        <span class="play__name">
+          @if (isBot(player.id)) {
+          <span aria-hidden="true">🤖</span> {{ 'PLAY.BOT' | translate: { n:
+          botNumber(player.id) } }} } @else { {{ 'PLAY.PLAYER' | translate: { n:
+          player.slot + 1 } }} }
+        </span>
+        @if (!player.alive) {
+        <span class="play__out" data-testid="play-hud-out"
+          >{{ 'PLAY.OUT' | translate }}</span
+        >
+        }
+      </div>
+      <lib-player-badges [stats]="player" testId="play-hud" />
+    </li>
+    }
+  </ul>
+
+  <div class="play__stage">
+    <div #arena class="play__arena" data-testid="play-arena"></div>
+
+    @if (status() === 'loading') {
+    <div class="play__overlay">
+      <lib-spinner size="lg" [label]="'PLAY.LOADING' | translate" />
+    </div>
+    } @else if (status() === 'error') {
+    <div class="play__overlay" data-testid="play-error">
+      <lib-alert tone="danger">{{ 'PLAY.ERROR' | translate }}</lib-alert>
+    </div>
+    } @else if (isOver()) {
+    <div class="play__overlay" data-testid="play-result" role="status">
+      <p class="play__result">
+        @if (winner(); as w) { @if (isBot(w.id)) { {{ 'PLAY.BOT_WINS' |
+        translate: { n: botNumber(w.id) } }} } @else { {{ 'PLAY.WINNER' |
+        translate: { n: w.slot + 1 } }} } } @else { {{ 'PLAY.DRAW' | translate
+        }} }
+      </p>
+      <button
+        type="button"
+        libButton
+        variant="primary"
+        (click)="restart()"
+        data-testid="play-restart"
+      >
+        {{ 'PLAY.RESTART' | translate }}
+      </button>
+    </div>
+    }
+  </div>
+
+  <dl class="play__controls">
+    <div>
+      <dt>{{ 'PLAY.PLAYER' | translate: { n: 1 } }}</dt>
+      <dd>{{ 'PLAY.CONTROLS_P1' | translate }}</dd>
+    </div>
+    @if (setup().secondHuman) {
+    <div>
+      <dt>{{ 'PLAY.PLAYER' | translate: { n: 2 } }}</dt>
+      <dd>{{ 'PLAY.CONTROLS_P2' | translate }}</dd>
+    </div>
+    }
+  </dl>
+</section>

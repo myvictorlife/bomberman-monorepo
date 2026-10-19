@@ -30,6 +30,7 @@ import {
 } from '@angular/common/http';
 import { ANALYTICS } from '@libs/analytics';
 import { provideFirebaseAnalytics } from '@libs/analytics-firebase';
+import { provideFirebaseAuth } from '@libs/auth-firebase';
 import { GlobalErrorHandler, httpErrorInterceptor } from '@libs/ui';
 import { provideTranslation } from '@libs/translation';
 import { metaReducers, reducers } from './core/+state';
@@ -57,6 +58,9 @@ export const appConfig: ApplicationConfig = {
     // `@libs/analytics-firebase` lib) and `ANALYTICS` falls back to `NoopAnalytics`
     // — nothing else in the workspace changes.
     provideFirebaseAnalytics(),
+    // Same rule for accounts: `AUTH` falls back to `NoopAuth` without this line,
+    // and the SDK is only fetched by the pages that sign someone in.
+    provideFirebaseAuth(),
 
     // The global store exists for router state only. Feature state lives in a
     // SignalStore inside its own lib and is provided on the route that needs it.

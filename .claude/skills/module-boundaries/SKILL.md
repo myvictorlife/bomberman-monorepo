@@ -39,18 +39,25 @@ The `scope:` prefix is mandatory. It is what connects the `project.json` tag to 
 
 ## Current projects and their tags
 
-| Project            | Path                             | `project.json` tag             | Can depend on                                                    |
-| ------------------ | -------------------------------- | ------------------------------ | ---------------------------------------------------------------- |
-| demo-app           | `apps/demo-app`                  | `scope:demo-app`               | everything below                                                 |
-| environment        | `libs/environment`               | `scope:environment-lib`        | _(nothing)_                                                      |
-| entity             | `libs/shared/entity`             | `scope:entity-lib`             | _(nothing)_                                                      |
-| theme              | `libs/theme`                     | `scope:theme-lib`              | _(nothing)_                                                      |
-| analytics          | `libs/shared/analytics`          | `scope:analytics-lib`          | _(nothing)_                                                      |
-| analytics-firebase | `libs/shared/analytics-firebase` | `scope:analytics-firebase-lib` | analytics-lib, environment-lib                                   |
-| translation        | `libs/shared/translation`        | `scope:translate`              | entity-lib, environment-lib                                      |
-| ui                 | `libs/shared/ui`                 | `scope:ui-lib`                 | analytics-lib, entity-lib, environment-lib, theme-lib, translate |
-| profile            | `libs/profile`                   | `scope:profile`                | entity-lib, environment-lib                                      |
-| settings           | `libs/settings`                  | `scope:settings`               | entity-lib, environment-lib, theme-lib, translate, ui-lib        |
+| Project            | Path                             | `project.json` tag             | Can depend on                                                                                              |
+| ------------------ | -------------------------------- | ------------------------------ | ---------------------------------------------------------------------------------------------------------- |
+| demo-app           | `apps/demo-app`                  | `scope:demo-app`               | everything below                                                                                           |
+| environment        | `libs/environment`               | `scope:environment-lib`        | _(nothing)_                                                                                                |
+| entity             | `libs/shared/entity`             | `scope:entity-lib`             | _(nothing)_                                                                                                |
+| theme              | `libs/theme`                     | `scope:theme-lib`              | _(nothing)_                                                                                                |
+| analytics          | `libs/shared/analytics`          | `scope:analytics-lib`          | _(nothing)_                                                                                                |
+| analytics-firebase | `libs/shared/analytics-firebase` | `scope:analytics-firebase-lib` | analytics-lib, environment-lib                                                                             |
+| translation        | `libs/shared/translation`        | `scope:translate`              | entity-lib, environment-lib                                                                                |
+| ui                 | `libs/shared/ui`                 | `scope:ui-lib`                 | analytics-lib, entity-lib, environment-lib, theme-lib, translate                                           |
+| profile            | `libs/profile`                   | `scope:profile`                | entity-lib, environment-lib                                                                                |
+| settings           | `libs/settings`                  | `scope:settings`               | entity-lib, environment-lib, theme-lib, translate, ui-lib                                                  |
+| auth               | `libs/shared/auth`               | `scope:auth-lib`               | _(nothing)_                                                                                                |
+| auth-firebase      | `libs/shared/auth-firebase`      | `scope:auth-firebase-lib`      | auth-lib, environment-lib                                                                                  |
+| game-ai            | `libs/game/ai`                   | `scope:game-ai-lib`            | game-core-lib (bots: pure TS, run offline and on the server)                                               |
+| game-protocol      | `libs/game/protocol`             | `scope:game-protocol-lib`      | game-core-lib                                                                                              |
+| game-lobby         | `libs/game/lobby`                | `scope:game-lobby-lib`         | game-core-lib, game-protocol-lib                                                                           |
+| game-server (app)  | `apps/game-server`               | `scope:game-server`            | game-core-lib, game-protocol-lib, game-lobby-lib; bans `@angular/*`, `phaser`, `firebase`, `@colyseus/sdk` |
+| online             | `libs/online`                    | `scope:online`                 | auth-lib, game-client/core/protocol libs, character-select, audio-settings, ui, translate, …               |
 
 ---
 
@@ -104,6 +111,11 @@ theme             →  (no dependencies)
 
 - `profile` importing from `@libs/settings`, or `settings` from `@libs/profile` —
   **features never see each other.** They compose through the app.
+- Anything importing `@libs/auth-firebase` except the app — same rule as
+  analytics: libraries depend on `@libs/auth`.
+- `apps/game-server` importing browser code. `bannedExternalImports` on
+  `scope:game-server` turns `@angular/*`, `phaser` or the Firebase web SDK into
+  a lint error there.
 - Any library except the app importing `@libs/analytics-firebase` — picking a
   vendor is a composition decision, made once in `app.config.ts`. Libraries depend
   on `@libs/analytics`, the contract, and never learn what is behind it.

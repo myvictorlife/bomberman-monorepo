@@ -1,0 +1,138 @@
+.account {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  color: var(--color-text-primary);
+}
+
+.account__title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+}
+
+.account__muted {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.account__form,
+.account__verify,
+.account__me {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+/* Google's own button style: white, its logo, a grey border — in both themes. */
+.account__google {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid #747775;
+  border-radius: var(--radius-md);
+  background: #fff;
+  color: #1f1f1f;
+  font: inherit;
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: #f2f2f2;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-brand);
+    outline-offset: 2px;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+.account__google-logo {
+  width: 1.125rem;
+  height: 1.125rem;
+  flex-shrink: 0;
+}
+
+.account__or {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+
+  &::before,
+  &::after {
+    content: '';
+    flex: 1;
+    border-top: 1px solid var(--color-border-strong);
+  }
+}
+
+.account__field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+
+  input {
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-md);
+    background: var(--color-bg-base);
+    color: var(--color-text-primary);
+    font: inherit;
+    font-size: var(--font-size-md, 1rem);
+
+    &:focus-visible {
+      outline: 2px solid var(--color-brand);
+      outline-offset: 1px;
+    }
+  }
+}
+
+.account__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.account__row--links {
+  justify-content: space-between;
+}
+
+.account__link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-brand);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.account__welcome {
+  font-weight: var(--font-weight-semibold);
+}
+
+.account__stats {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.account__error {
+  color: var(--color-danger);
+  font-size: var(--font-size-sm);
+}
+
+.account__notice {
+  color: var(--color-success);
+  font-size: var(--font-size-sm);
+}

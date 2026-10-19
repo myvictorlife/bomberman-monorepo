@@ -1,0 +1,114 @@
+<section class="chat" [class.chat--dock]="dock()" data-testid="chat-panel">
+  <h2 class="chat__title">{{ 'ONLINE.CHAT.TITLE' | translate }}</h2>
+
+  <ol
+    #list
+    class="chat__list"
+    aria-live="polite"
+    [attr.aria-label]="'ONLINE.CHAT.TITLE' | translate"
+    (scroll)="onScroll(list)"
+    data-testid="chat-list"
+  >
+    @for (message of messages(); track message.id) { @if (message.author; as
+    author) {
+    <li
+      class="chat__line"
+      [class.chat__line--me]="author.id === myId()"
+      data-testid="chat-line"
+    >
+      <span class="chat__name">{{ author.name }}</span>
+      <span class="chat__role chat__role--{{ author.role }}"
+        >{{ 'ONLINE.CHAT.ROLE.' + author.role | translate }}</span
+      >
+      <span class="chat__text">{{ message.text }}</span>
+      @if (admin() && author.id !== myId()) {
+      <span class="chat__tools">
+        <button
+          type="button"
+          class="chat__tool"
+          [attr.aria-label]="'ONLINE.CHAT.REMOVE' | translate"
+          [title]="'ONLINE.CHAT.REMOVE' | translate"
+          (click)="remove.emit(message.id)"
+          data-testid="chat-remove"
+        >
+          ✕
+        </button>
+        <button
+          type="button"
+          class="chat__tool"
+          [attr.aria-label]="'ONLINE.CHAT.MUTE' | translate: { name: author.name }"
+          [title]="'ONLINE.CHAT.MUTE' | translate: { name: author.name }"
+          (click)="mute.emit(author.id)"
+          data-testid="chat-mute"
+        >
+          🔇
+        </button>
+      </span>
+      }
+    </li>
+    } @else {
+    <li class="chat__line chat__line--event" data-testid="chat-event">
+      {{ eventKey(message) | translate: eventParams(message) }}
+    </li>
+    } } @empty {
+    <li class="chat__empty" data-testid="chat-empty">
+      {{ 'ONLINE.CHAT.EMPTY' | translate }}
+    </li>
+    }
+  </ol>
+
+  <div
+    class="chat__reactions"
+    role="group"
+    [attr.aria-label]="'ONLINE.CHAT.REACT' | translate"
+  >
+    @for (emoji of reactions; track emoji) {
+    <button
+      type="button"
+      class="chat__reaction"
+      [disabled]="blocked() === 'offline'"
+      (click)="react.emit(emoji)"
+      data-testid="chat-react"
+    >
+      {{ emoji }}
+    </button>
+    }
+  </div>
+
+  @if (blocked(); as reason) {
+  <p class="chat__hint" data-testid="chat-blocked">
+    {{ 'ONLINE.CHAT.BLOCKED.' + reason | translate }}
+  </p>
+  } @else {
+  <form class="chat__form" (submit)="submit($event)" data-testid="chat-form">
+    <input
+      class="chat__input"
+      type="text"
+      autocomplete="off"
+      enterkeyhint="send"
+      [maxLength]="maxLength"
+      [value]="draft()"
+      (input)="onInput($any($event.target).value)"
+      [attr.aria-label]="'ONLINE.CHAT.PLACEHOLDER' | translate"
+      [placeholder]="'ONLINE.CHAT.PLACEHOLDER' | translate"
+      data-testid="chat-input"
+    />
+    <button
+      type="submit"
+      libButton
+      variant="primary"
+      size="sm"
+      [disabled]="!canSend()"
+      data-testid="chat-send"
+    >
+      {{ 'ONLINE.CHAT.SEND' | translate }}
+    </button>
+  </form>
+  @if (left() <= 20) {
+  <p class="chat__count" data-testid="chat-count">{{ left() }}</p>
+  } } @if (error(); as code) {
+  <p class="chat__error" role="alert" data-testid="chat-error">
+    {{ 'ONLINE.SERVER_ERROR.' + code | translate }}
+  </p>
+  }
+</section>

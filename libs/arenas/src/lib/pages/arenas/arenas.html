@@ -1,0 +1,89 @@
+<section class="arenas">
+  <header class="arenas__header">
+    <div>
+      <h1 class="arenas__title" data-testid="arenas-title">
+        {{ 'ARENAS.TITLE' | translate }}
+      </h1>
+      <p class="arenas__lead">{{ 'ARENAS.LEAD' | translate }}</p>
+      <p class="arenas__live">{{ 'ARENAS.LIVE' | translate }}</p>
+    </div>
+    <a
+      routerLink="/play"
+      [queryParams]="{ map: selected() }"
+      libButton
+      variant="primary"
+      data-testid="arenas-play"
+    >
+      {{ 'ARENAS.PLAY_SELECTED' | translate }}
+    </a>
+  </header>
+
+  <ul class="arenas__grid" role="list">
+    @for (id of maps(); track id) {
+    <li
+      class="arena"
+      [class.arena--selected]="id === selected()"
+      [style.--arena-accent]="accent(id)"
+      data-testid="arena-card"
+      [attr.data-map]="id"
+    >
+      <button
+        type="button"
+        class="arena__stage"
+        (click)="select(id)"
+        [attr.aria-pressed]="id === selected()"
+        [attr.aria-label]="mapKey(id, 'NAME') | translate"
+      >
+        <canvas
+          #preview
+          class="arena__preview"
+          [attr.data-map]="id"
+          [attr.data-video]="'arena:' + id"
+          aria-hidden="true"
+        ></canvas>
+      </button>
+      <div class="arena__body">
+        <p class="arena__owner">{{ mapKey(id, 'OWNER') | translate }}</p>
+        <h2 class="arena__name">
+          <a
+            [routerLink]="['/arenas', id]"
+            class="arena__link"
+            data-testid="arena-detail-link"
+            >{{ mapKey(id, 'NAME') | translate }}</a
+          >
+        </h2>
+        <p class="arena__desc">{{ mapKey(id, 'DESC') | translate }}</p>
+        <p class="arena__moment">
+          <span class="arena__moment-label"
+            >{{ 'ARENAS.MOMENT' | translate }}</span
+          >
+          <strong>{{ mapKey(id, 'MOMENT') | translate }}</strong>
+          <span class="arena__moment-desc"
+            >{{ mapKey(id, 'MOMENT_DESC') | translate }}</span
+          >
+        </p>
+        <div class="arena__actions">
+          <a
+            routerLink="/play"
+            [queryParams]="{ map: id }"
+            libButton
+            variant="primary"
+            size="sm"
+            data-testid="arena-play"
+          >
+            {{ 'ARENAS.PLAY_HERE' | translate }}
+          </a>
+          <a
+            [routerLink]="['/arenas', id]"
+            libButton
+            variant="secondary"
+            size="sm"
+            >{{ 'ARENAS.DETAILS' | translate }}</a
+          >
+          <code class="arena__url">/play?map={{ id }}</code>
+        </div>
+      </div>
+    </li>
+    }
+  </ul>
+</section>

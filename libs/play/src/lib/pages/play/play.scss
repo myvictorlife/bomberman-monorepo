@@ -1,0 +1,213 @@
+.play {
+  max-width: 52rem;
+  margin: 0 auto;
+  padding: var(--space-6) var(--space-4) var(--space-10);
+}
+
+.play__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+/* Where and when, as pills under the title: the arena, the clock. */
+.play__status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+
+.play__pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-bg-surface);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  font-variant-numeric: tabular-nums;
+}
+
+.play__pill--closing {
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+}
+
+.play__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+.play__title {
+  color: var(--color-text-primary);
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-bold);
+}
+
+.play__lead {
+  margin-top: var(--space-1);
+  color: var(--color-text-secondary);
+}
+
+.play__hud {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: var(--space-3);
+  margin-top: var(--space-6);
+}
+
+.play__player {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-left: 4px solid var(--player-color);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-surface);
+  color: var(--color-text-primary);
+}
+
+.play__player--out {
+  opacity: 0.55;
+}
+
+.play__player-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.play__swatch {
+  width: 0.875rem;
+  height: 0.875rem;
+  border-radius: 50%;
+  background: var(--player-color);
+  box-shadow: 0 0 0 1px var(--color-border-strong);
+}
+
+.play__name {
+  flex: 1;
+  font-weight: var(--font-weight-semibold);
+}
+
+.play__out {
+  padding: 0.1rem var(--space-2);
+  border-radius: 999px;
+  background: var(--color-bg-base);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.play__stage {
+  position: relative;
+  margin-top: var(--space-4);
+  aspect-ratio: 15 / 13;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: #0b0b12;
+}
+
+.play__arena {
+  position: absolute;
+  inset: 0;
+}
+
+.play__overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  background: rgb(0 0 0 / 0.55);
+}
+
+.play__result {
+  color: #fff;
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-bold);
+  text-align: center;
+  text-shadow: 0 2px 0 #000;
+}
+
+.play__controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-8);
+  margin-top: var(--space-4);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+
+  dt {
+    display: inline;
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-primary);
+
+    &::after {
+      content: ': ';
+    }
+  }
+
+  dd {
+    display: inline;
+  }
+}
+
+/* Who plays: a card above the arena. Changing anything starts a new match. */
+.play__setup {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3) var(--space-6);
+  margin-top: var(--space-6);
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-surface);
+}
+
+.play__setup-title {
+  flex-basis: 100%;
+  color: var(--color-text-primary);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+}
+
+.play__setup-field {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.play__setup-label {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.play__setup-check {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+}
+
+.play__setup-hint {
+  flex-basis: 100%;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+}

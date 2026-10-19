@@ -1,5 +1,6 @@
 import { DOCUMENT } from '@angular/common';
 import { computed, inject } from '@angular/core';
+import { AudioSettingsService } from '@libs/audio-settings';
 import { Language } from '@libs/entity';
 import { ThemePreference, ThemeService } from '@libs/theme';
 import { UpdateLanguageService } from '@libs/translation';
@@ -43,10 +44,14 @@ export const SettingsStore = signalStore(
       _,
       theme = inject(ThemeService),
       language = inject(UpdateLanguageService),
+      audio = inject(AudioSettingsService),
     ) => ({
       themePreference: computed(() => theme.preference()),
       isDarkActive: computed(() => theme.isDark()),
       currentLanguage: computed(() => language.currentLanguage() as Language),
+      // Audio lives in AudioSettingsService, shared with the game page.
+      music: computed(() => audio.music()),
+      sfx: computed(() => audio.sfx()),
     }),
   ),
 
@@ -55,6 +60,7 @@ export const SettingsStore = signalStore(
       store,
       theme = inject(ThemeService),
       language = inject(UpdateLanguageService),
+      audio = inject(AudioSettingsService),
       document = inject(DOCUMENT),
     ) => {
       const applyReduceMotion = (enabled: boolean): void => {
@@ -68,6 +74,14 @@ export const SettingsStore = signalStore(
 
         setLanguage(next: Language): void {
           language.changeLanguage(next);
+        },
+
+        setMusic(on: boolean): void {
+          audio.setMusic(on);
+        },
+
+        setSfx(on: boolean): void {
+          audio.setSfx(on);
         },
 
         setReduceMotion(enabled: boolean): void {

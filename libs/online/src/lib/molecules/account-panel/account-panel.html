@@ -1,0 +1,185 @@
+<section class="account" data-testid="account-panel">
+  @if (!available()) {
+  <p class="account__muted" data-testid="account-unavailable">
+    {{ 'ONLINE.ACCOUNT.UNAVAILABLE' | translate }}
+  </p>
+  } @else if (!ready()) {
+  <p class="account__muted">{{ 'ONLINE.ACCOUNT.LOADING' | translate }}</p>
+  } @else if (user(); as u) { @if (!u.emailVerified) {
+  <div class="account__verify" data-testid="account-verify">
+    <h2 class="account__title">
+      {{ 'ONLINE.ACCOUNT.VERIFY_TITLE' | translate }}
+    </h2>
+    <p>{{ 'ONLINE.ACCOUNT.VERIFY_TEXT' | translate: { email: u.email } }}</p>
+    <div class="account__row">
+      <button
+        type="button"
+        libButton
+        variant="primary"
+        size="sm"
+        [disabled]="busy()"
+        (click)="checkVerification.emit()"
+        data-testid="account-verify-check"
+      >
+        {{ 'ONLINE.ACCOUNT.VERIFY_DONE' | translate }}
+      </button>
+      <button
+        type="button"
+        libButton
+        size="sm"
+        [disabled]="busy()"
+        (click)="resendVerification.emit()"
+        data-testid="account-verify-resend"
+      >
+        {{ 'ONLINE.ACCOUNT.VERIFY_RESEND' | translate }}
+      </button>
+    </div>
+  </div>
+  } @else {
+  <div class="account__me" data-testid="account-me">
+    <p class="account__welcome" data-testid="account-welcome">
+      {{ (profile()?.returning ? 'ONLINE.ACCOUNT.WELCOME_BACK' :
+      'ONLINE.ACCOUNT.WELCOME_NEW') | translate: { name: u.displayName ||
+      u.email } }}
+    </p>
+    @if (profile(); as p) {
+    <p class="account__stats" data-testid="account-stats">
+      {{ 'ONLINE.ACCOUNT.STATS' | translate: { wins: p.wins, matches: p.matches
+      } }} @if (p.rank) { · {{ 'ONLINE.ACCOUNT.RANK' | translate: { rank: p.rank
+      } }} }
+    </p>
+    }
+  </div>
+  }
+  <button
+    type="button"
+    libButton
+    size="sm"
+    (click)="signOut.emit()"
+    data-testid="account-sign-out"
+  >
+    {{ 'ONLINE.ACCOUNT.SIGN_OUT' | translate }}
+  </button>
+  } @else {
+  <form
+    class="account__form"
+    (submit)="submit($event)"
+    data-testid="account-form"
+    novalidate
+  >
+    <h2 class="account__title">
+      {{ (mode() === 'sign-in' ? 'ONLINE.ACCOUNT.SIGN_IN' :
+      'ONLINE.ACCOUNT.SIGN_UP') | translate }}
+    </h2>
+    <p class="account__muted">{{ 'ONLINE.ACCOUNT.WHY' | translate }}</p>
+    <button
+      type="button"
+      class="account__google"
+      [disabled]="busy()"
+      (click)="signInWith.emit('google')"
+      data-testid="account-google"
+    >
+      <svg class="account__google-logo" viewBox="0 0 48 48" aria-hidden="true">
+        <path
+          fill="#EA4335"
+          d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"
+        />
+        <path
+          fill="#4285F4"
+          d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"
+        />
+        <path
+          fill="#FBBC05"
+          d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"
+        />
+        <path
+          fill="#34A853"
+          d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"
+        />
+      </svg>
+      {{ 'ONLINE.ACCOUNT.GOOGLE' | translate }}
+    </button>
+    <p class="account__or" aria-hidden="true">
+      {{ 'ONLINE.ACCOUNT.OR' | translate }}
+    </p>
+    @if (mode() === 'sign-up') {
+    <label class="account__field">
+      <span>{{ 'ONLINE.ACCOUNT.NAME' | translate }}</span>
+      <input
+        type="text"
+        name="name"
+        autocomplete="nickname"
+        [attr.maxlength]="nameLength.max"
+        [value]="name()"
+        (input)="name.set(read($event))"
+        data-testid="account-name"
+      />
+    </label>
+    }
+    <label class="account__field">
+      <span>{{ 'ONLINE.ACCOUNT.EMAIL' | translate }}</span>
+      <input
+        type="email"
+        name="email"
+        autocomplete="email"
+        [value]="email()"
+        (input)="email.set(read($event))"
+        data-testid="account-email"
+      />
+    </label>
+    <label class="account__field">
+      <span
+        >{{ 'ONLINE.ACCOUNT.PASSWORD' | translate: { min: minPassword } }}</span
+      >
+      <input
+        type="password"
+        name="password"
+        [attr.autocomplete]="mode() === 'sign-in' ? 'current-password' : 'new-password'"
+        [value]="password()"
+        (input)="password.set(read($event))"
+        data-testid="account-password"
+      />
+    </label>
+    <button
+      type="submit"
+      libButton
+      variant="primary"
+      [block]="true"
+      [disabled]="!valid() || busy()"
+      data-testid="account-submit"
+    >
+      {{ (mode() === 'sign-in' ? 'ONLINE.ACCOUNT.SUBMIT_IN' :
+      'ONLINE.ACCOUNT.SUBMIT_UP') | translate }}
+    </button>
+    <div class="account__row account__row--links">
+      <button
+        type="button"
+        class="account__link"
+        (click)="toggleMode()"
+        data-testid="account-toggle"
+      >
+        {{ (mode() === 'sign-in' ? 'ONLINE.ACCOUNT.TO_SIGN_UP' :
+        'ONLINE.ACCOUNT.TO_SIGN_IN') | translate }}
+      </button>
+      @if (mode() === 'sign-in') {
+      <button
+        type="button"
+        class="account__link"
+        (click)="forgot()"
+        data-testid="account-forgot"
+      >
+        {{ 'ONLINE.ACCOUNT.FORGOT' | translate }}
+      </button>
+      }
+    </div>
+  </form>
+  } @if (error(); as code) {
+  <p class="account__error" role="alert" data-testid="account-error">
+    {{ 'ONLINE.AUTH_ERROR.' + code | translate }}
+  </p>
+  } @if (notice(); as n) {
+  <p class="account__notice" role="status" data-testid="account-notice">
+    {{ 'ONLINE.ACCOUNT.NOTICE.' + n | translate }}
+  </p>
+  }
+</section>

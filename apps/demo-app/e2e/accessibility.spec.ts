@@ -7,7 +7,22 @@ import { expect, test } from '@playwright/test';
  * during ordinary work: a heading that disappears, a control that loses its
  * accessible name, a language switch that does not update `<html lang>`.
  */
-const ROUTES = ['/', '/settings', '/design', '/profile'];
+const ROUTES = [
+  '/',
+  '/play',
+  '/online',
+  '/arenas',
+  '/arenas/autodromo',
+  '/items',
+  '/items/egg',
+  '/items/glove',
+  '/items/kick',
+  '/settings/audio',
+  '/characters',
+  '/settings',
+  '/design',
+  '/profile',
+];
 
 test.describe('accessibility', () => {
   for (const route of ROUTES) {

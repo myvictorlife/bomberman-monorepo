@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { AudioSettingsService } from '@libs/audio-settings';
 import { Language } from '@libs/entity';
 import { ThemeService } from '@libs/theme';
 import { UpdateLanguageService } from '@libs/translation';
@@ -51,6 +52,21 @@ describe('SettingsStore', () => {
     createStore().setThemePreference('dark');
 
     expect(themeService.setPreference).toHaveBeenCalledWith('dark');
+  });
+
+  it('reads and forwards the audio choices through AudioSettingsService', () => {
+    const store = createStore();
+    const audio = TestBed.inject(AudioSettingsService);
+    expect(store.music()).toBe(false);
+    expect(store.sfx()).toBe(true);
+
+    store.setMusic(true);
+    store.setSfx(false);
+
+    expect(audio.music()).toBe(true);
+    expect(audio.sfx()).toBe(false);
+    expect(store.music()).toBe(true);
+    expect(store.sfx()).toBe(false);
   });
 
   it('forwards a language change to UpdateLanguageService', () => {

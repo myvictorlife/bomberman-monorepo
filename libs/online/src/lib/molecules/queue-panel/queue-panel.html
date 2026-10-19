@@ -1,0 +1,92 @@
+<section class="queue" data-testid="queue-panel">
+  <h2 class="queue__title">{{ 'ONLINE.QUEUE.TITLE' | translate }}</h2>
+
+  @if (inRound()) {
+  <p class="queue__status queue__status--live" data-testid="queue-in-round">
+    {{ 'ONLINE.QUEUE.IN_ROUND' | translate }}
+  </p>
+  } @else if (position(); as n) { @if (outside()) {
+  <p class="queue__status queue__status--live" data-testid="queue-outside">
+    {{ 'ONLINE.QUEUE.OUTSIDE' | translate }}
+  </p>
+  }
+  <p class="queue__status" data-testid="queue-position">
+    {{ (nextUp() ? 'ONLINE.QUEUE.NEXT_UP' : 'ONLINE.QUEUE.POSITION') |
+    translate: { n: n } }}
+  </p>
+  <button
+    type="button"
+    libButton
+    size="sm"
+    (click)="leave.emit()"
+    data-testid="queue-leave"
+  >
+    {{ 'ONLINE.QUEUE.LEAVE' | translate }}
+  </button>
+  } @else {
+  <button
+    type="button"
+    libButton
+    variant="primary"
+    [block]="true"
+    [disabled]="blocked() !== null"
+    (click)="join.emit()"
+    data-testid="queue-join"
+  >
+    {{ 'ONLINE.QUEUE.JOIN' | translate }}
+  </button>
+  @if (blocked(); as reason) {
+  <p class="queue__hint" data-testid="queue-blocked">
+    {{ 'ONLINE.QUEUE.BLOCKED.' + reason | translate }}
+  </p>
+  } } @if (phase() === 'playing' || phase() === 'results') {
+  <div class="queue__live" data-testid="queue-live">
+    <h3 class="queue__subtitle">
+      {{ 'ONLINE.QUEUE.NOW_PLAYING' | translate }}
+    </h3>
+    <p class="queue__live-names">
+      @for (seat of players(); track seat.id; let last = $last) {
+      <span [class.queue__me]="seat.id === myId()">{{ seat.name }}</span>@if
+      (seat.id === champion()?.id) {<span
+        class="queue__crown"
+        data-testid="queue-live-crown"
+        [title]="'ONLINE.QUEUE.CHAMPION' | translate: { n: champion()?.streak }"
+        >👑</span
+      >}@if (!last) {<span aria-hidden="true"> · </span>} }
+    </p>
+  </div>
+  }
+
+  <ol class="queue__list" data-testid="queue-list">
+    @for (seat of queue(); track seat.id; let i = $index) {
+    <li
+      class="queue__item"
+      [class.queue__item--me]="seat.id === myId()"
+      [class.queue__item--next]="i < maxPlayers()"
+    >
+      <span class="queue__place">{{ i + 1 }}</span>
+      <span class="queue__name"
+        >{{ seat.name }} @if (seat.id === champion()?.id) {
+        <span
+          class="queue__crown"
+          data-testid="queue-crown"
+          [title]="'ONLINE.QUEUE.CHAMPION' | translate: { n: champion()?.streak }"
+          >👑 {{ champion()?.streak }}</span
+        >
+        }</span
+      >
+      <span class="queue__character">
+        {{ characterKey(seat) | translate }} @if (isOutside(i + 1)) {
+        <span class="queue__outside" data-testid="queue-outside-tag"
+          >{{ 'ONLINE.QUEUE.OUTSIDE_TAG' | translate }}</span
+        >
+        }
+      </span>
+    </li>
+    } @empty {
+    <li class="queue__empty" data-testid="queue-empty">
+      {{ 'ONLINE.QUEUE.EMPTY' | translate }}
+    </li>
+    }
+  </ol>
+</section>

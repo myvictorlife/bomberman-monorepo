@@ -1,0 +1,60 @@
+.detail__preview {
+  display: block;
+  width: 100%;
+  aspect-ratio: 15 / 13;
+}
+
+.detail__panel {
+  --arena-accent: var(--color-warning);
+}
+
+.detail__fact {
+  display: grid;
+  gap: var(--space-1);
+  padding-left: var(--space-3);
+  border-left: 3px solid var(--arena-accent);
+  color: var(--color-text-primary);
+}
+
+.detail__label {
+  font-size: var(--font-size-xs);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
+.detail__muted {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.detail__url {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
+}
+
+.detail__others {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.detail__tiles {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-4);
+
+  & + & {
+    margin-top: var(--space-5);
+  }
+}
+
+.detail__notes {
+  display: grid;
+  gap: var(--space-3);
+
+  @media (min-width: 46rem) {
+    grid-template-columns: 1fr 1fr;
+  }
+}

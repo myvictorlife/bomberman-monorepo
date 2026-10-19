@@ -1,0 +1,31 @@
+<section class="players" data-testid="players-panel">
+  @if (!compact()) {
+  <h2 class="players__title">{{ 'ONLINE.PLAYERS.TITLE' | translate }}</h2>
+  }
+  <ul class="players__list" role="list">
+    @for (player of players(); track player.id) {
+    <li
+      class="players__item"
+      [class.players__item--out]="!player.alive"
+      [class.players__item--me]="player.id === myId()"
+      [style.--player-color]="colors()[player.slot]"
+      data-testid="players-item"
+    >
+      <div class="players__head">
+        <span class="players__swatch" aria-hidden="true"></span>
+        <span class="players__name">{{ player.name }}</span>
+        @if (!player.alive) {
+        <span class="players__out" data-testid="players-out"
+          >{{ 'ONLINE.PLAYERS.OUT' | translate }}</span
+        >
+        }
+      </div>
+      <lib-player-badges
+        [stats]="player"
+        [size]="compact() ? 'sm' : 'md'"
+        testId="players"
+      />
+    </li>
+    }
+  </ul>
+</section>

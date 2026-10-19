@@ -1,0 +1,140 @@
+<lib-showcase
+  [eyebrow]="'SOUNDS.EYEBROW' | translate"
+  [title]="'SOUNDS.TITLE' | translate"
+  [lead]="'SOUNDS.LEAD' | translate"
+>
+  <div showcase-stage class="sounds__stage">
+    <button
+      type="button"
+      class="sounds__theme"
+      [class.sounds__theme--on]="themePlaying()"
+      (click)="toggleTheme()"
+      [attr.aria-pressed]="themePlaying()"
+      data-testid="sounds-theme"
+    >
+      <span class="sounds__theme-icon" aria-hidden="true"
+        >{{ themePlaying() ? '◼' : '▶' }}</span
+      >
+      <span class="sounds__theme-name">{{ 'SOUNDS.THEME' | translate }}</span>
+      <span class="sounds__theme-meta"
+        >{{ 'SOUNDS.THEME_META' | translate: theme }}</span
+      >
+    </button>
+    <div class="sounds__bars" aria-hidden="true">
+      @for (bar of [1, 2, 3, 4, 5, 6, 7, 8]; track bar) {
+      <span
+        class="sounds__bar"
+        [class.sounds__bar--on]="themePlaying()"
+        [style.animation-delay.ms]="bar * 90"
+      ></span>
+      }
+    </div>
+  </div>
+
+  <div showcase-panel class="sounds__panel">
+    <div class="sounds__fact">
+      <span class="sounds__label">{{ 'SOUNDS.LAST' | translate }}</span>
+      <strong data-testid="sounds-last">{{ lastPlayed() ?? '—' }}</strong>
+    </div>
+    <div class="sounds__fact">
+      <label class="sounds__label" for="sounds-voice"
+        >{{ 'SOUNDS.VOICE' | translate }}</label
+      >
+      @if (voices().length) {
+      <select
+        id="sounds-voice"
+        class="sounds__select"
+        [value]="voiceName() ?? ''"
+        (change)="chooseVoice($any($event.target).value)"
+        data-testid="sounds-voice"
+      >
+        @for (voice of voices(); track voice.name) {
+        <option [value]="voice.name" [selected]="voice.name === voiceName()">
+          {{ voice.name }} · {{ voice.lang }}
+        </option>
+        }
+      </select>
+      <span class="sounds__muted">{{ 'SOUNDS.VOICE_HINT' | translate }}</span>
+      } @else {
+      <span class="sounds__muted" data-testid="sounds-voice-none"
+        >{{ 'SOUNDS.VOICE_NONE' | translate }}</span
+      >
+      }
+    </div>
+    <div class="sounds__fact">
+      <span class="sounds__label">{{ 'SOUNDS.HOW' | translate }}</span>
+      <span class="sounds__muted">{{ 'SOUNDS.HOW_DESC' | translate }}</span>
+    </div>
+  </div>
+
+  <lib-showcase-section
+    [title]="'SOUNDS.EFFECTS' | translate"
+    [lead]="'SOUNDS.EFFECTS_LEAD' | translate"
+  >
+    <div class="sounds__grid">
+      @for (effect of effects; track effect) {
+      <button
+        type="button"
+        libButton
+        variant="secondary"
+        size="sm"
+        (click)="playEffect(effect)"
+        data-testid="sounds-effect"
+        [attr.data-effect]="effect"
+      >
+        {{ effectKey(effect) | translate }}
+      </button>
+      }
+    </div>
+  </lib-showcase-section>
+
+  <p class="sounds__pointer">
+    {{ 'SOUNDS.ITEMS_HINT' | translate }}
+    <a routerLink="/items" libButton variant="secondary" size="sm"
+      >{{ 'SOUNDS.ITEMS_LINK' | translate }}</a
+    >
+  </p>
+
+  <lib-showcase-section
+    [title]="'SOUNDS.QUIPS' | translate"
+    [lead]="'SOUNDS.QUIPS_LEAD' | translate"
+  >
+    <div class="sounds__moments">
+      @for (moment of moments; track moment) {
+      <div class="sounds__moment">
+        <h3 class="sounds__moment-title">
+          {{ momentKey(moment) | translate }}
+        </h3>
+        <div class="sounds__lines">
+          @for (line of quips[moment]; track line) {
+          <button
+            type="button"
+            class="sounds__line"
+            (click)="say(line)"
+            data-testid="sounds-line"
+          >
+            <span aria-hidden="true">🗣</span> {{ line }}
+          </button>
+          }
+        </div>
+      </div>
+      }
+    </div>
+  </lib-showcase-section>
+
+  <lib-showcase-section [title]="'SOUNDS.NOTES' | translate">
+    <div class="sounds__notes">
+      <lib-showcase-note [title]="'SOUNDS.NOTE_1_TITLE' | translate"
+        >{{ 'SOUNDS.NOTE_1' | translate }}</lib-showcase-note
+      >
+      <lib-showcase-note [title]="'SOUNDS.NOTE_2_TITLE' | translate"
+        >{{ 'SOUNDS.NOTE_2' | translate }}</lib-showcase-note
+      >
+      <lib-showcase-note
+        [title]="'SOUNDS.NOTE_3_TITLE' | translate"
+        tone="warning"
+        >{{ 'SOUNDS.NOTE_3' | translate }}</lib-showcase-note
+      >
+    </div>
+  </lib-showcase-section>
+</lib-showcase>

@@ -1,0 +1,177 @@
+<section class="mounts">
+  <header class="mounts__header">
+    <h1 class="mounts__title" data-testid="mounts-title">
+      {{ 'MOUNTS.TITLE' | translate }}
+    </h1>
+    <p class="mounts__lead">{{ 'MOUNTS.LEAD' | translate }}</p>
+    <a
+      routerLink="/characters"
+      class="mounts__characters-link"
+      data-testid="mounts-characters"
+    >
+      {{ 'MOUNTS.CHARACTERS' | translate }}
+    </a>
+  </header>
+
+  <div class="mounts__layout">
+    <!-- The list -->
+    <div>
+      <h2 class="mounts__subtitle">{{ 'MOUNTS.LIST' | translate }}</h2>
+      <ul class="mounts__list" role="list" data-testid="mounts-list">
+        @for (mount of mounts(); track mount.id) {
+        <li>
+          <button
+            type="button"
+            class="mounts__card"
+            [class.mounts__card--selected]="mount.id === selected().id"
+            [attr.aria-pressed]="mount.id === selected().id"
+            (click)="select(mount.id)"
+            [attr.data-mount]="mount.id"
+            data-testid="mounts-card"
+          >
+            <lib-mount-portrait [mountId]="mount.id" [size]="56" />
+            <span class="mounts__card-text">
+              <span class="mounts__card-name"
+                >{{ key(mount.id, 'NAME') | translate }}</span
+              >
+              <span class="mounts__card-ability"
+                >{{ key(mount.id, 'ABILITY') | translate }}</span
+              >
+            </span>
+            @if (mount.id === selected().id) {
+            <span class="mounts__card-badge">
+              <lib-badge tone="success" [pill]="true"
+                >{{ 'MOUNTS.ON_STAGE' | translate }}</lib-badge
+              >
+            </span>
+            }
+          </button>
+        </li>
+        }
+      </ul>
+    </div>
+
+    <!-- The stage -->
+    <lib-card padding="lg" [elevated]="true">
+      <div class="mounts__preview-head">
+        <div>
+          <h2 class="mounts__subtitle" data-testid="mounts-selected-name">
+            {{ key(selected().id, 'NAME') | translate }}
+          </h2>
+          <p class="mounts__rider" data-testid="mounts-rider">
+            {{ 'MOUNTS.RIDER' | translate: { name: (characterKey(riderId()) |
+            translate) } }}
+          </p>
+        </div>
+      </div>
+
+      <!-- The stage, with the eight poses around it -->
+      <div
+        class="mounts__ring"
+        role="group"
+        [attr.aria-label]="'MOUNTS.FACING' | translate"
+      >
+        @for (pose of poses; track pose.cell) {
+        <button
+          type="button"
+          [class]="'mounts__pose mounts__pose--' + pose.cell"
+          [class.mounts__pose--active]="isActive(pose)"
+          [attr.aria-pressed]="isActive(pose)"
+          [attr.aria-label]="(pose.walking ? 'MOUNTS.POSE_WALKING' : 'MOUNTS.POSE_STANDING') | translate: { side: (facingKey(pose.facing) | translate) }"
+          [attr.data-facing]="pose.facing"
+          [attr.data-walking]="pose.walking"
+          (click)="strike(pose.facing, pose.walking)"
+          data-testid="mounts-pose"
+        >
+          <lib-mount-sprite
+            [mountId]="selected().id"
+            [riderId]="riderId()"
+            [facing]="pose.facing"
+            [frame]="pose.walking ? walkFrame() : 0"
+            [size]="56"
+          />
+        </button>
+        }
+        <button
+          type="button"
+          class="mounts__stage"
+          (click)="turn()"
+          [attr.aria-label]="'MOUNTS.TURN_HINT' | translate"
+          data-testid="mounts-stage"
+        >
+          <lib-mount-sprite
+            [mountId]="selected().id"
+            [riderId]="riderId()"
+            [facing]="facing()"
+            [frame]="frame()"
+            [size]="176"
+          />
+          <span class="mounts__stage-hint" aria-hidden="true"
+            >{{ 'MOUNTS.TURN_HINT' | translate }}</span
+          >
+        </button>
+      </div>
+
+      <div class="mounts__poses">
+        <button
+          type="button"
+          libButton
+          [variant]="walking() ? 'primary' : 'secondary'"
+          size="sm"
+          class="mounts__walk"
+          [attr.aria-pressed]="walking()"
+          (click)="toggleWalking()"
+          data-testid="mounts-walk"
+        >
+          {{ (walking() ? 'MOUNTS.STAND' : 'MOUNTS.WALK') | translate }}
+        </button>
+      </div>
+
+      <!-- The ability: its video, played by the rules, and its numbers -->
+      <section class="mounts__ability" data-testid="mounts-ability">
+        <h3 class="mounts__section-title">
+          {{ key(selected().id, 'ABILITY') | translate }}
+          <lib-badge
+            [tone]="selected().usesButton ? 'info' : 'neutral'"
+            [pill]="true"
+          >
+            {{ (selected().usesButton ? 'MOUNTS.BUTTON' : 'MOUNTS.PASSIVE') |
+            translate }}
+          </lib-badge>
+        </h3>
+        @for (mount of mounts(); track mount.id) {
+        <canvas
+          #video
+          class="mounts__video"
+          [hidden]="mount.id !== selected().id"
+          [attr.data-video]="'mount:' + mount.id"
+          role="img"
+          [attr.aria-label]="
+            'MOUNTS.VIDEO'
+              | translate
+                : { name: (key(mount.id, 'NAME') | translate), ability: (key(mount.id, 'ABILITY') | translate) }
+          "
+          data-testid="mounts-video"
+        ></canvas>
+        }
+        <p class="mounts__desc" data-testid="mounts-desc">
+          {{ key(selected().id, 'ABILITY_DESC') | translate }}
+        </p>
+        <ul class="mounts__facts" role="list" data-testid="mounts-facts">
+          @for (fact of selected().facts; track fact.key) {
+          <li class="mounts__fact">
+            {{ 'MOUNTS.FACT.' + fact.key | translate: { n: fact.n } }}
+          </li>
+          }
+        </ul>
+      </section>
+
+      <div class="mounts__story">
+        <h3 class="mounts__section-title">{{ 'MOUNTS.STORY' | translate }}</h3>
+        <p data-testid="mounts-story">
+          {{ key(selected().id, 'STORY') | translate }}
+        </p>
+      </div>
+    </lib-card>
+  </div>
+</section>

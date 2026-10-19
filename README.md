@@ -8,7 +8,7 @@
 [![Nx](https://img.shields.io/badge/Nx-23-143055.svg)](https://nx.dev)
 
 **Clone it, `npm install`, and you have a running product skeleton** — lazy-loaded
-features with SignalStore, eight-language i18n with RTL, OS-synced dark mode, a
+features with SignalStore, i18n with RTL support, OS-synced dark mode, a
 published Storybook, dependency boundaries that fail lint, per-project coverage
 floors, and a CI/CD pipeline that gives every pull request its own live preview
 URL. All of it before you create a single vendor account: the week of
@@ -32,7 +32,7 @@ with controls, theme and RTL toolbars
 - ⚡ **Angular 22, standalone and zoneless** — no NgModules, no zone.js, OnPush everywhere, enforced by lint
 - 🧠 **NgRx SignalStore per feature, provided on its route** — state is created on entry and destroyed on exit
 - 🧱 **Module boundaries that bite** — features cannot import each other; an illegal import is a lint error, not a review comment
-- 🌍 **i18n in eight languages, RTL included** — with a completeness test that fails CI the moment a key is missing from any bundle
+- 🌍 **i18n with RTL support** — English and Portuguese bundles, with a completeness test that fails CI the moment a key is missing from any bundle
 - 🎨 **Design tokens + dark mode following the OS** — every token rendered live at [`/design`](https://base-angular-monorepo.web.app/design), so the docs cannot go stale invisibly
 - 📖 **Storybook for the design system** — `nx storybook ui`: every component with controls, plus theme (light/dark) and direction (LTR/RTL) toolbars, deployed as its [own site](https://base-monorepo-design-system.web.app)
 - 🧪 **Vitest through Angular's official builder + Playwright e2e** — with a coverage floor per project that fails the build
@@ -165,7 +165,7 @@ base-angular-monorepo/
 │       │   │   ├── app.config.ts           # Application providers setup
 │       │   │   ├── app.routes.ts           # Root routing configuration
 │       │   │   └── app.ts                  # Root component
-│       │   ├── assets/i18n/                # en · nl · fr · pt translation bundles
+│       │   ├── assets/i18n/                # en · pt translation bundles
 │       │   ├── main.ts                     # Bootstrap entry point
 │       │   ├── fonts.css                   # Self-hosted Inter @font-face rules
 │       │   ├── index.html
@@ -623,10 +623,10 @@ security headers.
 
 ### Internationalisation
 
-Eight bundles live in `apps/demo-app/src/assets/i18n/` — `en`, `nl`, `fr`, `pt`,
-`es`, `de`, `ar`, `pl`. `provideTranslation()` wires the loader, restores the
-language from `localStorage`, keeps `<html lang>` and `<html dir>` in sync (Arabic
-renders right-to-left) and translates each route's `<title>`.
+Two bundles live in `apps/demo-app/src/assets/i18n/` — `en` and `pt`.
+`provideTranslation()` wires the loader, restores the language from
+`localStorage`, keeps `<html lang>` and `<html dir>` in sync (an `rtl` language
+only needs its metadata entry) and translates each route's `<title>`.
 
 Adding a language means adding it to the `Language` enum and dropping in the JSON
 bundle — `i18n-completeness.spec.ts` fails until every key is present in every

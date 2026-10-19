@@ -30,6 +30,7 @@ enforces, and getting them wrong means a failed lint or a rejected review.
 | Writing or fixing a Storybook story          | `.claude/skills/storybook/SKILL.md`          |
 | Tracking events                              | `.claude/skills/firebase-analytics/SKILL.md` |
 | Deploying, or CI secrets                     | `.claude/skills/firebase-deploy/SKILL.md`    |
+| Changing the game server or the online room  | `.claude/skills/game-server/SKILL.md`        |
 
 Broader background: [`docs/best-practices.md`](docs/best-practices.md),
 [`docs/workspace-generators.md`](docs/workspace-generators.md),
@@ -40,6 +41,7 @@ Broader background: [`docs/best-practices.md`](docs/best-practices.md),
 ```sh
 npm install     # also generates the integration configs
 npm start       # http://localhost:4200
+npm run start:server   # game server, ws on :8086 (optional: /online needs it)
 ```
 
 Node `^22.22.3`, `^24.15.0` or `>=26`. **No Firebase project is needed** — without
@@ -72,8 +74,8 @@ These are enforced by lint or by a test — breaking one fails the build.
   defeats the boundary rules. For feature libraries,
   `npx nx g @app/workspace-plugin:feature-lib <name>` does both (and the alias,
   test target and i18n keys) in one step
-- Every i18n key exists in every bundle — `en`, `nl`, `fr`, `pt`, `es`, `de`,
-  `ar`, `pl`. `i18n-completeness.spec.ts` fails otherwise; the list of bundles
+- Every i18n key exists in every bundle — `en` and `pt`.
+  `i18n-completeness.spec.ts` fails otherwise; the list of bundles
   derives from the `Language` enum, so adding a language means adding its bundle
 
 ## Architecture rules that are easy to get wrong
@@ -93,8 +95,15 @@ theme and language through `withComputed` and forwards writes, because
 `ThemeService` and `UpdateLanguageService` already own them as signals. Copying
 them into `withState` creates a second source of truth.
 
-**Analytics goes through the `ANALYTICS` token.** Only `@libs/analytics-firebase`
-may name Firebase, and only `app.config.ts` may import it.
+**Analytics goes through the `ANALYTICS` token, accounts through `AUTH`.** Only
+`@libs/analytics-firebase` and `@libs/auth-firebase` may name Firebase, and only
+`app.config.ts` may import them.
+
+**The game server shares the rules, never the browser.** `apps/game-server`
+imports `@libs/game-core`, `@libs/game-protocol` and `@libs/game-lobby` only;
+lint bans Angular, Phaser and the Firebase web SDK there. Queue logic belongs
+in `@libs/game-lobby`, where it is unit-tested without sockets; the room class
+is glue. See `.claude/skills/game-server/SKILL.md`.
 
 **Vendor SDKs load with `import()`, never a static import.** A static import pulls
 the SDK into the bundle even when the integration is disabled.

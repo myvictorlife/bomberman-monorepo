@@ -11,6 +11,421 @@ config file. Ordinary app-level additions are minor.
 
 ## [Unreleased]
 
+### Added
+
+- **Chat beside the arena, and a full-screen mode.** On `/online` the chat
+  is the first card of the right column, next to the arena, with the queue
+  under it. A button in the stage's corner expands the page: the arena
+  fills the screen (the browser's full screen too, where allowed) and the
+  chat docks on its right with the newest line at the bottom, the way a
+  live stream shows its chat; `✕` or Escape comes back. The canvas never
+  remounts — only the layout changes. `lib-chat-panel` gained a `dock`
+  input for that height-filling form.
+
+- **Mounts page.** `/mounts` (`libs/mounts`, "Mounts" in the header), laid
+  out like the characters page: the mounts listed on the left, and the
+  chosen one on a stage ridden by your character — turned by a click, the
+  eight poses around it, a walk button — with a little video of its
+  ability played by the rules themselves (`mount:<id>` scenes in
+  `demoScene`, with a new `face` step and `mounts` seating in
+  `DemoScene`), the ability's numbers straight from the rules
+  (`abilityFacts`), and the story. The mounts section leaves the
+  characters page, which links here instead. The preview painter now
+  draws Pato's jump as an arc and Tatu's sprint with a trail.
+
+- **The ranking beside the arena.** `/online` is three columns on a wide
+  screen: the ranking on the left, with the top three on the shared
+  `lib-podium` wearing their last characters and the rest of the list from
+  fourth place under it, the arena in the middle, the room on the right.
+  Narrower, the ranking goes under the arena. `lib-ranking-list` gained
+  `start` and `titled`.
+
+- **The round's HUD over the arena.** The clock and who is in with what
+  (`lib-players-panel [compact]`, `lib-player-badges [size]="'sm'"`) sit
+  in a thin strip along the top of the stage instead of a sidebar card,
+  so they are in view in both layouts.
+
+### Fixed
+
+- **Google sign-in on a custom domain.** `authDomainRedirect` now sends
+  `<projectId>.web.app` and `<projectId>.firebaseapp.com` to a custom
+  `authDomain` too, so with `authDomain` set to the custom domain every
+  Hosting address signs in on the same origin instead of stopping on a blank
+  `/__/auth/handler`.
+- **Deep links no longer serve a stale `index.html` for an hour.** The
+  hosting `no-cache` header matched only the literal `/index.html`, so `/`
+  and routes such as `/mounts` got Firebase's default `max-age=3600` and kept
+  loading the previous bundle after a deploy. It now matches every path
+  without a file extension.
+- **The game server died on its first HTTP request.** Colyseus binds its own
+  request listener to the HTTP server it is given, so `/ranking`'s handler
+  and Colyseus both answered every request and the second answer threw
+  (`ERR_HTTP_HEADERS_SENT`) — also turning matchmaking posts into 405s.
+  `httpHandler` now claims only `/ranking` and `/` (returning whether it
+  did), and `main.ts` runs it ahead of Colyseus' listener for the rest.
+
+### Changed
+
+- **The game server moved to `https://api.detona.online`.** The hosting CSP
+  `connect-src` lists it in place of `game.cragvia.com`; the tunnel route
+  still points at `http://localhost:8086`.
+- **Pato hops over pillars.** The jump crosses up to 3 cells of crates,
+  pillars or bombs, not only crates and bombs; the arena's border is the
+  one thing it never clears (`jumpLanding`). A rules change: deploy the
+  front and restart the server together.
+
+- **Pato hops one cell, Tatu rolls.** The Pato's jump clears exactly the
+  next cell (`JUMP_REACH` 1) and lands on the one after; if that one is
+  taken there is no jump — it no longer looks further for room. The Tatu's
+  sprint is now a roll: straight ahead the way the keys point as it starts,
+  no steering until it stops — against a wall, crate or bomb (kicking it,
+  with the kick), on a second press, or after 4 s, enough to cross the
+  arena. Their demo scenes and ability strings follow.
+
+- **The Galinha replaces the Poraquê.** The electric eel in a wheeled tank
+  is gone; its mount slot is now an electric hen (`MountId` `'galinha'`):
+  white feathers, a comb shaped like a lightning bolt, wings and tail tipped
+  in sparks, the rider on a team-coloured saddle (`cartoon/galinha.ts`). The
+  ability is unchanged — Short circuit, every bomb within two cells goes off.
+  Her sound clucks before it crackles. Renamed with it: the demo scene
+  (`GALINHA_SCENE`), the sound and quip key `mount-galinha`, and the strings
+  `MOUNTS.GALINHA`, `ITEMS.EFFECT_MOUNT_GALINHA`,
+  `SOUNDS.EFFECT_MOUNT_GALINHA`, `SOUNDS.MOMENT_MOUNT_GALINHA`. Client and
+  server must ship together: the id travels in every frame.
+
+- **Audio moved into the settings.** The header no longer links to the
+  sounds page. The settings page has two sections, General and Audio; Audio
+  holds the music and effects switches and a link to the sounds page, which
+  now lives at `/settings/audio` (`/sounds` redirects there). `@libs/sounds`
+  and `@libs/settings` still never import each other: the app's routes put
+  one under the other. `HEADER.SOUNDS` is gone from the bundles.
+
+- **Riders keep their size.** A character on a mount was drawn at 64 % of
+  their size to fit mount and rider in one cell, and read as a child on a
+  toy. Riders are now at 92 % (`RIDER_SCALE` in `cartoon/ink.ts`), and
+  mounted HD frames are 18 units taller (`MOUNTED_HEADROOM`): the mount
+  stands in the cell as before and the rider's head rises above it, as in a
+  3/4 view. The arena stands every player frame on the cell whatever its
+  height, the preview painter does the same, and roster cards shrink a
+  mounted frame to fit their square.
+
+- **A bomb on the head bounces.** A bomb in the air — kicked, thrown with
+  the glove or from the border — that comes down on a player standing there
+  no longer stops on top of them: it bonks them and bounces one cell on.
+  The one it hit is dizzy for a second (`STUN_TICKS`) and loses up to two
+  items above the starting kit (`BONK_DROPS`: extra bombs, fire, speed,
+  kick, remote, pierce — never the glove), which land on free floor around
+  them. Which two depends on the tick, not on chance, so a replay or the
+  server always agrees. New `bonk.ts` and events `player-bonked`,
+  `power-up-dropped`. A player in mid-air is flown over, as before.
+
+- **The last one standing wins.** A round is decided the moment one player
+  (or none) is left; the 1.5 s before it is over are for the result only.
+  Until now the survivor could still die in that time — a flame still
+  burning, a falling wall — and the round became a draw, which mostly hit a
+  rider whose mount had just taken the blast. Now nobody dies once it is
+  decided (`isDecided` in `game-core`): flames and falling walls kill no one
+  and `eliminatePlayer` does nothing. Players who fall in the same tick still
+  draw. Local and online play both get it.
+
+- **Winner stays.** In the online room the winner of a round plays the
+  next one too, first in line with the next four, until `winnerStays` wins
+  in a row (a new room rule: off, 2, 3, 5 or 10; default 5). The losers go
+  to the back of the line, best placed first. The snapshot carries
+  `champion { id, streak }`; the queue panel crowns the champion, and the
+  chat announces the streak. `Lobby.finishRound` takes the round's
+  standings and returns the outcome.
+
+- **Chat and reactions in the online room.** Under the arena, everyone reads
+  the conversation and anyone can send a reaction (🔥 😂 💣 👏 😱 👀) that
+  floats over the arena; writing takes a confirmed account. Lines show the
+  author's role (playing, in line, watching), and the room writes who won a
+  round and who got in from the border. Limits live in `Chat`
+  (`@libs/game-lobby`): 140 characters, one message per 2 s and five per
+  15 s, no repeats within 30 s, the last 50 messages kept in memory only, 20
+  sent to a newcomer. Admins remove a line or silence an account. New
+  messages `chat:send`, `react`, `chat:delete`, `chat:mute` and
+  `chat:history`, `chat`, `chat:removed`, `reaction`; new server errors
+  `chat-slow-down` and `chat-muted`. The arena no longer reads keys while a
+  text field has focus.
+
+- **Sign in with Google.** The online room's account panel has a "Sign in with
+  Google" button above the e-mail form. `Auth` gains
+  `signInWith(provider: AuthProvider)` (only `'google'` for now) and the error
+  codes `popup-blocked` and `cancelled`; `FirebaseAuth` opens a popup and loads
+  the popup resolver only for that call, so e-mail sign-in still never fetches
+  `apis.google.com`. Google accounts come confirmed, so they queue straight
+  away. The hosting headers now allow the popup: `apis.google.com` in
+  `script-src`, `frame-src 'self' https://*.firebaseapp.com` (`'self'` for an
+  `authDomain` on the site's own domain), and
+  `Cross-Origin-Opener-Policy: same-origin-allow-popups`. A fork enables the
+  provider in Firebase → Authentication → Sign-in method, sets `authDomain` to
+  the site's own domain and adds its `/__/auth/handler` to the OAuth client's
+  redirect URIs (the `firebase-deploy` skill explains why); an implementation
+  of `Auth` outside this repo must add `signInWith`. An error code Firebase
+  returns that `toAuthError` does not map is logged with `console.warn`
+  (`[auth] unmapped error`), since the UI only shows "Something went wrong".
+  `provideFirebaseAuth()` redirects whichever of `<projectId>.web.app` and
+  `<projectId>.firebaseapp.com` is not the `authDomain` to the one that is,
+  because sign-in cannot complete on the other. On the `authDomain` itself,
+  Google sign-in now redirects the page instead of opening a popup: the
+  popup's result was recorded by Firebase but did not reach the page. `Auth`
+  gains `takeRedirectError()`, which the online page reads after
+  `initialize()`; an implementation of `Auth` outside this repo must add it.
+
+- **Bots, offline.** `/play` now opens with a "Who plays" panel: 0–4 bots
+  (0–3 with a second player on the arrow keys), Easy / Medium / Hard, carried
+  in the URL (`/play?bots=3&level=hard&p2=1`); the default is one medium bot.
+  The brains live in a new library, `@libs/game-ai` (`scope:game-ai-lib`,
+  depends on game-core only, so the game server can run the same bots
+  later): a danger map that times every blast (chains, thrown bombs, the
+  closing walls), a timed path search that never walks into fire, a bomb only
+  ever dropped with a way out checked first, and — on Hard — traps for
+  enemies with nowhere to run. A level is data (`BOT_PROFILES`); the plan
+  layer is the slot a future strategist (an LLM, say) would fill. A headless
+  tournament in the specs checks that Hard beats Easy and that bots rarely
+  blow themselves up. `LocalSession` takes the bot seats; `ArenaOptions.bots`
+  passes them in.
+
+- **The glove grabs players.** Facing a player right next to you, the bomb
+  key lifts them overhead (`player-grabbed`): they cannot move, drop bombs or
+  burn, and wriggle free after 2 s (`CARRY_TICKS`). The bomb key again throws
+  them 3 cells the way you face (`player-thrown`), over anything, bouncing to
+  a free cell and wrapping round the arena like a thrown bomb; they land
+  dizzy for 1 s (`STUN_TICKS`, `player-landed`). New `grab.ts`; `Player`
+  gains `carrying`, `carriedBy`, `carriedUntilTick`, `flight` and
+  `stunnedUntilTick`; `ThrownBomb` now extends a shared `Flight`, which
+  `flightPosition` accepts.
+
+- **Player badges** (`lib-player-badges`, `@libs/ui`): a player's stats as a
+  row of icon badges — a count beside bombs, fire and speed; only the icon
+  for a one-off item (pierce, remote, glove, kick), the seconds for the
+  vest, the mount and its ability's state — with the name on hover and for
+  screen readers. `/play` and the online players panel use it, so a card
+  stays one row whatever was picked up. The `/play` header shows the arena
+  and the round's clock as pills under the title; an eliminated player gets
+  an "out" tag instead of a strike-through.
+- **The title screen says who is online.** The hero leads with _Play
+  online_ (local versus beside it), a live pill under the buttons — "3 online
+  now · a round is on", refreshed every 30 s while the tab is visible — and
+  the stage plays a live match instead of a still. Badge, facts and ticker no
+  longer say "coming soon" or "four players". The server answers
+  `GET /status` (`RoomStatus`: online, phase, playing, queued) from the room's
+  listing, which `refreshLobby` keeps in the room's metadata.
+- **Podium on the title screen.** The top three of the online ranking, on
+  a podium with the character each last played, joke titles by place and a
+  line earned by the win rate; an empty board invites the first win. The game
+  server now answers plain `GET /ranking` (JSON, open to any origin, cached
+  30 s) on the socket's port, so a page reads the leaderboard without joining
+  the room; records remember each player's last character (`characterId` on
+  `PlayerRecord` and `RankingEntry`).
+- **The arenas' special moments happen.** They were only described; now
+  the Subestação's lights go out every 30 s for 2 s (bombs and flames stay
+  lit, players become silhouettes) and it rains on the Autódromo the whole
+  race (streaks across the screen, a wet sheen on the asphalt). Visual only,
+  timed from the tick, so every client and the previews agree
+  (`ArenaTheme.moment`, `blackoutAt`); previews quicken the blackout to 8 s.
+- **Arenas play their video too.** The gallery and each arena's page show a
+  live match on that arena instead of a still (`DemoVideos`, moved to
+  `@libs/game-client`, drives any canvas with `data-video`: `local`,
+  `online`, `arena:<id>` or `ranking`). A new arena needs no new code to get a
+  preview: without a scene of its own it plays the local match on its map;
+  one with a story (co-op stages, a fight pit) gets an entry in `DEMO_SCENES`.
+- **Live previews on the mode cards.** The title screen's three modes play a
+  little match each, run by the rules themselves (`ModeDemo` steps
+  `createGame`/`tick` on a carved arena with a scripted cast: walk to a cell,
+  drop a bomb, wait) and painted with the HD skin on a plain canvas
+  (`FramePainter`; no Phaser on the home). Versus local: Faísca breaks a
+  crate, takes the fire and catches Dra. Lia. Online: five in the arena, the
+  next in line on the wall, a thrown bomb and the thrower stepping in.
+  Ranking: the leaderboard with someone climbing. Only cards on screen are
+  painted; reduced motion shows a still. Online and Ranking are no longer
+  "coming soon" on the home.
+- **Room rules from the page.** The online room's rules (`RoomRules`: who
+  stands outside, min/max players, countdown, results time, the round clock
+  and the closing walls) are now the room's feature flags. Everyone sees them
+  on `/online`; an **admin** — an e-mail listed in `config/game-server.json`
+  (`admins`) or `ADMINS` on the server — changes them there, with
+  `rules:set`. Between rounds a change applies at once; during a round the
+  lobby holds it (`nextRules` in the snapshot) and the next round plays by
+  it. The server saves them to `rules.json` under `DATA_DIR` and loads them
+  at boot, over the environment. A new rule is one entry in `RULE_FIELDS`
+  plus its `ONLINE.RULES.<KEY>` strings; the panel draws itself from the
+  schema. New server message `admin`, new error `forbidden`.
+- **Round clock and closing arena.** A round of two or more lasts 3 minutes
+  (`ROUND_TIME_TICKS`, shown as `m:ss` above the arena and in the online
+  room). When it runs out the announcer shouts and a wall drops every 0.3 s
+  (`CLOSING_STEP_TICKS`) in a clockwise spiral from the top-left corner, until
+  one player (or none) is left. A falling wall crushes whoever stands there —
+  no mount, vest or shield saves them, and the kill is nobody's — and takes
+  any bomb, item or burning crate under it. `GameOptions.roundTicks` sets the
+  clock (`null` for none; a one-player sandbox never has one) and
+  `GameOptions.closingWalls: false` makes time-up a draw instead. New module
+  `closing.ts`, events `arena-closing` and `wall-dropped`, `HudSnapshot`
+  fields `secondsLeft` and `closing`, sounds `alarm` and `wall`, announcer
+  moment `hurry`.
+
+- **Mount abilities, new scheme.** Tatu now **sprints** (`dash`: +3 cells/s
+  for 1.5 s, still bombing, still mortal) instead of rolling, and Bernardo
+  drops a **barrage** (`line-bombs`: 3 bombs at once, under the rider and on
+  the free cells ahead, over the bomb limit) instead of sniffing. Pato's hop,
+  Capivara's walk-over-bombs and Poraquê's short circuit are unchanged.
+  `isRolling`/`isSniffing` are gone, `isDashing` arrives, and `speedOf` takes
+  the tick for the sprint. The mount cards describe the new abilities.
+- The characters page shows the eight poses around the stage — the sides
+  standing, the corners walking — instead of a row of four.
+- Mounts redrawn to the classic rider-on-the-back proportion: the rider at
+  64 %, taller bodies, bigger heads; the Poraquê is a proper aquarium.
+- **Glove** and **Kick**, two new power-ups (2 of each per arena). With the
+  glove, the bomb key picks up the bomb you just dropped (before stepping off
+  it) and a further press throws it 3 cells the way you face; you can walk
+  with it, and its fuse keeps burning in your hands — a flame where you stand
+  sets it off. With the kick, walking into any bomb sends it hopping 1 cell.
+  Both fly over crates, stone and bombs, bounce on to the next free cell, and
+  wrap round the arena: out at the top, in at the bottom. A bomb always
+  belongs to whoever dropped it, so the kill is theirs. One flight for the
+  glove, the kick and the outsiders' throw lives in `throw.ts`; `ThrownBomb`
+  now carries the bomb's direction, range, fuse, pierce and remote, and
+  `flightPosition` gives its place on screen, wrap included. New events
+  `bomb-picked-up` and `bomb-kicked`, new sounds `throw` and `kick`, HUD
+  badges, item pages and art in both skins. An item's key hint is now its
+  own (`itemKeys(...).hintKey`) instead of the remote's for every item.
+
+- **Outsiders** in the online room: while a round is played, the first few
+  in line (`RoomRules.outsiders`, 5 in the public room, `OUTSIDERS=0` on the
+  server turns it off) stand on the border wall, walk around it and throw
+  bombs 3 cells in with the bomb key. A thrown bomb flies for 0.6 s, lands on
+  the first free cell and burns like a starting bomb. Whoever gets a kill
+  from outside steps into the arena on the victim's cell, with the starting
+  kit and 1 s of immunity, and plays the rest of the round; the next in line
+  takes their place on the wall. Flames now remember whose bomb lit them
+  (`Flame.ownerId`), `player-died` carries a `killerId`, and a frame carries
+  the room's `round` number so the arena stays up when a player is added
+  mid-round. Skins may paint a character on demand (`ArenaSkin.loadCharacter`).
+
+- **Poraquê**, a fifth mount: an electric eel in a wheeled fish tank, hatched
+  from the egg like the others. Its ability, **Short circuit** (`short-circuit`),
+  sets off every bomb within 2 cells, anyone's, at once; no cooldown. Painter,
+  zap sound, announcer lines and en/pt strings included.
+- **Tião**, the electrician who runs the Substation: a new `works` group
+  ("Works"/"Obras"), a cartoon painter with hard hat, moustache, tool belt
+  and pliers, and his story in en/pt. The Substation is now his workplace.
+- **Online room** (`/online`, `@libs/online`): one public arena anyone can
+  watch live. Signed-in players with a confirmed e-mail join a queue; up to
+  five play a round. A full arena starts at once, otherwise a 15 s countdown
+  starts when two are in line. Newcomers queue for the next round, and after
+  a round the waiting players go first and the round's players go to the back,
+  winner first. A ranking and a per-account profile (wins, matches, visits,
+  "welcome back") come from the server.
+- The online room shows **who is watching** (signed-in viewers by name, the
+  rest as a count; `LobbySnapshot.watchers`) and an **"In the arena" panel**
+  with what each player has picked up: bombs, fire, speed, pierce, remote,
+  vest time and mount, fed by the arena's HUD.
+- **`apps/game-server`**: a Node + Colyseus server on port 8086 (`PORT`). It
+  runs the same `@libs/game-core` rules at 60 Hz, sends 20 frames a second,
+  checks Firebase ID tokens against Google's public keys with `jose` (no
+  service account) and keeps player records in a JSON file under `DATA_DIR`.
+  `npm run start:server` runs it; `nx test game-server` runs its Node specs,
+  including an end-to-end room test with real sockets.
+- `@libs/game-protocol` (the wire contract and validators shared by server
+  and browser) and `@libs/game-lobby` (the queue state machine and the player
+  records, pure and fully unit-tested).
+- **Accounts**: `@libs/auth` (the vendor-neutral `AUTH` token, `NoopAuth` by
+  default) and `@libs/auth-firebase` (`provideFirebaseAuth()`, e-mail and
+  password with a confirmation e-mail, SDK loaded with `import()`).
+- `config/game-server.json` / `GAME_SERVER_URL`, generated into
+  `environment.gameServerUrl`. Development falls back to
+  `http://localhost:8086`; production hides the online room when it is unset.
+  `environment.authEnabled` is new as well.
+- Five players per round: a fifth spawn in the middle of the arena, with the
+  3 × 3 box around every spawn free of crates, and a fifth player colour in
+  every skin.
+
+### Fixed
+
+- The game server could ignore SIGTERM (its own handler raced Colyseus'), so a
+  restart left the old process holding port 8086 while the new one sat idle.
+  Shutdown is now handled once: flush the records, close the rooms, exit
+  within 3 s.
+- A player who left mid-round (closed the tab or signed out) stood still
+  forever, so the round never ended and the queue stayed stuck behind it. The
+  server now eliminates them with the new `eliminatePlayer` from
+  `@libs/game-core`; with two players, the one who stayed wins.
+- Reloading the page mid-round no longer costs the round: a dropped
+  connection keeps its character (or queue spot) for 15 s
+  (`RECONNECT_GRACE_MS`), and signing back in hands the keys back without
+  rebuilding the arena. Signing out on purpose (`sign-out` message) still
+  gives the place up at once.
+- i18n bundles were served with a one-year `immutable` cache under fixed
+  names, so a returning visitor saw raw keys for every string added later.
+  JSON now revalidates, and the loader requests `<lang>.json?v=<hash>`, where
+  the hash of the bundles is generated into `environment.i18nVersion`.
+- Firebase Auth starts with `initializeAuth` and persistence only, so it no
+  longer injects `apis.google.com/js/api.js`, which the CSP blocks and e-mail
+  sign-in never needs.
+- Safari could not open the online room: the Colyseus SDK's Node-style
+  `WebSocket` call fails there without throwing. The client hands the SDK a
+  `WebSocket` that accepts both forms.
+
+### Changed
+
+- Mount abilities have no cooldown: Tatu's roll, Pato's jump and Bernardo's
+  sniff can be used again as soon as the previous one ends (`cooldownTicks: 0`).
+- Both maps lost their centre wall (the generator and the gantry): the middle
+  is now the fifth spawn.
+- `ArenaScene` draws any `ArenaSession`; `ArenaOptions.session` lets the arena
+  mirror an online round instead of running a local one.
+
+- Languages reduced to English and Portuguese: the `Language` enum, its
+  metadata, the bundles, the feature-lib generator and the docs. RTL support
+  stays in the metadata (`dir`) for whoever adds an rtl language back.
+- The developer character is now called **Tired Dev** (`Dev Cansado` in
+  Portuguese); its id stays `byte`.
+
+### Added
+
+- **Novato** (Rookie), the plain default player: no job and no props, a tee
+  and a cap in the team colour. First in the roster, under the `starter`
+  group, and `DEFAULT_CHARACTER_ID`.
+- The cast. Four hand-drawn cartoon characters, each with a job and a story,
+  grouped by profession (`CHARACTER_GROUPS`, so a group such as IT can hold
+  several): **Faísca** the sapper, **Tired Dev** the developer, **Dra. Lia**
+  the doctor and **Zé Motoca** the delivery rider. Four mounts that belong to
+  nobody: **Tatu** the armadillo, **Pato** the rubber duck, **Bernardo** the
+  Saint Bernard and the **Capivara**. The catalogue (`CHARACTERS`,
+  `MOUNTS`) lives in `@libs/game-core`; the painters in `@libs/game-client`
+  (`characters/cartoon`) draw both the roster and the arena textures.
+- `@libs/audio-settings` — `AudioSettingsService`: the arena music (off by
+  default: it loops for a whole match) and the sound effects (on by default),
+  persisted, with two switches on the settings page. The play page's own
+  toggles read and write the same service, so the choice is one.
+- Three more items under the crates, one of each per arena: the **piercing
+  bomb** (`pierce`: flames go through every crate in range), the **remote
+  control** (`remote`: bombs have no fuse; a dedicated detonate button,
+  `PlayerInput.detonate` on E and /, sets off the oldest) and the **vest** (`vest`: `VEST_TICKS` of
+  immunity). They show in the HUD, tint the bombs in the arena, and have their
+  cards on the items page and the home.
+- Mount abilities. Each mount does one thing on top of the speed and the
+  absorbed hit: Tatu rolls (immune for a second), Pato hops over the cell
+  ahead, Bernardo sniffs out what nearby crates hide, and the Capivara walks
+  over bombs. A third button (`PlayerInput.ability`; Shift for player 1, Ctrl
+  for player 2), cooldowns in ticks on the mount catalogue, the `ability-used`
+  event, and the HUD counting the cooldown down.
+- The egg. A fourth power-up hidden under the crates: pick it up and it hatches
+  into a random mount (`hatchMount`, deterministic from the game state so a
+  server agrees). Mounted players move faster (`MOUNT_SPEED_BONUS`) and the
+  mount takes the first flame in their place, with a short shield afterwards
+  (`MOUNT_SHIELD_TICKS`). New events `mount-gained` and `mount-lost`, new
+  textures `player-<slot>-<mount>-<facing>-<frame>`, and the HUD shows the
+  mount.
+- `@libs/characters` — the roster page at `/characters`: pick who you play
+  as, turn them around, set them walking, mount up, read their story.
+- `@libs/character-select` — `CharacterSelectionService`, the chosen
+  character shared between the roster and the game, persisted like the theme.
+  The versus match gives player 1 the choice and player 2 the next character.
+- `PlayerSetup.characterId` and `Player.characterId` in the rules;
+  `ArenaSkin.load(scene, characters)` so a skin paints each slot's character.
+
 ## [1.0.0] - 2026-08-09
 
 First stable release: everything below is the baseline a fork starts from.

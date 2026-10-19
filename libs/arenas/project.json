@@ -1,0 +1,27 @@
+{
+  "name": "arenas",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/arenas/src",
+  "prefix": "lib",
+  "projectType": "library",
+  "tags": ["scope:arenas"],
+  "targets": {
+    "test": {
+      "executor": "@angular/build:unit-test",
+      "options": {
+        "coverageInclude": ["libs/arenas/src/**/*.ts"],
+        "coverageExclude": [
+          "libs/arenas/src/**/index.ts",
+          "libs/arenas/src/**/*.routes.ts",
+          "libs/arenas/src/**/*.spec.ts"
+        ],
+        "coverageThresholds": {
+          "statements": 95,
+          "branches": 90,
+          "functions": 90,
+          "lines": 95
+        }
+      }
+    }
+  }
+}

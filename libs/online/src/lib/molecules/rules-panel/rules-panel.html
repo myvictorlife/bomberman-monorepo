@@ -1,0 +1,47 @@
+<div class="rules" data-testid="rules-panel">
+  <h2 class="rules__title">{{ 'ONLINE.RULES.TITLE' | translate }}</h2>
+  <p class="rules__lead">
+    {{ (admin() ? 'ONLINE.RULES.ADMIN_HINT' : 'ONLINE.RULES.LEAD') | translate
+    }}
+  </p>
+  @if (nextRules()) {
+  <p class="rules__pending" role="status" data-testid="rules-pending">
+    {{ 'ONLINE.RULES.PENDING' | translate }}
+  </p>
+  }
+
+  <dl class="rules__list">
+    @for (field of fields; track field.key) {
+    <div class="rules__row" [attr.data-rule]="field.key">
+      <dt class="rules__label">
+        {{ labelKey(field) | translate }}
+        <span class="rules__desc"
+          >{{ labelKey(field) + '_DESC' | translate }}</span
+        >
+      </dt>
+      <dd class="rules__control">
+        @if (admin()) { @if (field.kind === 'boolean') {
+        <lib-switch
+          [checked]="valueOf(field) === true"
+          [label]="labelKey(field) | translate"
+          (checkedChange)="toggle(field, $event)"
+          [attr.data-testid]="'rules-' + field.key"
+        />
+        } @else {
+        <lib-segmented-control
+          [options]="options(field)"
+          [value]="'' + valueOf(field)"
+          [label]="labelKey(field) | translate"
+          (valueChange)="pick(field, $event)"
+          [attr.data-testid]="'rules-' + field.key"
+        />
+        } } @else { @let t = text(field, valueOf(field));
+        <span class="rules__value" [attr.data-testid]="'rules-' + field.key"
+          >{{ t.key | translate: t.params }}</span
+        >
+        }
+      </dd>
+    </div>
+    }
+  </dl>
+</div>

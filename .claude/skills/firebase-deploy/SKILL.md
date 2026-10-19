@@ -177,6 +177,40 @@ the stylesheet stuck at `media="print"`. Do not re-enable `inlineCritical`
 without either dropping the CSP or adding `'unsafe-hashes'` plus the hash of
 `this.media='all'` to `script-src`.
 
+Google sign-in goes through `/__/auth/handler` on the `authDomain`. On that
+domain the page itself leaves for Google and comes back (`signInWithRedirect`);
+anywhere else, such as `localhost`, it opens a popup instead. The headers allow
+four things for it: `https://apis.google.com` in `script-src` and `connect-src`
+(the resolver), `frame-src 'self' https://*.firebaseapp.com`
+(the auth iframe that receives the result, served from the `authDomain`) and
+`Cross-Origin-Opener-Policy: same-origin-allow-popups` — plain `same-origin`
+cuts the page off from the popup and the sign-in fails as "popup closed". The
+`'self'` is what lets the iframe load once `authDomain` is the site's own
+domain (below); without it the popup stops on a blank `/__/auth/handler` page.
+A custom domain served by another site needs its own `frame-src` entry.
+
+**Set `authDomain` to the domain the site is served from** (e.g.
+`<projectId>.web.app`, or the custom domain) in `config/firebase.json`, not the
+`firebaseapp.com` the console hands out. Otherwise the auth iframe is
+third-party, browsers partition its storage, and the popup's result never
+reaches the page: Firebase records the sign-in, yet the page reports a closed
+popup and stays signed out. Firebase Hosting serves `/__/auth/handler` on every
+domain of the site. The Google OAuth client must then list
+`https://<that domain>/__/auth/handler` under Authorized redirect URIs (Google
+Cloud Console → APIs & Services → Credentials → _Web client (auto created by
+Google Service)_), or the popup fails with `redirect_uri_mismatch`. Rebuild
+with `--skip-nx-cache` after the change.
+
+Hosting serves the site on `<projectId>.web.app`,
+`<projectId>.firebaseapp.com` and any custom domain, and sign-in only
+completes on the one that is the `authDomain`. On another, the sign-in sits on
+a blank `/__/auth/handler` and then lands back on the page, still signed out.
+`provideFirebaseAuth()` therefore redirects both default Hosting domains to
+the `authDomain` (`authDomainRedirect`), keeping the path — including to a
+custom `authDomain`, which must be a custom domain of the same Hosting site.
+Custom domains and `localhost` are left alone. With a custom domain, also add
+it under Authentication → Settings → Authorized domains.
+
 ---
 
 ## 5. Adding a new app to the same Firebase project

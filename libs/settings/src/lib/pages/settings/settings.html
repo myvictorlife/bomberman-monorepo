@@ -1,6 +1,9 @@
 <section class="settings">
   <lib-page-header titleKey="SETTINGS.TITLE" leadKey="SETTINGS.LEAD" />
 
+  <h2 class="settings__section">
+    {{ 'SETTINGS.SECTION_GENERAL' | translate }}
+  </h2>
   <div class="settings__panel">
     <lib-setting-row
       labelKey="SETTINGS.THEME"
@@ -35,6 +38,46 @@
         [label]="'SETTINGS.REDUCE_MOTION' | translate"
         (checkedChange)="setReduceMotion($event)"
       />
+    </lib-setting-row>
+  </div>
+
+  <h2 class="settings__section" id="audio" data-testid="settings-audio">
+    {{ 'SETTINGS.SECTION_AUDIO' | translate }}
+  </h2>
+  <div class="settings__panel">
+    <lib-setting-row
+      labelKey="SETTINGS.MUSIC"
+      descriptionKey="SETTINGS.MUSIC_DESC"
+    >
+      <lib-switch
+        [checked]="music()"
+        [label]="'SETTINGS.MUSIC' | translate"
+        (checkedChange)="setMusic($event)"
+        data-testid="settings-music"
+      />
+    </lib-setting-row>
+
+    <lib-setting-row labelKey="SETTINGS.SFX" descriptionKey="SETTINGS.SFX_DESC">
+      <lib-switch
+        [checked]="sfx()"
+        [label]="'SETTINGS.SFX' | translate"
+        (checkedChange)="setSfx($event)"
+        data-testid="settings-sfx"
+      />
+    </lib-setting-row>
+
+    <lib-setting-row
+      labelKey="SETTINGS.SOUNDS"
+      descriptionKey="SETTINGS.SOUNDS_DESC"
+    >
+      <a
+        routerLink="/settings/audio"
+        libButton
+        variant="secondary"
+        size="sm"
+        data-testid="settings-sounds"
+        >{{ 'SETTINGS.SOUNDS_OPEN' | translate }}</a
+      >
     </lib-setting-row>
   </div>
 </section>

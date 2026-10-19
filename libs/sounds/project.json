@@ -1,0 +1,27 @@
+{
+  "name": "sounds",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/sounds/src",
+  "prefix": "lib",
+  "projectType": "library",
+  "tags": ["scope:sounds"],
+  "targets": {
+    "test": {
+      "executor": "@angular/build:unit-test",
+      "options": {
+        "coverageInclude": ["libs/sounds/src/**/*.ts"],
+        "coverageExclude": [
+          "libs/sounds/src/**/index.ts",
+          "libs/sounds/src/**/*.routes.ts",
+          "libs/sounds/src/**/*.spec.ts"
+        ],
+        "coverageThresholds": {
+          "statements": 95,
+          "branches": 90,
+          "functions": 90,
+          "lines": 95
+        }
+      }
+    }
+  }
+}

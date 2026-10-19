@@ -1,0 +1,27 @@
+{
+  "name": "characters",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/characters/src",
+  "prefix": "lib",
+  "projectType": "library",
+  "tags": ["scope:characters"],
+  "targets": {
+    "test": {
+      "executor": "@angular/build:unit-test",
+      "options": {
+        "coverageInclude": ["libs/characters/src/**/*.ts"],
+        "coverageExclude": [
+          "libs/characters/src/**/index.ts",
+          "libs/characters/src/**/*.routes.ts",
+          "libs/characters/src/**/*.spec.ts"
+        ],
+        "coverageThresholds": {
+          "statements": 95,
+          "branches": 90,
+          "functions": 90,
+          "lines": 95
+        }
+      }
+    }
+  }
+}
