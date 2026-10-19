@@ -13,6 +13,7 @@ const ROUTES = [
   '/online',
   '/arenas',
   '/arenas/autodromo',
+  '/arenas/gramado',
   '/items',
   '/items/egg',
   '/items/glove',

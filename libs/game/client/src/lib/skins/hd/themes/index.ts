@@ -2,6 +2,7 @@ import { findMap, GameState, isExtraWall, MapId, Tile } from '@libs/game-core';
 import type * as Phaser from 'phaser';
 import { TEXTURE } from '../../texture-keys';
 import { autodromoTheme } from './autodromo';
+import { gramadoTheme } from './gramado';
 import { subestacaoTheme } from './subestacao';
 import { ArenaTheme } from './theme';
 
@@ -10,6 +11,7 @@ export type { ArenaTheme } from './theme';
 export const ARENA_THEMES: Readonly<Record<MapId, ArenaTheme>> = {
   subestacao: subestacaoTheme,
   autodromo: autodromoTheme,
+  gramado: gramadoTheme,
 };
 
 const cache = new Map<string, Map<string, HTMLCanvasElement>>();

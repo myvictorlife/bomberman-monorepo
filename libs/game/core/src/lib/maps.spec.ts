@@ -6,6 +6,7 @@ import { DEFAULT_MAP_ID, findMap, isExtraWall, isMapId, MAPS } from './maps';
 describe('maps', () => {
   it('knows its ids and falls back to the first map', () => {
     expect(isMapId('autodromo')).toBe(true);
+    expect(isMapId('gramado')).toBe(true);
     expect(isMapId('lua')).toBe(false);
     expect(findMap('autodromo').id).toBe('autodromo');
     expect(findMap('nope' as never).id).toBe(MAPS[0]?.id);

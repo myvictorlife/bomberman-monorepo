@@ -60,6 +60,7 @@ describe('Arenas', () => {
     expect(cards.map((c) => c.getAttribute('data-map'))).toEqual([
       'subestacao',
       'autodromo',
+      'gramado',
     ]);
     expect(cards[0]).toHaveText('Substation');
     expect(play).toHaveBeenCalledTimes(1);
@@ -67,6 +68,7 @@ describe('Arenas', () => {
     expect(canvases.map((c) => c.dataset['video'])).toEqual([
       'arena:subestacao',
       'arena:autodromo',
+      'arena:gramado',
     ]);
 
     spectator.detectChanges();

@@ -131,6 +131,13 @@ config file. Ordinary app-level additions are minor.
   hands drive player 1, as online. `PLAY.CONTROLS_P1/P2` became
   `PLAY.KEYS_WASD_HINT/KEYS_ARROWS_HINT`.
 
+- **Gramado, the plain arena.** A third map (`gramado`, no extra walls):
+  a mown lawn in a walled yard — cut stone cubes for pillars, clay-brick
+  blocks for crates, a dry-stone wall with a hedge along the top, an old
+  well as the feature. No blackout, no rain: the arena to learn on and
+  the quick versus. Listed on `/arenas` with the local match as its video,
+  `MAPS.GRAMADO.*` in both bundles.
+
 - **The arena is painted at the screen's density.** The HD skin's tiles,
   characters, bombs, flames and items were always painted at 64 px and
   scaled up to the page — twice over on a dense screen — and went soft.

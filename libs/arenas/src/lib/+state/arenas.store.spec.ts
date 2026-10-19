@@ -11,7 +11,7 @@ describe('ArenasStore', () => {
   it('lists every arena with the first one in focus', () => {
     const store = createStore();
 
-    expect(store.maps()).toEqual(['subestacao', 'autodromo']);
+    expect(store.maps()).toEqual(['subestacao', 'autodromo', 'gramado']);
     expect(store.selected()).toBe(DEFAULT_MAP_ID);
   });
 

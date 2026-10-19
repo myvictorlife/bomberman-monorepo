@@ -448,6 +448,19 @@
       "NOTE_2": "O semáforo saiu da casa central: com cinco jogadores, o meio é um nascimento como os quatro cantos, com a mesma área livre em volta.",
       "NOTE_3_TITLE": "Barris de combustível no lugar dos caixotes",
       "NOTE_3": "Vermelhos, com aros de aço e o losango de inflamável. Quebram como caixotes; as lascas são uma labareda curta."
+    },
+    "GRAMADO": {
+      "NAME": "Gramado",
+      "OWNER": "Quintal de todo mundo",
+      "DESC": "Um gramado aparado num quintal murado: cubos de pedra lavrada no lugar dos pilares, blocos de tijolo no lugar dos caixotes, muro de pedra seca com cerca viva por cima e um poço antigo. A arena mais simples, para aprender e para o versus rápido.",
+      "MOMENT": "Não acontece nada",
+      "MOMENT_DESC": "Sem apagão, sem chuva: luz o jogo inteiro e grama seca. O que você vê é o que tem.",
+      "NOTE_1_TITLE": "Cubos de pedra no lugar dos pilares",
+      "NOTE_1": "Pedra lavrada com marcas de cinzel e musgo no pé. Indestrutíveis, e sem nenhuma surpresa dentro.",
+      "NOTE_2_TITLE": "O centro é o quinto nascimento",
+      "NOTE_2": "O poço fica fora do tabuleiro: com cinco jogadores, o meio é um nascimento como os quatro cantos, com a mesma área livre em volta.",
+      "NOTE_3_TITLE": "Blocos de tijolo no lugar dos caixotes",
+      "NOTE_3": "Tijolo de barro e argamassa, musgo num canto. Quebram como caixotes e podem esconder power-up."
     }
   },
   "ITEMS": {

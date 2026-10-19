@@ -448,6 +448,19 @@
       "NOTE_2": "The start lights left the centre cell: with five players it is a spawn like the four corners, with the same free box around it.",
       "NOTE_3_TITLE": "Fuel drums for crates",
       "NOTE_3": "Red, with steel rims and the flammable diamond. They break like crates; the splinters are a short burst of flame."
+    },
+    "GRAMADO": {
+      "NAME": "Gramado",
+      "OWNER": "Everybody’s yard",
+      "DESC": "A mown lawn in a walled yard: cut stone cubes for pillars, clay-brick blocks for crates, a dry-stone wall with a hedge along the top, and an old well. The plain arena — the one to learn on, and the quick versus.",
+      "MOMENT": "Nothing happens",
+      "MOMENT_DESC": "No blackout, no rain: full light and a dry lawn the whole round. What you see is what you get.",
+      "NOTE_1_TITLE": "Stone cubes for pillars",
+      "NOTE_1": "Cut stone with chisel marks and moss at the foot. Indestructible, and nothing in them to surprise you.",
+      "NOTE_2_TITLE": "The centre is the fifth spawn",
+      "NOTE_2": "The well stays out of the grid: with five players, the middle is a spawn like the four corners, with the same clear space around it.",
+      "NOTE_3_TITLE": "Brick blocks for crates",
+      "NOTE_3": "Clay bricks and mortar, moss in one corner. They break like crates and may hide a power-up."
     }
   },
   "ITEMS": {
