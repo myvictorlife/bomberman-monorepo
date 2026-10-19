@@ -8,6 +8,7 @@ import {
   ElementRef,
   inject,
   signal,
+  untracked,
   viewChild,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
@@ -33,6 +34,7 @@ import {
   isPlayerColorId,
 } from '@libs/game-core';
 import {
+  countsForRanking,
   FrameMessage,
   peopleNeeded,
   Reaction,
@@ -70,6 +72,41 @@ export const ONLINE_CONTROLS: ControlScheme[] = [
   { playerId: 'arrows', keys: ARROW_KEYS },
 ];
 
+const GUEST_KEY = 'online.guest';
+
+interface SavedGuest {
+  name: string;
+  token: string;
+}
+
+/**
+ * The guest this tab played as, so a reload gets the same one back — and their
+ * place, within the server's reconnect grace. Per tab, never shared; storage
+ * may be off, and then a reload is a new guest.
+ */
+export function savedGuest(): SavedGuest | null {
+  try {
+    const raw = globalThis.sessionStorage?.getItem(GUEST_KEY);
+    const value: unknown = raw ? JSON.parse(raw) : null;
+    const { name, token } = (value ?? {}) as Partial<SavedGuest>;
+    return typeof name === 'string' && typeof token === 'string'
+      ? { name, token }
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+function saveGuest(guest: SavedGuest | null): void {
+  try {
+    if (guest)
+      globalThis.sessionStorage?.setItem(GUEST_KEY, JSON.stringify(guest));
+    else globalThis.sessionStorage?.removeItem(GUEST_KEY);
+  } catch {
+    // Storage is off: the guest lasts as long as the connection.
+  }
+}
+
 /**
  * A round is identified by the server's count and its arena; a new key means a
  * new round to draw. The players are not part of it: an outsider entering adds
@@ -81,8 +118,9 @@ export function roundKey(frame: FrameMessage): string {
 
 /**
  * The public room: watch the round being played, queue for the next one, see
- * the ranking. Signing in (e-mail confirmed) is what lets you queue — and what
- * lets the server count your wins and notice when you come back.
+ * the ranking. A name is enough to play as a guest; signing in (e-mail
+ * confirmed) is what lets the server count your wins, lets you write in the
+ * chat, and notices when you come back.
  */
 @Component({
   selector: 'lib-online',
@@ -125,6 +163,7 @@ export class Online {
   readonly players = this.store.players;
   readonly ranking = this.store.ranking;
   readonly profile = this.store.profile;
+  readonly guest = this.store.guest;
   readonly serverError = this.store.serverError;
   readonly watchers = this.store.watchers;
   readonly chat = this.store.chat;
@@ -168,7 +207,13 @@ export class Online {
   /** Ticks while the page is open, so the countdown re-renders each second. */
   private readonly clock = signal(Date.now());
 
-  readonly myId = computed(() => this.user()?.id ?? null);
+  readonly myId = computed(() => this.user()?.id ?? this.guest()?.id ?? null);
+  /** My name while I play as a guest; `null` with an account. */
+  readonly guestName = computed(() =>
+    this.user() ? null : (this.guest()?.name ?? null),
+  );
+  /** The round on screen counts for the ranking: two accounts or more in it. */
+  readonly ranked = computed(() => countsForRanking(this.players()));
   /** I asked to leave when this round ends. */
   readonly leavingAfter = computed(() => {
     const id = this.myId();
@@ -191,7 +236,21 @@ export class Online {
     const lobby = this.lobby();
     return lobby?.players.find((p) => p.id === lobby.winnerId) ?? null;
   });
+  /** I won the round just decided as a guest: an account would have counted it. */
+  readonly guestWon = computed(() => {
+    const id = this.guest()?.id;
+    return !this.user() && id !== undefined && this.winner()?.id === id;
+  });
+  /** Why I cannot queue: without an account, until I play as a guest, the panel asks for a name. */
   readonly blocked = computed<JoinBlock>(() => {
+    if (this.status() !== 'online') return 'offline';
+    const user = this.user();
+    if (!user) return this.guest() ? null : 'sign-in';
+    if (!user.emailVerified || !this.profile()) return 'verify';
+    return null;
+  });
+  /** Writing in the chat always takes a confirmed account. */
+  readonly chatBlocked = computed<JoinBlock>(() => {
     if (this.status() !== 'online') return 'offline';
     const user = this.user();
     if (!user) return 'sign-in';
@@ -204,8 +263,10 @@ export class Online {
   private currentRound: string | null = null;
   private lastTick = 0;
   private destroyed = false;
-  /** Which account (and verification state) the connection has been told about. */
+  /** Which account (and verification state) the connection has been told about; `'guest'` when it was a guest. */
   private announced: string | null = null;
+  /** Asked to play as a guest: queue as soon as the server says who we are. */
+  private joinAsGuest = false;
 
   private readonly analytics = inject(ANALYTICS);
 
@@ -242,22 +303,43 @@ export class Online {
     };
     globalThis.addEventListener?.('focus', onFocus);
 
-    // Tell the server who is here whenever the account or its verification changes.
+    // Tell the server who is here whenever the account or its verification
+    // changes — or, with no account, the guest this tab played as.
     effect(() => {
       const user = this.user();
       const online = this.status() === 'online';
-      const key = user ? `${user.id}:${user.emailVerified}` : null;
+      const resume = !user && online ? savedGuest() : null;
+      const key = user
+        ? `${user.id}:${user.emailVerified}`
+        : resume
+          ? 'guest'
+          : null;
       if (!online) {
         this.announced = null;
         return;
       }
       if (key === this.announced) return;
-      const wasSignedIn = this.announced !== null;
+      const wasSignedIn = this.announced !== null && this.announced !== 'guest';
       this.announced = key;
       // Signed in or out mid-round: hand the keys over without rebuilding the arena.
       this.session?.setControls(this.controlsFor(this.session.state));
-      if (user) void this.sayHello();
+      if (user) {
+        // Signing in ends the guest: the server drops it on `hello`.
+        saveGuest(null);
+        untracked(() => this.store.forgetGuest());
+        void this.sayHello();
+      } else if (resume) this.store.playAsGuest(resume.name, resume.token);
       else if (wasSignedIn) this.store.signOut();
+    });
+
+    // The server said who we are as a guest: keep it for a reload, and queue if asked to.
+    effect(() => {
+      const guest = this.guest();
+      if (!guest) return;
+      saveGuest({ name: guest.name, token: guest.token });
+      if (!this.joinAsGuest) return;
+      this.joinAsGuest = false;
+      untracked(() => this.join());
     });
 
     inject(DestroyRef).onDestroy(() => {
@@ -272,6 +354,14 @@ export class Online {
   join(): void {
     this.store.joinQueue(this.characterId());
     this.analytics.logEvent('queue_join', { character: this.characterId() });
+  }
+
+  /** Plays without an account: the server names us, then we queue. */
+  playAsGuest(name: string): void {
+    this.joinAsGuest = true;
+    const kept = savedGuest();
+    this.store.playAsGuest(name, kept?.token);
+    this.analytics.logEvent('guest_start');
   }
 
   leave(): void {

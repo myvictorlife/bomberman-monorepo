@@ -162,6 +162,31 @@ describe('OnlineStore', () => {
     ]);
   });
 
+  it('plays as a guest: sends the name and the kept token, and takes the identity', async () => {
+    const store = setup();
+    await store.connect('http://server');
+    store.playAsGuest('Visita');
+    store.playAsGuest('Visita', 'tok-1234567890abcdef');
+    expect(connections[0]?.sent).toEqual([
+      { type: CLIENT_MESSAGE.guest, payload: { name: 'Visita' } },
+      {
+        type: CLIENT_MESSAGE.guest,
+        payload: { name: 'Visita', token: 'tok-1234567890abcdef' },
+      },
+    ]);
+
+    const identity = { id: 'guest:1', name: 'Visita', token: 't' };
+    connections[0]?.push(SERVER_MESSAGE.guest, identity);
+    expect(store.guest()).toEqual(identity);
+    store.forgetGuest();
+    expect(store.guest()).toBeNull();
+
+    // A fresh connection is nobody until it says so again.
+    connections[0]?.push(SERVER_MESSAGE.guest, identity);
+    await store.reconnect();
+    expect(store.guest()).toBeNull();
+  });
+
   it('goes offline when the socket drops, and comes back on reconnect', async () => {
     const store = setup();
     await store.connect('http://server');

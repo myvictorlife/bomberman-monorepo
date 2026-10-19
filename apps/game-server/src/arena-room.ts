@@ -1,4 +1,4 @@
-import { Client, Delayed, Room } from '@colyseus/core';
+import { AuthContext, Client, Delayed, Room } from '@colyseus/core';
 import { BotDirector, BotLevel } from '@libs/game-ai';
 import {
   addOutsider,
@@ -16,6 +16,7 @@ import {
   Chat,
   isBotId,
   Lobby,
+  nameKey,
   PlayerRecord,
   ranking,
   recordRound,
@@ -27,12 +28,16 @@ import {
   ChatEvent,
   ChatRole,
   CLIENT_MESSAGE,
+  countsForRanking,
   FRAME_EVERY_TICKS,
   FrameMessage,
+  GUEST_ID_PREFIX,
+  GuestIdentity,
   InputMessage,
   parseChatDelete,
   parseChatMute,
   parseChatText,
+  parseGuest,
   parseHello,
   parseInput,
   parseJoinQueue,
@@ -45,6 +50,7 @@ import {
   ServerErrorCode,
   Watchers,
 } from '@libs/game-protocol';
+import { randomUUID } from 'node:crypto';
 import { TokenVerifier, VerifiedAccount } from './auth';
 import { RecordsStore } from './records-store';
 
@@ -92,10 +98,27 @@ export function chatOutcome(
 const BOT_LEVEL: BotLevel = 'casual';
 
 /**
- * A round counts for the ranking only with this many people in it: a win
- * over bots alone would let anyone farm the table.
+ * How many guests from one address may hold a place — queued or playing — at
+ * once. More than one, since a family shares a connection; few, so one person
+ * opening tabs cannot fill the line.
  */
-const PEOPLE_TO_RECORD = 2;
+export const GUESTS_PER_ADDRESS = 3;
+
+/** A guest as the room knows them: who they play as, and where they connect from. */
+interface Guest extends GuestIdentity {
+  address: string;
+}
+
+/**
+ * Where a connection comes from: behind Cloudflare, the visitor's address
+ * (`CF-Connecting-IP`); otherwise what Colyseus resolved from the proxy
+ * headers or the socket. Only guests are limited by it, and only softly.
+ */
+export function clientAddress(
+  context: Pick<AuthContext, 'ip' | 'headers'>,
+): string {
+  return context.headers.get('cf-connecting-ip') ?? context.ip ?? 'unknown';
+}
 
 /** How often the queue is re-checked for a countdown that ran out. */
 const LOBBY_CHECK_MS = 250;
@@ -137,6 +160,10 @@ export function createArenaRoom(deps: ArenaRoomDeps) {
     readonly chat = new Chat();
     /** Signed-in account per connection. */
     readonly accounts = new Map<string, VerifiedAccount>();
+    /** Guest per connection: plays under a name, never in the ranking or the chat. */
+    readonly guests = new Map<string, Guest>();
+    /** Guests by their token, kept while they hold a place, so a reload gets the same guest back. */
+    private readonly guestTokens = new Map<string, Guest>();
     game: GameState | null = null;
     /** Plays the round's bots; `null` in a round of people only. */
     private bots: BotDirector | null = null;
@@ -163,6 +190,9 @@ export function createArenaRoom(deps: ArenaRoomDeps) {
         (client, message) => void this.hello(client, message),
       );
       this.onMessage(CLIENT_MESSAGE.signOut, (client) => this.signOut(client));
+      this.onMessage(CLIENT_MESSAGE.guest, (client, message) =>
+        this.guest(client, message),
+      );
       this.onMessage(CLIENT_MESSAGE.joinQueue, (client, message) =>
         this.joinQueue(client, message),
       );
@@ -191,8 +221,22 @@ export function createArenaRoom(deps: ArenaRoomDeps) {
         this.chatMute(client, message),
       );
 
+      // A type this server does not know — a newer page talking to an older
+      // server — is refused, not punished: Colyseus would otherwise drop the
+      // connection in production, mid-round.
+      this.onMessage('*', (client) => this.fail(client, 'bad-message'));
+
       this.setSimulationInterval(() => this.step(), 1000 / TICK_RATE);
       this.clock.setInterval(() => this.refreshLobby(), LOBBY_CHECK_MS);
+    }
+
+    /** Notes where the connection comes from; anyone may connect. */
+    override onAuth(
+      _client: Client,
+      _options: unknown,
+      context: AuthContext,
+    ): { address: string } {
+      return { address: clientAddress(context) };
     }
 
     override onJoin(client: Client): void {
@@ -211,8 +255,9 @@ export function createArenaRoom(deps: ArenaRoomDeps) {
     }
 
     override onLeave(client: Client): void {
-      const account = this.accounts.get(client.sessionId);
+      const account = this.player(client);
       this.accounts.delete(client.sessionId);
+      this.guests.delete(client.sessionId);
       this.chat.forget(client.sessionId);
       // One viewer fewer, whatever happens to the place.
       this.refreshLobby();
@@ -220,7 +265,7 @@ export function createArenaRoom(deps: ArenaRoomDeps) {
       // held for a grace period: a reload reconnects and carries on.
       if (!account || this.hasSession(account.id)) return;
       if (!this.lobby.isQueued(account.id) && !this.lobby.isPlaying(account.id))
-        return;
+        return this.forgetGuest(account.id);
       // Stand still while away, rather than keep walking into a flame.
       this.heldInputs.delete(account.id);
       this.leaving.get(account.id)?.clear();
@@ -232,9 +277,10 @@ export function createArenaRoom(deps: ArenaRoomDeps) {
 
     /** Signing out on purpose gives the place up at once. */
     signOut(client: Client): void {
-      const account = this.accounts.get(client.sessionId);
+      const account = this.player(client);
       if (!account) return;
       this.accounts.delete(client.sessionId);
+      this.guests.delete(client.sessionId);
       if (!this.hasSession(account.id)) this.drop(account.id);
       this.refreshLobby();
     }
@@ -253,6 +299,48 @@ export function createArenaRoom(deps: ArenaRoomDeps) {
       const event =
         wasPlaying && this.game ? eliminatePlayer(this.game, accountId) : null;
       if (event) this.pendingEvents.push(event);
+      this.forgetGuest(accountId);
+      this.refreshLobby();
+    }
+
+    /**
+     * Play without an account: the room hands out a guest id and a token. The
+     * token of an earlier answer gets the same guest back — and their place,
+     * within the reconnect grace. The name may be no account's and no other
+     * guest's, so nobody plays as someone on the ranking.
+     */
+    guest(client: Client, message: unknown): void {
+      if (this.accounts.has(client.sessionId))
+        return this.fail(client, 'bad-message');
+      const request = parseGuest(message);
+      if (!request) return this.fail(client, 'bad-message');
+      const known = request.token
+        ? this.guestTokens.get(request.token)
+        : undefined;
+      if (this.nameTaken(request.name, known?.id))
+        return this.fail(client, 'name-taken');
+
+      const address =
+        (client.auth as { address?: string } | undefined)?.address ?? 'unknown';
+      // A seat already in the queue or the round keeps the name it was taken with.
+      const guest: Guest = known
+        ? Object.assign(known, { name: request.name, address })
+        : {
+            id: `${GUEST_ID_PREFIX}${randomUUID()}`,
+            name: request.name,
+            token: randomUUID(),
+            address,
+          };
+      this.guestTokens.set(guest.token, guest);
+      this.leaving.get(guest.id)?.clear();
+      this.leaving.delete(guest.id);
+
+      const previous = this.guests.get(client.sessionId);
+      this.guests.set(client.sessionId, guest);
+      if (previous && previous.id !== guest.id && !this.hasSession(previous.id))
+        this.drop(previous.id);
+      const { id, name, token } = guest;
+      client.send(SERVER_MESSAGE.guest, { id, name, token });
       this.refreshLobby();
     }
 
@@ -294,6 +382,12 @@ export function createArenaRoom(deps: ArenaRoomDeps) {
         account = await deps.verify(hello.token);
       } catch {
         return this.fail(client, 'invalid-token');
+      }
+      // Signing in ends playing as a guest on this connection.
+      const guest = this.guests.get(client.sessionId);
+      if (guest) {
+        this.guests.delete(client.sessionId);
+        if (!this.hasSession(guest.id)) this.drop(guest.id);
       }
       // Back within the grace period: the place — character or queue spot — is still theirs.
       this.leaving.get(account.id)?.clear();
@@ -394,16 +488,20 @@ export function createArenaRoom(deps: ArenaRoomDeps) {
 
     joinQueue(client: Client, message: unknown): void {
       const account = this.accounts.get(client.sessionId);
-      if (!account) return this.fail(client, 'auth-required');
-      if (!account.emailVerified)
+      const guest = account ? undefined : this.guests.get(client.sessionId);
+      const player = account ?? guest;
+      if (!player) return this.fail(client, 'auth-required');
+      if (account && !account.emailVerified)
         return this.fail(client, 'email-not-verified');
+      if (guest && this.placesHeldFrom(guest) >= GUESTS_PER_ADDRESS)
+        return this.fail(client, 'guest-limit');
 
       const { characterId } = parseJoinQueue(message);
       // The colour is the profile's, never the message's: it is the server's record.
-      const color = deps.records.get(account.id)?.color;
+      const color = account && deps.records.get(account.id)?.color;
       const result = this.lobby.join({
-        id: account.id,
-        name: account.name,
+        id: player.id,
+        name: player.name,
         characterId,
         ...(color ? { color } : {}),
       });
@@ -412,7 +510,7 @@ export function createArenaRoom(deps: ArenaRoomDeps) {
     }
 
     leaveQueue(client: Client): void {
-      const account = this.accounts.get(client.sessionId);
+      const account = this.player(client);
       // Walking out of a round in progress is not a queue action.
       if (!account || this.lobby.isPlaying(account.id)) return;
       this.lobby.leave(account.id);
@@ -421,14 +519,14 @@ export function createArenaRoom(deps: ArenaRoomDeps) {
 
     /** A player of the round plays it out, then is not put back in line. */
     leaveAfterRound(client: Client, message: unknown): void {
-      const account = this.accounts.get(client.sessionId);
+      const account = this.player(client);
       if (!account) return this.fail(client, 'auth-required');
       const { leave } = parseLeaveAfterRound(message);
       if (this.lobby.leaveAfterRound(account.id, leave)) this.refreshLobby();
     }
 
     input(client: Client, message: unknown): void {
-      const account = this.accounts.get(client.sessionId);
+      const account = this.player(client);
       const input = parseInput(message);
       if (!account || !input || !this.game) return;
       if (
@@ -545,9 +643,11 @@ export function createArenaRoom(deps: ArenaRoomDeps) {
     }
 
     private endRound(game: GameState): void {
-      // Bots have no record, so only people are counted, and only in a round with enough of them.
-      const ids = game.players.map((p) => p.id).filter((id) => !isBotId(id));
-      if (ids.length >= PEOPLE_TO_RECORD) {
+      // Bots and guests have no record, so only accounts are counted, and only
+      // in a round with enough of them.
+      const people = this.lobby.people();
+      const ids = people.map((s) => s.id);
+      if (countsForRanking(people)) {
         const updated = recordRound(
           deps.records.all(),
           ids,
@@ -626,7 +726,7 @@ export function createArenaRoom(deps: ArenaRoomDeps) {
       const names = new Map<string, string>();
       let anonymous = 0;
       for (const client of this.clients) {
-        const account = this.accounts.get(client.sessionId);
+        const account = this.player(client);
         if (!account) anonymous++;
         else if (
           !this.lobby.isPlaying(account.id) &&
@@ -642,7 +742,44 @@ export function createArenaRoom(deps: ArenaRoomDeps) {
     }
 
     private hasSession(accountId: string): boolean {
-      return [...this.accounts.values()].some((a) => a.id === accountId);
+      return [...this.accounts.values(), ...this.guests.values()].some(
+        (a) => a.id === accountId,
+      );
+    }
+
+    /** Who plays on this connection: the signed-in account, or the guest. */
+    private player(client: Client): { id: string; name: string } | null {
+      return (
+        this.accounts.get(client.sessionId) ??
+        this.guests.get(client.sessionId) ??
+        null
+      );
+    }
+
+    private nameTaken(name: string, exceptId?: string): boolean {
+      const key = nameKey(name);
+      for (const record of deps.records.all().values())
+        if (nameKey(record.name) === key) return true;
+      for (const guest of this.guestTokens.values())
+        if (guest.id !== exceptId && nameKey(guest.name) === key) return true;
+      return false;
+    }
+
+    /** Other guests from the same address with a place in the queue or the round. */
+    private placesHeldFrom(guest: Guest): number {
+      let held = 0;
+      for (const other of this.guestTokens.values()) {
+        if (other.id === guest.id || other.address !== guest.address) continue;
+        if (this.lobby.isQueued(other.id) || this.lobby.isPlaying(other.id))
+          held++;
+      }
+      return held;
+    }
+
+    /** A guest with no place left and no connection is forgotten, token and all. */
+    private forgetGuest(id: string): void {
+      for (const [token, guest] of this.guestTokens)
+        if (guest.id === id) this.guestTokens.delete(token);
     }
 
     private fail(client: Client, code: ServerErrorCode): void {

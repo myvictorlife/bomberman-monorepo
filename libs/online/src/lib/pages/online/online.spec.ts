@@ -20,7 +20,7 @@ import {
   ONLINE_ARENA_LAUNCHER,
 } from '../../services/online.tokens';
 import { FakeConnection } from '../../testing/fake-connection';
-import { Online, roundKey } from './online';
+import { Online, roundKey, savedGuest } from './online';
 
 const flush = () => new Promise((r) => setTimeout(r, 0));
 
@@ -134,6 +134,7 @@ describe('Online', () => {
     launched = [];
     handles = [];
     user.set(null);
+    sessionStorage.clear();
     vi.clearAllMocks();
     environment.gameServerUrl = 'http://localhost:8086';
   });
@@ -160,6 +161,103 @@ describe('Online', () => {
     expect(auth.initialize).toHaveBeenCalled();
     expect(spectator.query('[data-testid="online-waiting"]')).toExist();
     expect(spectator.component.blocked()).toBe('sign-in');
+  });
+
+  describe('guests', () => {
+    const identity = {
+      id: 'guest:1',
+      name: 'Visita',
+      token: 'tok-1234567890abcdef',
+    };
+
+    it('plays as a guest: names itself, queues once the server answers, and comes back after a drop', async () => {
+      await render();
+      spectator.component.playAsGuest('Visita');
+      expect(connection.sent).toContainEqual({
+        type: CLIENT_MESSAGE.guest,
+        payload: { name: 'Visita' },
+      });
+      expect(analytics.logEvent).toHaveBeenCalledWith('guest_start');
+
+      connection.push(SERVER_MESSAGE.guest, identity);
+      spectator.detectChanges();
+      expect(connection.sent).toContainEqual({
+        type: CLIENT_MESSAGE.joinQueue,
+        payload: { characterId: spectator.component.characterId() },
+      });
+      expect(spectator.component.myId()).toBe('guest:1');
+      expect(spectator.component.blocked()).toBeNull();
+      expect(spectator.component.chatBlocked()).toBe('sign-in');
+      expect(spectator.component.guestName()).toBe('Visita');
+      expect(savedGuest()).toEqual({ name: 'Visita', token: identity.token });
+
+      // The socket drops; the fresh one is the same guest, without queuing twice.
+      connection.close();
+      spectator.detectChanges();
+      spectator.click('[data-testid="online-retry"]');
+      await flush();
+      spectator.detectChanges();
+      expect(connection.sent).toEqual([
+        {
+          type: CLIENT_MESSAGE.guest,
+          payload: { name: 'Visita', token: identity.token },
+        },
+      ]);
+    });
+
+    it('ends the guest when the player signs in', async () => {
+      sessionStorage.setItem(
+        'online.guest',
+        JSON.stringify({ name: 'Visita', token: identity.token }),
+      );
+      await render();
+      connection.push(SERVER_MESSAGE.guest, identity);
+      spectator.detectChanges();
+
+      user.set({
+        id: 'me',
+        email: 'me@x.dev',
+        displayName: 'Me',
+        emailVerified: true,
+      });
+      spectator.detectChanges();
+      await flush();
+
+      expect(connection.sent).toContainEqual({
+        type: CLIENT_MESSAGE.hello,
+        payload: { token: 'token-1' },
+      });
+      expect(spectator.component.guest()).toBeNull();
+      expect(spectator.component.myId()).toBe('me');
+      expect(savedGuest()).toBeNull();
+    });
+
+    it('says whether the round is ranked, and what a guest’s win would have been worth', async () => {
+      await render();
+      connection.push(SERVER_MESSAGE.guest, identity);
+      const seat = (id: string) => ({
+        id,
+        name: id,
+        characterId: 'lia' as const,
+      });
+      connection.push(
+        SERVER_MESSAGE.lobby,
+        lobby({ phase: 'playing', players: [seat('a'), seat('b')] }),
+      );
+      expect(spectator.component.ranked()).toBe(true);
+
+      connection.push(
+        SERVER_MESSAGE.lobby,
+        lobby({
+          phase: 'results',
+          players: [seat('guest:1'), seat('a')],
+          winnerId: 'guest:1',
+        }),
+      );
+      spectator.detectChanges();
+      expect(spectator.component.ranked()).toBe(false);
+      expect(spectator.query('[data-testid="online-guest-won"]')).toExist();
+    });
   });
 
   it('offers a retry when the server drops', async () => {

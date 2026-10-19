@@ -5,6 +5,7 @@ import {
   ChatMessage,
   CLIENT_MESSAGE,
   FrameMessage,
+  GuestIdentity,
   LobbySnapshot,
   PlayerProfile,
   RankingEntry,
@@ -17,7 +18,13 @@ import { Client, Room } from '@colyseus/sdk';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { chatOutcome, createArenaRoom, standings } from './arena-room';
+import {
+  chatOutcome,
+  clientAddress,
+  createArenaRoom,
+  GUESTS_PER_ADDRESS,
+  standings,
+} from './arena-room';
 import { TokenVerifier } from './auth';
 import { RecordsStore } from './records-store';
 
@@ -180,6 +187,13 @@ async function signedIn(id: string, verified = true, roomName = 'arena') {
   });
   await peer.next<PlayerProfile>(SERVER_MESSAGE.profile);
   return peer;
+}
+
+async function asGuest(name: string, token?: string, roomName = 'arena') {
+  const peer = await connect(roomName);
+  peer.room.send(CLIENT_MESSAGE.guest, { name, ...(token ? { token } : {}) });
+  const identity = await peer.next<GuestIdentity>(SERVER_MESSAGE.guest);
+  return { ...peer, identity };
 }
 
 const localRoom = (peer: { room: Room }) =>
@@ -695,6 +709,184 @@ describe('ArenaRoom', () => {
       (l) => l.queue.length === 0,
     );
     expect(empty.phase).toBe('waiting');
+  });
+
+  describe('guests', () => {
+    it('plays a guest under a name, and a reload gets the same guest back', async () => {
+      const acc = await signedIn('acc');
+      const guest = await asGuest('Visita');
+      expect(guest.identity).toEqual({
+        id: expect.stringMatching(/^guest:/),
+        name: 'Visita',
+        token: expect.any(String),
+      });
+
+      guest.room.send(CLIENT_MESSAGE.joinQueue, { characterId: 'byte' });
+      acc.room.send(CLIENT_MESSAGE.joinQueue, {});
+      const playing = await acc.next<LobbySnapshot>(
+        SERVER_MESSAGE.lobby,
+        (l) => l.phase === 'playing',
+      );
+      expect(playing.players.map((p) => [p.id, p.name])).toEqual([
+        [guest.identity.id, 'Visita'],
+        ['acc', 'ACC'],
+      ]);
+
+      // The page reloads and sends the token it kept: same guest, same place.
+      await guest.room.leave();
+      const back = await asGuest('Visita', guest.identity.token);
+      expect(back.identity.id).toBe(guest.identity.id);
+      await new Promise((r) => setTimeout(r, 600));
+      const game = localRoom(acc).game as GameState;
+      expect(game.players.find((p) => p.id === back.identity.id)?.alive).toBe(
+        true,
+      );
+    });
+
+    it('refuses a name an account or another guest has, and a bad one', async () => {
+      await signedIn('nia');
+      const taken = await connect();
+      taken.room.send(CLIENT_MESSAGE.guest, { name: ' Niá ' });
+      await taken.next(
+        SERVER_MESSAGE.error,
+        (e: { code: string }) => e.code === 'name-taken',
+      );
+
+      await asGuest('Primeiro');
+      taken.room.send(CLIENT_MESSAGE.guest, { name: 'primeiro' });
+      await taken.next(
+        SERVER_MESSAGE.error,
+        (e: { code: string }) => e.code === 'name-taken',
+      );
+      taken.room.send(CLIENT_MESSAGE.guest, { name: 'x' });
+      await taken.next(
+        SERVER_MESSAGE.error,
+        (e: { code: string }) => e.code === 'bad-message',
+      );
+    });
+
+    it('keeps the chat for accounts', async () => {
+      const guest = await asGuest('Calado');
+      guest.room.send(CLIENT_MESSAGE.chatSend, { text: 'oi' });
+      await guest.next(
+        SERVER_MESSAGE.error,
+        (e: { code: string }) => e.code === 'auth-required',
+      );
+    });
+
+    it('lets only a few guests from one address hold a place', async () => {
+      const guests = [];
+      for (let i = 0; i <= GUESTS_PER_ADDRESS; i++)
+        guests.push(await asGuest(`Casa ${i}`, undefined, 'no-outsiders'));
+      for (const guest of guests.slice(0, GUESTS_PER_ADDRESS))
+        guest.room.send(CLIENT_MESSAGE.joinQueue, {});
+      const last = guests[GUESTS_PER_ADDRESS];
+      if (!last) throw new Error('no last guest');
+      await last.next<LobbySnapshot>(
+        SERVER_MESSAGE.lobby,
+        (l) => l.players.length + l.queue.length === GUESTS_PER_ADDRESS,
+      );
+      last.room.send(CLIENT_MESSAGE.joinQueue, {});
+      await last.next(
+        SERVER_MESSAGE.error,
+        (e: { code: string }) => e.code === 'guest-limit',
+      );
+    });
+
+    it('ends playing as a guest when the connection signs in', async () => {
+      const guest = await asGuest('Depois', undefined, 'no-outsiders');
+      guest.room.send(CLIENT_MESSAGE.joinQueue, {});
+      await guest.next<LobbySnapshot>(SERVER_MESSAGE.lobby, (l) =>
+        l.queue.some((s) => s.id === guest.identity.id),
+      );
+      guest.room.send(CLIENT_MESSAGE.hello, { token: 'ped:PED:yes' });
+      await guest.next<LobbySnapshot>(
+        SERVER_MESSAGE.lobby,
+        (l) => !l.queue.some((s) => s.id === guest.identity.id),
+      );
+      // An account cannot play as a guest on top of it.
+      guest.room.send(CLIENT_MESSAGE.guest, { name: 'Outro' });
+      await guest.next(
+        SERVER_MESSAGE.error,
+        (e: { code: string }) => e.code === 'bad-message',
+      );
+    });
+
+    it('records a round only with two accounts in it', async () => {
+      const que = await signedIn('que');
+      const guest = await asGuest('Rival');
+      que.room.send(CLIENT_MESSAGE.joinQueue, {});
+      guest.room.send(CLIENT_MESSAGE.joinQueue, {});
+      await que.next<LobbySnapshot>(
+        SERVER_MESSAGE.lobby,
+        (l) => l.phase === 'playing',
+      );
+      const game = localRoom(que).game as GameState;
+      const victim = game.players.find((p) => p.id === guest.identity.id);
+      if (!victim) throw new Error('no guest');
+      victim.alive = false;
+      victim.diedAtTick = game.tick;
+
+      const results = await que.next<LobbySnapshot>(
+        SERVER_MESSAGE.lobby,
+        (l) => l.phase === 'results',
+      );
+      expect(results.winnerId).toBe('que');
+      expect(records.get('que')).toMatchObject({ wins: 0, matches: 0 });
+      expect(records.get(guest.identity.id)).toBeUndefined();
+    }, 15_000);
+
+    it('records the accounts of a round a guest wins', async () => {
+      const ray = await signedIn('ray');
+      const sol = await signedIn('sol');
+      const guest = await asGuest('Penetra', undefined, 'no-outsiders');
+      // `ray` and `sol` join the same room as the guest.
+      const rayHere = await signedIn('ray', true, 'no-outsiders');
+      const solHere = await signedIn('sol', true, 'no-outsiders');
+      await Promise.all([ray.room.leave(), sol.room.leave()]);
+      guest.room.send(CLIENT_MESSAGE.joinQueue, {});
+      rayHere.room.send(CLIENT_MESSAGE.joinQueue, {});
+      solHere.room.send(CLIENT_MESSAGE.joinQueue, {});
+      await guest.next<LobbySnapshot>(
+        SERVER_MESSAGE.lobby,
+        (l) => l.phase === 'playing',
+      );
+      const game = localRoom(guest).game as GameState;
+      for (const p of game.players) {
+        if (p.id === guest.identity.id) continue;
+        p.alive = false;
+        p.diedAtTick = game.tick;
+      }
+      const results = await guest.next<LobbySnapshot>(
+        SERVER_MESSAGE.lobby,
+        (l) => l.phase === 'results',
+      );
+      expect(results.winnerId).toBe(guest.identity.id);
+      expect(records.get('ray')).toMatchObject({ wins: 0, matches: 1 });
+      expect(records.get('sol')).toMatchObject({ wins: 0, matches: 1 });
+    }, 15_000);
+
+    it('answers a message type it does not know, without dropping the connection', async () => {
+      const peer = await connect();
+      peer.room.send('from-the-future', { x: 1 });
+      await peer.next(
+        SERVER_MESSAGE.error,
+        (e: { code: string }) => e.code === 'bad-message',
+      );
+      peer.room.send(CLIENT_MESSAGE.react, { emoji: '🔥' });
+      await expect(peer.next(SERVER_MESSAGE.reaction)).resolves.toBeTruthy();
+    });
+
+    it('reads the visitor address Cloudflare passes on, else Colyseus’ own', () => {
+      const headers = new Headers({ 'cf-connecting-ip': '200.1.2.3' });
+      expect(clientAddress({ ip: '127.0.0.1', headers })).toBe('200.1.2.3');
+      expect(clientAddress({ ip: '10.0.0.9', headers: new Headers() })).toBe(
+        '10.0.0.9',
+      );
+      expect(clientAddress({ ip: undefined, headers: new Headers() })).toBe(
+        'unknown',
+      );
+    });
   });
 
   describe('rules', () => {

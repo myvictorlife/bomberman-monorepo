@@ -1,9 +1,12 @@
 import { DEFAULT_CHARACTER_ID, MAX_PLAYERS } from '@libs/game-core';
 import {
   CHAT_MAX_LENGTH,
+  countsForRanking,
+  isGuestId,
   parseChatDelete,
   parseChatMute,
   parseChatText,
+  parseGuest,
   parseHello,
   parseInput,
   parseJoinQueue,
@@ -260,5 +263,48 @@ describe('parseProfileUpdate', () => {
     expect(parseProfileUpdate({})).toBeNull();
     expect(parseProfileUpdate({ email: 'a@b.c' })).toBeNull();
     expect(parseProfileUpdate('Ana')).toBeNull();
+  });
+});
+
+describe('guests', () => {
+  it('takes a cleaned name and, optionally, a well-formed token', () => {
+    expect(parseGuest({ name: '  Visita ' })).toEqual({ name: 'Visita' });
+    const token = 'a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d';
+    expect(parseGuest({ name: 'Visita', token })).toEqual({
+      name: 'Visita',
+      token,
+    });
+    expect(parseGuest({ name: 'Visita', token: null })).toEqual({
+      name: 'Visita',
+    });
+  });
+
+  it('refuses a bad name or a token that is not one', () => {
+    expect(parseGuest({ name: 'x' })).toBeNull();
+    expect(parseGuest({})).toBeNull();
+    expect(parseGuest('Visita')).toBeNull();
+    expect(parseGuest({ name: 'Visita', token: 'short' })).toBeNull();
+    expect(parseGuest({ name: 'Visita', token: 'a'.repeat(65) })).toBeNull();
+    expect(
+      parseGuest({ name: 'Visita', token: 'not a token!!!!!!' }),
+    ).toBeNull();
+  });
+
+  it('tells guest ids from account ids', () => {
+    expect(isGuestId('guest:abc')).toBe(true);
+    expect(isGuestId('Xy12FirebaseUid')).toBe(false);
+  });
+
+  it('counts a round for the ranking only with two accounts in it', () => {
+    const account = (id: string) => ({ id });
+    const guest = (n: number) => ({ id: `guest:${n}` });
+    const bot = (n: number) => ({ id: `cpu${n}`, bot: true });
+    expect(countsForRanking([account('a'), account('b')])).toBe(true);
+    expect(
+      countsForRanking([account('a'), account('b'), guest(1), bot(1)]),
+    ).toBe(true);
+    expect(countsForRanking([account('a'), guest(1), guest(2)])).toBe(false);
+    expect(countsForRanking([account('a'), bot(1), bot(2)])).toBe(false);
+    expect(countsForRanking([guest(1), guest(2)])).toBe(false);
   });
 });

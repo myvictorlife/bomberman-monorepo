@@ -717,7 +717,8 @@
       "WINNER": "{{name}} venceu!",
       "DRAW": "Empate!",
       "EXPAND": "Expandir: o jogo em tela cheia com o chat ao lado",
-      "COLLAPSE": "Sair da tela cheia"
+      "COLLAPSE": "Sair da tela cheia",
+      "GUEST_WON": "Com uma conta, essa vitória valeria ranking."
     },
     "QUEUE": {
       "TITLE": "Próxima partida",
@@ -738,7 +739,16 @@
       },
       "OUTSIDE": "Você está do lado de fora: ande pela muralha e jogue bombas para dentro. Acertou alguém, entra no lugar dele.",
       "OUTSIDE_TAG": "de fora",
-      "CHAMPION": "{{n}} vitórias seguidas: joga a próxima rodada"
+      "CHAMPION": "{{n}} vitórias seguidas: joga a próxima rodada",
+      "GUEST_NAME": "Seu nome",
+      "GUEST_PLAY": "Jogar como convidado",
+      "GUEST_HINT": "Sem conta. Partidas de convidado não valem ranking: entre na sua conta abaixo para pontuar.",
+      "GUEST_NOTE": "Você joga como convidado ({{name}}): suas partidas não valem ranking.",
+      "GUEST_TAG": "convidado",
+      "RANKED": "Vale ranking",
+      "RANKED_HINT": "Dois ou mais jogadores com conta: esta partida vale ranking.",
+      "FRIENDLY": "Amistosa",
+      "FRIENDLY_HINT": "Menos de dois jogadores com conta: esta partida não vale ranking."
     },
     "RANKING": {
       "TITLE": "Ranking",
@@ -797,7 +807,9 @@
       "bad-message": "O servidor não entendeu. Recarregue a página.",
       "forbidden": "Só o líder da sala pode mudar as regras.",
       "chat-slow-down": "Calma: espere um pouco antes de escrever de novo.",
-      "chat-muted": "Um admin silenciou você no chat."
+      "chat-muted": "Um admin silenciou você no chat.",
+      "name-taken": "Esse nome já está em uso. Escolha outro.",
+      "guest-limit": "Já há convidados demais jogando da sua conexão. Entre na sua conta para jogar."
     },
     "PLAYERS": {
       "TITLE": "Na arena",

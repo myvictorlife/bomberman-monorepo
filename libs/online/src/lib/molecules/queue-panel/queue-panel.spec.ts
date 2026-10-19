@@ -68,6 +68,44 @@ describe('QueuePanelComponent', () => {
     );
   });
 
+  it('asks for a name to play as a guest when there is no account', () => {
+    const play = watch('playAsGuest');
+    spectator.setInput('blocked', 'sign-in');
+    expect(spectator.query('[data-testid="queue-join"]')).not.toExist();
+    const button = () =>
+      spectator.query<HTMLButtonElement>('[data-testid="queue-guest-play"]');
+
+    spectator.typeInElement('x', '[data-testid="queue-guest-name"]');
+    expect(button()?.disabled).toBe(true);
+    spectator.typeInElement('  Visita ', '[data-testid="queue-guest-name"]');
+    expect(button()?.disabled).toBe(false);
+    spectator.click('[data-testid="queue-guest-play"]');
+    expect(play).toHaveBeenCalledWith('Visita');
+    expect(spectator.query('[data-testid="queue-guest-hint"]')).toHaveText(
+      'ONLINE.QUEUE.GUEST_HINT',
+    );
+  });
+
+  it('reminds a guest that their rounds are not ranked, and tags guests', () => {
+    spectator.setInput({
+      guest: 'Visita',
+      phase: 'playing',
+      players: [seat('guest:1'), seat('ana')],
+      queue: [seat('guest:2'), seat('bia')],
+    });
+    expect(spectator.query('[data-testid="queue-guest-note"]')).toExist();
+    expect(spectator.queryAll('[data-testid="queue-guest-tag"]')).toHaveLength(
+      2,
+    );
+    expect(spectator.query('[data-testid="queue-ranked"]')).toHaveText(
+      'ONLINE.QUEUE.FRIENDLY',
+    );
+    spectator.setInput('ranked', true);
+    expect(spectator.query('[data-testid="queue-ranked"]')).toHaveText(
+      'ONLINE.QUEUE.RANKED',
+    );
+  });
+
   it('shows your place and lets you leave', () => {
     const leave = watch('leave');
     spectator.setInput('queue', [seat('a'), seat('b'), seat('me')]);

@@ -13,6 +13,17 @@ config file. Ordinary app-level additions are minor.
 
 ### Added
 
+- **Play online without an account.** With no sign-in, the queue panel asks
+  for a name and "Play as a guest": the server answers with a guest id
+  (`guest:<uuid>`) and a token the tab keeps for a reload. Guests queue and
+  play like anyone, tagged "guest", but cannot chat and never reach the
+  records. A name an account or another guest has is refused, and one
+  address holds at most three guest places at once. A round now counts for
+  the ranking only with **two signed-in accounts** in it (`countsForRanking`,
+  replacing "two people"), so guest tabs cannot farm wins; the queue panel
+  shows whether the round on screen is "Ranked" or "Friendly", and a guest
+  who wins is told an account would have counted it. A server without a
+  Firebase project now lets guests play instead of being watch-only.
 - **Leave after this round, online.** A player of the round in progress
   can ask to leave when it ends (`round:leave-after`): the round is played
   out, then they are not put back in line, and a winner gives the seat up.

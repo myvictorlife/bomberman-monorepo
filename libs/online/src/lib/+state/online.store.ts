@@ -8,6 +8,7 @@ import {
   CLIENT_MESSAGE,
   ErrorMessage,
   FrameMessage,
+  GuestIdentity,
   InputMessage,
   LobbySnapshot,
   PlayerProfile,
@@ -67,6 +68,8 @@ export interface OnlineState {
   ranking: RankingEntry[];
   /** What the server knows about the signed-in account; `null` until it answers. */
   profile: PlayerProfile | null;
+  /** Who this connection plays as without an account; `null` until the server answers `guest`. */
+  guest: GuestIdentity | null;
   serverError: ServerErrorCode | null;
   /** How far the server clock is ahead of this one, for the countdown. */
   clockOffset: number;
@@ -85,6 +88,7 @@ export const initialOnlineState: OnlineState = {
   lobby: null,
   ranking: [],
   profile: null,
+  guest: null,
   serverError: null,
   clockOffset: 0,
   hud: null,
@@ -141,6 +145,7 @@ export const OnlineStore = signalStore(
         status: 'connecting',
         serverError: null,
         profile: null,
+        guest: null,
         admin: false,
         chat: [],
         chatError: null,
@@ -159,6 +164,9 @@ export const OnlineStore = signalStore(
         );
         opened.on<PlayerProfile>(SERVER_MESSAGE.profile, (profile) =>
           patchState(store, { profile }),
+        );
+        opened.on<GuestIdentity>(SERVER_MESSAGE.guest, (guest) =>
+          patchState(store, { guest }),
         );
         opened.on<AdminMessage>(SERVER_MESSAGE.admin, ({ admin }) =>
           patchState(store, { admin }),
@@ -233,6 +241,18 @@ export const OnlineStore = signalStore(
       /** Gives up the place in the queue or the round now, instead of after the reconnect grace. */
       signOut(): void {
         send(CLIENT_MESSAGE.signOut);
+      },
+      /**
+       * Plays without an account, under `name`; the token of an earlier
+       * answer gets the same guest back. The server answers `guest` or an error.
+       */
+      playAsGuest(name: string, token?: string): void {
+        patchState(store, { serverError: null });
+        send(CLIENT_MESSAGE.guest, { name, ...(token ? { token } : {}) });
+      },
+      /** Signed in: the server ended the guest on this connection, and so does the page. */
+      forgetGuest(): void {
+        patchState(store, { guest: null });
       },
       joinQueue(characterId: CharacterId): void {
         patchState(store, { serverError: null });

@@ -182,7 +182,35 @@ export const PUBLIC_ROOM_RULES: RoomRules = {
  */
 export type LobbyPhase = 'waiting' | 'countdown' | 'playing' | 'results';
 
-/** Someone in the queue or in the round. `id` is the account id, so one account holds one place. */
+/**
+ * Ids the server gives guests — people who play without an account. Account
+ * ids are Firebase uids, which never contain a colon, so the two never meet.
+ */
+export const GUEST_ID_PREFIX = 'guest:';
+
+export function isGuestId(id: string): boolean {
+  return id.startsWith(GUEST_ID_PREFIX);
+}
+
+/**
+ * A round goes into the ranking only with this many signed-in accounts in it.
+ * Guests and bots play, but never count: otherwise anyone could open a few
+ * guest tabs, beat them, and farm the table.
+ */
+export const ACCOUNTS_TO_RANK = 2;
+
+/** Whether a round with these players counts for the ranking. */
+export function countsForRanking(
+  seats: readonly Pick<Seat, 'id' | 'bot'>[],
+): boolean {
+  const accounts = seats.filter((s) => !s.bot && !isGuestId(s.id));
+  return accounts.length >= ACCOUNTS_TO_RANK;
+}
+
+/**
+ * Someone in the queue or in the round. `id` is the account id — or a guest
+ * id ({@link GUEST_ID_PREFIX}) — so one account holds one place.
+ */
 export interface Seat {
   id: string;
   name: string;
@@ -307,7 +335,11 @@ export type ServerErrorCode =
   /** A chat message too soon after the last ones, or the same one again. */
   | 'chat-slow-down'
   /** An admin silenced this account in the chat until the server restarts. */
-  | 'chat-muted';
+  | 'chat-muted'
+  /** A guest asked for a name an account or another guest already has. */
+  | 'name-taken'
+  /** Too many guests from the same address are already queued or playing. */
+  | 'guest-limit';
 
 /** A player's name on the ranking, in characters (an emoji is one). */
 export const PLAYER_NAME_LENGTH = { min: 2, max: 20 } as const;
@@ -382,6 +414,11 @@ export const CLIENT_MESSAGE = {
   hello: 'hello',
   /** Signing out on purpose: give up the place now, no grace period. */
   signOut: 'sign-out',
+  /**
+   * Play without an account, under a name; answered with `guest` (or `error`).
+   * The token of an earlier answer gets the same guest back after a reload.
+   */
+  guest: 'guest',
   joinQueue: 'queue:join',
   leaveQueue: 'queue:leave',
   /**
@@ -419,10 +456,25 @@ export const SERVER_MESSAGE = {
   chatRemoved: 'chat:removed',
   /** Someone reacted. */
   reaction: 'reaction',
+  /** After `guest`: who this connection plays as. */
+  guest: 'guest',
 } as const;
 
 export interface HelloMessage {
   /** A Firebase ID token. */
+  token: string;
+}
+
+export interface GuestMessage {
+  name: string;
+  /** From an earlier {@link GuestIdentity}: the same guest, back within the reconnect grace. */
+  token?: string;
+}
+
+/** Who a guest plays as. The token is theirs alone; the id is what everyone sees in the queue. */
+export interface GuestIdentity {
+  id: string;
+  name: string;
   token: string;
 }
 
@@ -536,6 +588,20 @@ export function parsePlayerName(value: unknown): string | null {
   const length = [...name].length;
   return length >= PLAYER_NAME_LENGTH.min && length <= PLAYER_NAME_LENGTH.max
     ? name
+    : null;
+}
+
+const GUEST_TOKEN = /^[A-Za-z0-9-]{16,64}$/;
+
+/** A guest's name, checked like a profile's, and the token of an earlier visit if any. */
+export function parseGuest(value: unknown): GuestMessage | null {
+  if (!isRecord(value)) return null;
+  const name = parsePlayerName(value['name']);
+  if (name === null) return null;
+  const token = value['token'];
+  if (token === undefined || token === null) return { name };
+  return typeof token === 'string' && GUEST_TOKEN.test(token)
+    ? { name, token }
     : null;
 }
 

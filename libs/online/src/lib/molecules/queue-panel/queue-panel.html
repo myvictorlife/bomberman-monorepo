@@ -1,7 +1,10 @@
 <section class="queue" data-testid="queue-panel">
   <h2 class="queue__title">{{ 'ONLINE.QUEUE.TITLE' | translate }}</h2>
-
-  @if (ofThisRound()) { @if (inRound()) {
+  @if (guest(); as name) {
+  <p class="queue__hint" data-testid="queue-guest-note">
+    {{ 'ONLINE.QUEUE.GUEST_NOTE' | translate: { name: name } }}
+  </p>
+  } @if (ofThisRound()) { @if (inRound()) {
   <p class="queue__status queue__status--live" data-testid="queue-in-round">
     {{ 'ONLINE.QUEUE.IN_ROUND' | translate }}
   </p>
@@ -46,6 +49,39 @@
   >
     {{ 'ONLINE.QUEUE.LEAVE' | translate }}
   </button>
+  } @else if (blocked() === 'sign-in') {
+  <form
+    class="queue__guest"
+    (submit)="submitGuest($event)"
+    data-testid="queue-guest-form"
+    novalidate
+  >
+    <label class="queue__field">
+      <span>{{ 'ONLINE.QUEUE.GUEST_NAME' | translate }}</span>
+      <input
+        type="text"
+        name="guest-name"
+        autocomplete="nickname"
+        [attr.maxlength]="nameLength.max"
+        [value]="guestName()"
+        (input)="guestName.set(read($event))"
+        data-testid="queue-guest-name"
+      />
+    </label>
+    <button
+      type="submit"
+      libButton
+      variant="primary"
+      [block]="true"
+      [disabled]="!guestNameValid()"
+      data-testid="queue-guest-play"
+    >
+      {{ 'ONLINE.QUEUE.GUEST_PLAY' | translate }}
+    </button>
+    <p class="queue__hint" data-testid="queue-guest-hint">
+      {{ 'ONLINE.QUEUE.GUEST_HINT' | translate }}
+    </p>
+  </form>
   } @else {
   <button
     type="button"
@@ -66,11 +102,23 @@
   <div class="queue__live" data-testid="queue-live">
     <h3 class="queue__subtitle">
       {{ 'ONLINE.QUEUE.NOW_PLAYING' | translate }}
+      <span
+        class="queue__ranked"
+        [class.queue__ranked--on]="ranked()"
+        [title]="(ranked() ? 'ONLINE.QUEUE.RANKED_HINT' : 'ONLINE.QUEUE.FRIENDLY_HINT') | translate"
+        data-testid="queue-ranked"
+        >{{ (ranked() ? 'ONLINE.QUEUE.RANKED' : 'ONLINE.QUEUE.FRIENDLY') |
+        translate }}</span
+      >
     </h3>
     <p class="queue__live-names">
       @for (seat of players(); track seat.id; let last = $last) {
       <span [class.queue__me]="seat.id === myId()">{{ seat.name }}</span>@if
-      (seat.id === champion()?.id) {<span
+      (isGuest(seat)) {<span
+        class="queue__guest-tag"
+        data-testid="queue-guest-tag"
+        >{{ 'ONLINE.QUEUE.GUEST_TAG' | translate }}</span
+      >}@if (seat.id === champion()?.id) {<span
         class="queue__crown"
         data-testid="queue-live-crown"
         [title]="'ONLINE.QUEUE.CHAMPION' | translate: { n: champion()?.streak }"
@@ -89,7 +137,11 @@
     >
       <span class="queue__place">{{ i + 1 }}</span>
       <span class="queue__name"
-        >{{ seat.name }} @if (seat.id === champion()?.id) {
+        >{{ seat.name }} @if (isGuest(seat)) {
+        <span class="queue__guest-tag" data-testid="queue-guest-tag"
+          >{{ 'ONLINE.QUEUE.GUEST_TAG' | translate }}</span
+        >
+        } @if (seat.id === champion()?.id) {
         <span
           class="queue__crown"
           data-testid="queue-crown"

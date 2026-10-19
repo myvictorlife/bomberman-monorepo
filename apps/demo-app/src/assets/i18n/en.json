@@ -717,7 +717,8 @@
       "WINNER": "{{name}} wins!",
       "DRAW": "Draw!",
       "EXPAND": "Expand: the game full screen with the chat beside it",
-      "COLLAPSE": "Exit full screen"
+      "COLLAPSE": "Exit full screen",
+      "GUEST_WON": "With an account, this win would count for the ranking."
     },
     "QUEUE": {
       "TITLE": "Next round",
@@ -738,7 +739,16 @@
       },
       "OUTSIDE": "You are outside the arena: walk the wall and throw bombs in. Get someone and you take their place.",
       "OUTSIDE_TAG": "outside",
-      "CHAMPION": "{{n}} wins in a row: plays the next round"
+      "CHAMPION": "{{n}} wins in a row: plays the next round",
+      "GUEST_NAME": "Your name",
+      "GUEST_PLAY": "Play as a guest",
+      "GUEST_HINT": "No account needed. Guest rounds don't count for the ranking: sign in below to score.",
+      "GUEST_NOTE": "You play as a guest ({{name}}): your rounds don't count for the ranking.",
+      "GUEST_TAG": "guest",
+      "RANKED": "Ranked",
+      "RANKED_HINT": "Two or more signed-in players: this round counts for the ranking.",
+      "FRIENDLY": "Friendly",
+      "FRIENDLY_HINT": "Fewer than two signed-in players: this round doesn't count for the ranking."
     },
     "RANKING": {
       "TITLE": "Ranking",
@@ -797,7 +807,9 @@
       "bad-message": "The server did not understand that. Reload the page.",
       "forbidden": "Only the room's leader can change the rules.",
       "chat-slow-down": "Easy there: wait a moment before writing again.",
-      "chat-muted": "An admin silenced you in the chat."
+      "chat-muted": "An admin silenced you in the chat.",
+      "name-taken": "That name is taken. Pick another.",
+      "guest-limit": "Too many guests from your connection are already playing. Sign in to join."
     },
     "PLAYERS": {
       "TITLE": "In the arena",

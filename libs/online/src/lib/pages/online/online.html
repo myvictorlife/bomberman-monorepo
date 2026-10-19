@@ -100,6 +100,11 @@
             @if (winner(); as w) { {{ 'ONLINE.STAGE.WINNER' | translate: { name:
             w.name } }} } @else { {{ 'ONLINE.STAGE.DRAW' | translate }} }
           </p>
+          @if (guestWon()) {
+          <p class="online__small" data-testid="online-guest-won">
+            {{ 'ONLINE.STAGE.GUEST_WON' | translate }}
+          </p>
+          }
         </div>
         } @else if (phase() === 'waiting' && status() === 'online') {
         <div
@@ -175,7 +180,7 @@
           [messages]="chat()"
           [myId]="myId()"
           [admin]="admin()"
-          [blocked]="blocked()"
+          [blocked]="chatBlocked()"
           [error]="chatError()"
           [dock]="expanded()"
           (send)="sendChat($event)"
@@ -196,7 +201,10 @@
           [blocked]="blocked()"
           [champion]="lobby()?.champion ?? null"
           [leavingAfter]="leavingAfter()"
+          [guest]="guestName()"
+          [ranked]="ranked()"
           (join)="join()"
+          (playAsGuest)="playAsGuest($event)"
           (leave)="leave()"
           (leaveAfterRound)="leaveAfterRound($event)"
         />

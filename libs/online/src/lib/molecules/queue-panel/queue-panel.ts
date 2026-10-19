@@ -4,8 +4,15 @@ import {
   computed,
   input,
   output,
+  signal,
 } from '@angular/core';
-import { Champion, LobbyPhase, Seat } from '@libs/game-protocol';
+import {
+  Champion,
+  isGuestId,
+  LobbyPhase,
+  PLAYER_NAME_LENGTH,
+  Seat,
+} from '@libs/game-protocol';
 import { ButtonComponent } from '@libs/ui';
 import { TranslatePipe } from '@ngx-translate/core';
 
@@ -15,7 +22,8 @@ export type JoinBlock = 'sign-in' | 'verify' | 'offline' | null;
 /**
  * Who plays next, in order, and the button to get in line. While a round is
  * played, the first `outsiders` in line are on its border throwing bombs in.
- * Presentational.
+ * Without an account, a name is enough to play as a guest — outside the
+ * ranking. Presentational.
  */
 @Component({
   selector: 'lib-queue-panel',
@@ -37,11 +45,24 @@ export class QueuePanelComponent {
   readonly champion = input<Champion | null>(null);
   /** I play this round out and then leave, instead of going back in line. */
   readonly leavingAfter = input(false);
+  /** My name when I play as a guest; `null` with an account, or before choosing one. */
+  readonly guest = input<string | null>(null);
+  /** The round on screen counts for the ranking: two accounts or more in it. */
+  readonly ranked = input(false);
 
   readonly join = output<void>();
   readonly leave = output<void>();
   /** `true`: leave when this round ends; `false`: stay after all. */
   readonly leaveAfterRound = output<boolean>();
+  /** Play without an account, under this name. */
+  readonly playAsGuest = output<string>();
+
+  readonly guestName = signal('');
+  readonly nameLength = PLAYER_NAME_LENGTH;
+  readonly guestNameValid = computed(() => {
+    const length = [...this.guestName().trim()].length;
+    return length >= PLAYER_NAME_LENGTH.min && length <= PLAYER_NAME_LENGTH.max;
+  });
 
   readonly position = computed(() => {
     const index = this.queue().findIndex((s) => s.id === this.myId());
@@ -74,6 +95,19 @@ export class QueuePanelComponent {
       position !== null &&
       position <= this.outsiders()
     );
+  }
+
+  isGuest(seat: Seat): boolean {
+    return isGuestId(seat.id);
+  }
+
+  read(event: Event): string {
+    return (event.target as HTMLInputElement).value;
+  }
+
+  submitGuest(event: Event): void {
+    event.preventDefault();
+    if (this.guestNameValid()) this.playAsGuest.emit(this.guestName().trim());
   }
 
   characterKey(seat: Seat): string {

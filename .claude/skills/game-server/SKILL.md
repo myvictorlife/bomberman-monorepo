@@ -36,7 +36,8 @@ tunnel on the same machine publishes the server), `FIREBASE_PROJECT_ID` (falls b
 `0` for none).
 `ADMINS` (comma-separated e-mails allowed to change the room's rules from
 the page; otherwise the `admins` array of `config/game-server.json`).
-Without a project id the room is **watch-only**: nobody can sign in to queue.
+Without a project id nobody can sign in, but guests still play (below):
+the ranking stays empty, since only accounts are counted.
 
 The browser finds the server through `environment.gameServerUrl`, generated
 from `config/game-server.json` (`{ "url": "https://…" }`) or `GAME_SERVER_URL`.
@@ -125,8 +126,25 @@ on `/online` draws itself from the schema; `parseRules` validates a change.
   never champion. The room plays them with a `BotDirector`
   (`@libs/game-ai`, level `BOT_LEVEL` = `casual`: a notch under `/play`'s
   medium, and not offered there) and merges its inputs before
-  `tick`. A round goes into the records only with `PEOPLE_TO_RECORD` (2)
-  people; `/status` and `Lobby.people()` count people only.
+  `tick`. A round goes into the records only with `ACCOUNTS_TO_RANK` (2)
+  accounts (`countsForRanking`, shared with the page's "Ranked / Friendly"
+  badge); `/status` and `Lobby.people()` count people — guests included.
+- **Guests** play without an account. `guest { name, token? }`
+  (`parseGuest`: the profile's name rules) is answered with
+  `guest { id, name, token }` — the id is `guest:<uuid>` (`isGuestId`;
+  Firebase uids never hold a colon), the token is the guest's secret. The
+  page keeps `{ name, token }` in `sessionStorage` and sends it again on a
+  reload or a new socket, so the same guest gets their place back within
+  the reconnect grace; a guest with no place and no connection is
+  forgotten. A name an account's record or another guest has (`nameKey`) is
+  `name-taken`. A guest queues and plays like anyone, but never writes in
+  the chat (`auth-required`), never gets a record, and is never counted for
+  the ranking. At most `GUESTS_PER_ADDRESS` (3) guests from one address hold
+  a place at once (`guest-limit`); the address is `CF-Connecting-IP` behind
+  Cloudflare, else what Colyseus resolves (`clientAddress`, read in
+  `onAuth`) — spoofable without a proxy in front, so a soft limit. `hello`
+  on a guest's connection ends the guest (their place goes with it);
+  `guest` on a signed-in connection is `bad-message`.
 
 ## Chat and reactions
 
