@@ -294,8 +294,16 @@ export interface ProfileUpdate {
   color?: PlayerColorId | null;
 }
 
-/** Why `PUT /me` refused: the body was not a {@link ProfileUpdate}, or someone else has the name. */
-export type ProfileUpdateError = 'bad-request' | 'name-taken';
+/**
+ * Why `/me` refused: no valid sign-in, an unconfirmed e-mail (a name on the
+ * public ranking takes a confirmed account), a body that is not a
+ * {@link ProfileUpdate}, or a name someone else has.
+ */
+export type ProfileUpdateError =
+  | 'auth-required'
+  | 'email-not-verified'
+  | 'bad-request'
+  | 'name-taken';
 
 /** The longest chat message, in characters. */
 export const CHAT_MAX_LENGTH = 140;

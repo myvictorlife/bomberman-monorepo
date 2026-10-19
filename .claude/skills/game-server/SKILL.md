@@ -160,7 +160,28 @@ a path, or leave it alone, never 404/405 the rest.
 - `GET /status` — `RoomStatus` (online, phase, playing, queued), cached 5 s,
   from the room's listing metadata (`setMetadata` in `refreshLobby`). The
   title screen's presence pill reads it.
+- `GET /me` / `PUT /me` — the signed-in player's own profile (`me.ts`), for
+  the profile page, which has no socket. `Authorization: Bearer <ID token>`,
+  checked like `hello`'s; `no-store`. `GET` answers `PlayerProfile` (creating
+  the record on a first visit). `PUT` takes `ProfileUpdate`
+  (`parseProfileUpdate`: `name`, `favoriteCharacterId`, `color` or `null`) —
+  400 `bad-request`, 403 `email-not-verified`, 409 `name-taken`, else 200
+  with the new profile. It saves through `records.putProfile`, which tells
+  the room (`watchProfiles`): it re-sends the ranking, the player's profile,
+  and gives their connections the new name. A seat already taken keeps the
+  old one.
 - `GET /` — 200, for the tunnel's health check.
+
+## Player records
+
+`PlayerRecord` (`records.ts` in `game-lobby`) is what `players.json` keeps per
+account. `recordVisit` refreshes the name from the token on every `hello`
+**unless `nameChosen`** — a name picked on `/me` sticks. `cleanRecord` keeps
+only the record's own fields (a verified account carries the e-mail; it must
+never reach the file), and `RecordsStore.load` cleans what older files hold.
+The ranking's face is `favoriteCharacterId ?? characterId` (last played), and
+it carries the player's `color`. Names compare by `nameKey` (no case, accents
+or spaces) — that is the uniqueness rule.
 
 ## Auth
 

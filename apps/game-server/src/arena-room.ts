@@ -14,6 +14,7 @@ import {
 import {
   Chat,
   Lobby,
+  PlayerRecord,
   ranking,
   recordRound,
   recordVisit,
@@ -127,6 +128,7 @@ export function createArenaRoom(deps: ArenaRoomDeps) {
     /** Players whose last connection dropped, waiting to come back before they lose their place. */
     private readonly leaving = new Map<string, Delayed>();
     private pendingEvents: GameEvent[] = [];
+    private unwatchProfiles: (() => void) | null = null;
     private ticksSinceFrame = 0;
     private lastLobby = '';
     /** Counts the rounds, so a client can tell a new one from a changed one. */
@@ -134,6 +136,9 @@ export function createArenaRoom(deps: ArenaRoomDeps) {
 
     override onCreate(): void {
       this.patchRate = null;
+      this.unwatchProfiles = deps.records.watchProfiles((record) =>
+        this.profileChanged(record),
+      );
 
       this.onMessage(
         CLIENT_MESSAGE.hello,
@@ -231,7 +236,30 @@ export function createArenaRoom(deps: ArenaRoomDeps) {
     }
 
     override onDispose(): void {
+      this.unwatchProfiles?.();
       deps.records.flush();
+    }
+
+    /**
+     * A player changed their profile from the profile page (`PUT /me`): their
+     * connections take the new name, and everyone gets the ranking again.
+     * A seat already in the queue or the round keeps the name it was taken with.
+     */
+    profileChanged(record: PlayerRecord): void {
+      for (const [sessionId, account] of this.accounts) {
+        if (account.id === record.id)
+          this.accounts.set(sessionId, { ...account, name: record.name });
+      }
+      const all = deps.records.all().values();
+      this.broadcast(SERVER_MESSAGE.ranking, ranking(all, RANKING_SIZE));
+      for (const client of this.clients) {
+        if (this.accounts.get(client.sessionId)?.id !== record.id) continue;
+        client.send(
+          SERVER_MESSAGE.profile,
+          toProfile(record, deps.records.all().values()),
+        );
+      }
+      this.refreshLobby();
     }
 
     async hello(client: Client, message: unknown): Promise<void> {
@@ -245,13 +273,14 @@ export function createArenaRoom(deps: ArenaRoomDeps) {
       } catch {
         return this.fail(client, 'invalid-token');
       }
-      this.accounts.set(client.sessionId, account);
       // Back within the grace period: the place — character or queue spot — is still theirs.
       this.leaving.get(account.id)?.clear();
       this.leaving.delete(account.id);
 
       const record = recordVisit(deps.records.get(account.id), account, now());
       deps.records.put(record);
+      // The name everyone sees is the record's: one the player chose wins over the account's.
+      this.accounts.set(client.sessionId, { ...account, name: record.name });
       this.refreshLobby();
       client.send(
         SERVER_MESSAGE.profile,

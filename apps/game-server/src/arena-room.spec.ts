@@ -225,6 +225,25 @@ describe('ArenaRoom', () => {
     });
   });
 
+  it('re-sends the profile and the ranking when a player renames themselves', async () => {
+    const peer = await signedIn('ren');
+    const record = records.get('ren');
+    if (!record) throw new Error('no record');
+    peer.clear();
+
+    records.putProfile({ ...record, name: 'Renomeado', nameChosen: true });
+
+    // The ranking goes to everyone first, then the profile to the player.
+    await peer.next(SERVER_MESSAGE.ranking);
+    const profile = await peer.next<PlayerProfile>(SERVER_MESSAGE.profile);
+    expect(profile).toMatchObject({ name: 'Renomeado', nameChosen: true });
+
+    // Signing in again does not bring the account's name back.
+    peer.room.send(CLIENT_MESSAGE.hello, { token: 'ren:REN:yes' });
+    const again = await peer.next<PlayerProfile>(SERVER_MESSAGE.profile);
+    expect(again.name).toBe('Renomeado');
+  });
+
   it('refuses the queue without a sign-in, a confirmed e-mail or a valid token', async () => {
     const anonymous = await connect();
     anonymous.room.send(CLIENT_MESSAGE.joinQueue, {});

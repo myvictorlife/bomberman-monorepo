@@ -61,4 +61,28 @@ describe('RecordsStore', () => {
     store.load();
     expect([...store.all().keys()]).toEqual(['a']);
   });
+
+  it('drops fields a record should not have when it loads', () => {
+    const path = file();
+    const store = new RecordsStore(path);
+    store.put({ ...record('a'), email: 'a@example.com' } as PlayerRecord);
+    store.flush();
+
+    const again = new RecordsStore(path);
+    again.load();
+    expect(again.get('a')).toEqual(record('a'));
+  });
+
+  it('tells watchers about a profile change until they stop watching', () => {
+    const store = new RecordsStore(file());
+    const seen: string[] = [];
+    const stop = store.watchProfiles((r) => seen.push(r.name));
+
+    store.putProfile({ ...record('a'), name: 'Ana' });
+    stop();
+    store.putProfile({ ...record('a'), name: 'Bia' });
+
+    expect(seen).toEqual(['Ana']);
+    expect(store.get('a')?.name).toBe('Bia');
+  });
 });

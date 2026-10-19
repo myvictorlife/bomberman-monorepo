@@ -13,6 +13,17 @@ config file. Ordinary app-level additions are minor.
 
 ### Added
 
+- **Player profile on the server: a chosen name, a favourite character and a
+  colour.** `GET /me` and `PUT /me` on the game server (bearer Firebase ID
+  token, CORS open, `no-store`) read and change the signed-in player's
+  record. A chosen name is 2–20 characters, cleaned like a chat line, unique
+  on the ranking ignoring case, accents and spaces (`409 name-taken`), and
+  survives sign-in instead of being replaced by the account's name. The
+  favourite character is the face on the podium; the colour (one of eight,
+  `PLAYER_COLOR_IDS` in `game-core`) is handed out per round by
+  `assignColors`, first in line first. The room re-sends the ranking and the
+  profile after a change. Changing anything takes a confirmed e-mail.
+
 - **Chat beside the arena, and a full-screen mode.** On `/online` the chat
   is the first card of the right column, next to the arena, with the queue
   under it. A button in the stage's corner expands the page: the arena

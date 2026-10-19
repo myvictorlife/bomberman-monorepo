@@ -6,6 +6,7 @@ import { join } from 'node:path';
 import { createArenaRoom } from './arena-room';
 import { firebaseTokenVerifier } from './auth';
 import { httpHandler } from './http';
+import { meHandler } from './me';
 import { loadConfig } from './config';
 import { RecordsStore } from './records-store';
 import { RulesStore } from './rules-store';
@@ -44,6 +45,9 @@ if (!config.firebaseProjectId) {
 // race, and a SIGTERM could leave the old process holding the port.
 // The socket and the plain HTTP routes (`/ranking`) share one port: Colyseus
 // binds its own request listener to this server when it listens (below).
+const verify = config.firebaseProjectId
+  ? firebaseTokenVerifier(config.firebaseProjectId)
+  : null;
 const httpServer = createServer();
 const server = new Server({
   transport: new WebSocketTransport({ server: httpServer }),
@@ -54,9 +58,7 @@ server.define(
   ARENA_ROOM,
   createArenaRoom({
     rules,
-    verify: config.firebaseProjectId
-      ? firebaseTokenVerifier(config.firebaseProjectId)
-      : null,
+    verify,
     records,
     admins: config.admins,
     saveRules: (next) => rulesStore.save(next),
@@ -73,8 +75,9 @@ const colyseusListeners = httpServer.listeners('request') as ((
 ) => void)[];
 httpServer.removeAllListeners('request');
 const ours = httpHandler(() => records.all().values(), roomStatus);
+const me = meHandler({ verify, records });
 httpServer.on('request', (req: IncomingMessage, res: ServerResponse) => {
-  if (ours(req, res)) return;
+  if (ours(req, res) || me(req, res)) return;
   for (const next of colyseusListeners) next.call(httpServer, req, res);
 });
 // The one public room exists from the start, so the first visitor joins it

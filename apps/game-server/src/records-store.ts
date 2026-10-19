@@ -1,4 +1,4 @@
-import { PlayerRecord } from '@libs/game-lobby';
+import { cleanRecord, PlayerRecord } from '@libs/game-lobby';
 import {
   existsSync,
   mkdirSync,
@@ -19,6 +19,7 @@ import { dirname } from 'node:path';
 export class RecordsStore {
   private readonly records = new Map<string, PlayerRecord>();
   private timer: ReturnType<typeof setTimeout> | null = null;
+  private readonly profileListeners = new Set<(record: PlayerRecord) => void>();
 
   constructor(
     private readonly file: string,
@@ -30,8 +31,9 @@ export class RecordsStore {
     const parsed: unknown = JSON.parse(readFileSync(this.file, 'utf8'));
     if (!Array.isArray(parsed)) return;
     for (const record of parsed as PlayerRecord[]) {
+      // Cleaned: records saved before `cleanRecord` existed carry the e-mail.
       if (record && typeof record.id === 'string')
-        this.records.set(record.id, record);
+        this.records.set(record.id, cleanRecord(record));
     }
   }
 
@@ -46,6 +48,21 @@ export class RecordsStore {
   put(...records: PlayerRecord[]): void {
     for (const record of records) this.records.set(record.id, record);
     this.timer ??= setTimeout(() => this.flush(), this.delayMs);
+  }
+
+  /**
+   * Saves a change a player made to themselves (`PUT /me`) and tells whoever
+   * watches — the room, which re-sends the ranking and the profile.
+   */
+  putProfile(record: PlayerRecord): void {
+    this.put(record);
+    for (const listener of this.profileListeners) listener(record);
+  }
+
+  /** Calls `listener` after every {@link putProfile}; returns the way to stop. */
+  watchProfiles(listener: (record: PlayerRecord) => void): () => void {
+    this.profileListeners.add(listener);
+    return () => this.profileListeners.delete(listener);
   }
 
   /** Writes now. Called on shutdown so the last round is never lost. */
