@@ -1,0 +1,49 @@
+{
+  "name": "game-server",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/game-server/src",
+  "projectType": "application",
+  "tags": ["scope:game-server", "type:app"],
+  "targets": {
+    "build": {
+      "executor": "@nx/esbuild:esbuild",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "main": "apps/game-server/src/main.ts",
+        "outputPath": "dist/apps/game-server",
+        "outputFileName": "main.js",
+        "tsConfig": "apps/game-server/tsconfig.app.json",
+        "platform": "node",
+        "target": "node22",
+        "format": ["esm"],
+        "bundle": true,
+        "thirdParty": false,
+        "generatePackageJson": true,
+        "sourcemap": true
+      },
+      "configurations": {
+        "production": {
+          "sourcemap": false
+        }
+      }
+    },
+    "serve": {
+      "executor": "@nx/js:node",
+      "options": {
+        "buildTarget": "game-server:build",
+        "watch": true
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "inputs": ["default", "^production"],
+      "options": {
+        "command": "vitest run --config apps/game-server/vitest.config.mts"
+      },
+      "configurations": {
+        "ci": {}
+      }
+    }
+  }
+}
