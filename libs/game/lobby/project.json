@@ -1,0 +1,26 @@
+{
+  "name": "game-lobby",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/game/lobby/src",
+  "prefix": "lib",
+  "projectType": "library",
+  "tags": ["scope:game-lobby-lib", "type:util"],
+  "targets": {
+    "test": {
+      "executor": "@angular/build:unit-test",
+      "options": {
+        "coverageInclude": ["libs/game/lobby/src/**/*.ts"],
+        "coverageExclude": [
+          "libs/game/lobby/src/**/index.ts",
+          "libs/game/lobby/src/**/*.spec.ts"
+        ],
+        "coverageThresholds": {
+          "statements": 95,
+          "branches": 90,
+          "functions": 95,
+          "lines": 95
+        }
+      }
+    }
+  }
+}

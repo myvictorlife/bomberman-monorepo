@@ -1,0 +1,26 @@
+{
+  "name": "game-ai",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/game/ai/src",
+  "prefix": "lib",
+  "projectType": "library",
+  "tags": ["scope:game-ai-lib", "type:util"],
+  "targets": {
+    "test": {
+      "executor": "@angular/build:unit-test",
+      "options": {
+        "coverageInclude": ["libs/game/ai/src/**/*.ts"],
+        "coverageExclude": [
+          "libs/game/ai/src/**/index.ts",
+          "libs/game/ai/src/**/*.spec.ts"
+        ],
+        "coverageThresholds": {
+          "statements": 85,
+          "branches": 75,
+          "functions": 85,
+          "lines": 85
+        }
+      }
+    }
+  }
+}

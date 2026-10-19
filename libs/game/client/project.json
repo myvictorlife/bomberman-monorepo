@@ -1,0 +1,42 @@
+{
+  "name": "game-client",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/game/client/src",
+  "prefix": "lib",
+  "projectType": "library",
+  "tags": ["scope:game-client-lib", "type:util"],
+  "targets": {
+    "test": {
+      "executor": "@angular/build:unit-test",
+      "options": {
+        "coverageInclude": ["libs/game/client/src/**/*.ts"],
+        "coverageExclude": [
+          "libs/game/client/src/**/index.ts",
+          "libs/game/client/src/**/*.spec.ts",
+          "libs/game/client/src/lib/phaser/**/*.ts",
+          "libs/game/client/src/lib/skins/classic/classic-painter.ts",
+          "libs/game/client/src/lib/skins/classic/classic-skin.ts",
+          "libs/game/client/src/lib/mount-arena.ts",
+          "libs/game/client/src/lib/online/connect.ts",
+          "libs/game/client/src/lib/skins/hd/hd-painter.ts",
+          "libs/game/client/src/lib/skins/hd/hd-skin.ts",
+          "libs/game/client/src/lib/audio/sfx.ts",
+          "libs/game/client/src/lib/audio/music.ts",
+          "libs/game/client/src/lib/preview/arena-preview.ts",
+          "libs/game/client/src/lib/preview/frame-painter.ts",
+          "libs/game/client/src/lib/preview/demo-videos.ts",
+          "libs/game/client/src/lib/skins/hd/themes/**/*.ts",
+          "libs/game/client/src/lib/skins/hd/egg.ts",
+          "libs/game/client/src/lib/characters/paint-character.ts",
+          "libs/game/client/src/lib/characters/cartoon/**/*.ts"
+        ],
+        "coverageThresholds": {
+          "statements": 95,
+          "branches": 90,
+          "functions": 95,
+          "lines": 95
+        }
+      }
+    }
+  }
+}

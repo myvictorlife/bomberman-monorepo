@@ -1,0 +1,26 @@
+{
+  "name": "game-core",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/game/core/src",
+  "prefix": "lib",
+  "projectType": "library",
+  "tags": ["scope:game-core-lib", "type:util"],
+  "targets": {
+    "test": {
+      "executor": "@angular/build:unit-test",
+      "options": {
+        "coverageInclude": ["libs/game/core/src/**/*.ts"],
+        "coverageExclude": [
+          "libs/game/core/src/**/index.ts",
+          "libs/game/core/src/**/*.spec.ts"
+        ],
+        "coverageThresholds": {
+          "statements": 95,
+          "branches": 90,
+          "functions": 95,
+          "lines": 95
+        }
+      }
+    }
+  }
+}

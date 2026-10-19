@@ -1,0 +1,26 @@
+{
+  "name": "game-protocol",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/game/protocol/src",
+  "prefix": "lib",
+  "projectType": "library",
+  "tags": ["scope:game-protocol-lib", "type:util"],
+  "targets": {
+    "test": {
+      "executor": "@angular/build:unit-test",
+      "options": {
+        "coverageInclude": ["libs/game/protocol/src/**/*.ts"],
+        "coverageExclude": [
+          "libs/game/protocol/src/**/index.ts",
+          "libs/game/protocol/src/**/*.spec.ts"
+        ],
+        "coverageThresholds": {
+          "statements": 95,
+          "branches": 90,
+          "functions": 95,
+          "lines": 95
+        }
+      }
+    }
+  }
+}
