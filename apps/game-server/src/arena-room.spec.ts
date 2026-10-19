@@ -39,6 +39,7 @@ const RULES: RoomRules = {
   // Off here, so the rotation tests below read as before; `champion` turns it on.
   winnerStays: 0,
   bots: 0,
+  botsFillTo: 5,
 };
 const saved: RoomRules[] = [];
 const PORT = 18_000 + Math.floor(Math.random() * 1_000);

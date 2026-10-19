@@ -66,6 +66,13 @@ export interface RoomRules {
    * round. `0`: no bots, and `minPlayers` people are needed.
    */
   bots: number;
+  /**
+   * With people in line, bots fill the round up to this many players — no
+   * more than `bots` of them: with 3, one person plays two bots, two play
+   * one, and three or more play among themselves. An empty room still gets
+   * `bots`. `0`: bots only play when nobody is queued.
+   */
+  botsFillTo: number;
 }
 
 /**
@@ -78,8 +85,11 @@ export interface RuleField {
   kind: 'number' | 'boolean';
   /** The numbers to pick from, in order. A rule never takes a free value. */
   options?: readonly number[];
-  /** How a number reads: a count, milliseconds shown as seconds, or wins in a row (`0` as "off" for both). */
-  unit?: 'count' | 'seconds' | 'wins';
+  /**
+   * How a number reads: a count, milliseconds shown as seconds, wins in a row,
+   * or a number of players — `0` as "off" for all but a count.
+   */
+  unit?: 'count' | 'seconds' | 'wins' | 'players';
 }
 
 const range = (from: number, to: number): number[] =>
@@ -135,6 +145,12 @@ export const RULE_FIELDS: readonly RuleField[] = [
     options: range(0, MAX_PLAYERS),
     unit: 'count',
   },
+  {
+    key: 'botsFillTo',
+    kind: 'number',
+    options: [0, ...range(2, MAX_PLAYERS)],
+    unit: 'players',
+  },
 ];
 
 /**
@@ -172,6 +188,7 @@ export const PUBLIC_ROOM_RULES: RoomRules = {
   closingWalls: true,
   winnerStays: 5,
   bots: MAX_PLAYERS,
+  botsFillTo: 3,
 };
 
 /**
@@ -223,10 +240,21 @@ export interface Seat {
 
 /**
  * How many people a round needs before the countdown runs: one when bots
- * fill the rest, `minPlayers` otherwise.
+ * join people, `minPlayers` otherwise.
  */
 export function peopleNeeded(rules: RoomRules): number {
-  return rules.bots > 0 ? 1 : rules.minPlayers;
+  return rules.bots > 0 && rules.botsFillTo > 1 ? 1 : rules.minPlayers;
+}
+
+/**
+ * How many bots play a round with `people` in it: `rules.bots` in an empty
+ * room, otherwise enough to reach `rules.botsFillTo` — never more than
+ * `rules.bots`, nor more than the seats left.
+ */
+export function botsFor(rules: RoomRules, people: number): number {
+  const wanted =
+    people === 0 ? rules.bots : Math.min(rules.bots, rules.botsFillTo - people);
+  return Math.max(0, Math.min(wanted, rules.maxPlayers - people));
 }
 
 /** Connected but neither playing nor queued: the audience. */

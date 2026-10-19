@@ -16,6 +16,15 @@ export const BOT_LEVELS: readonly BotLevel[] = ['easy', 'medium', 'hard'];
 export interface BotProfile {
   /** Ticks between two decisions. Lower reacts faster. */
   replanTicks: number;
+  /**
+   * Ticks a bomb has to sit on the ground before the bot notices it (its own
+   * it always knows). A person online sees a bomb a network trip late and
+   * takes a moment to react; without this a bot dodges on the very tick a
+   * bomb lands, a head start no person can match.
+   */
+  reactionTicks: number;
+  /** Chance (0–1), each time it runs from a blast, of picking any nearby safe cell rather than the best one. */
+  slipChance: number;
   /** Chance (0–1) of taking a good bombing chance when one comes up. */
   bombChance: number;
   /** Sees that one bomb sets off another, so a chain's reach is avoided too. */
@@ -36,6 +45,8 @@ export interface BotProfile {
 export const BOT_PROFILES: Readonly<Record<BotLevel, BotProfile>> = {
   easy: {
     replanTicks: 24,
+    reactionTicks: 45,
+    slipChance: 0.25,
     bombChance: 0.35,
     readsChains: false,
     readsClosing: false,
@@ -45,15 +56,20 @@ export const BOT_PROFILES: Readonly<Record<BotLevel, BotProfile>> = {
   },
   casual: {
     replanTicks: 16,
-    bombChance: 0.5,
-    readsChains: true,
+    // About what an online player loses: a network trip, then a human's reaction.
+    reactionTicks: 45,
+    slipChance: 0.25,
+    bombChance: 0.45,
+    readsChains: false,
     readsClosing: false,
-    aggression: 0.6,
+    aggression: 0.5,
     detonates: false,
     setsTraps: false,
   },
   medium: {
     replanTicks: 10,
+    reactionTicks: 0,
+    slipChance: 0,
     bombChance: 0.7,
     readsChains: true,
     readsClosing: true,
@@ -63,6 +79,8 @@ export const BOT_PROFILES: Readonly<Record<BotLevel, BotProfile>> = {
   },
   hard: {
     replanTicks: 3,
+    reactionTicks: 0,
+    slipChance: 0,
     bombChance: 1,
     readsChains: true,
     readsClosing: true,

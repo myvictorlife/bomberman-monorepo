@@ -118,14 +118,23 @@ on `/online` draws itself from the schema; `parseRules` validates a change.
 - **Bots** (`rules.bots`, 5 in the public room, `0` off). With nobody
   queued, `Lobby.update(now, watched)` runs the countdown anyway while
   anyone is connected and the round starts with that many bots; nobody
-  connected, the room stays idle. With people queued, one is enough for the
-  countdown (`peopleNeeded(rules)`, also what the page shows) and
-  `startRound` fills the seats left with bots. Bot seats are made per round
+  connected, the room stays idle. With people queued, bots fill the round up
+  to `rules.botsFillTo` players (3 in the public room: one person plays two
+  bots, two play one, three or more none; `0`: bots never join people) —
+  `botsFor(rules, people)` in `game-protocol` is the one formula. One
+  person is then enough for the countdown (`peopleNeeded(rules)`, also what
+  the page shows). Bot seats are made per round
   by the lobby (`bot: true`, ids `cpu1…` — `isBotId`, names drawn from
   `BOT_NAMES`, never twice nor like a person in the round), never requeued,
   never champion. The room plays them with a `BotDirector`
   (`@libs/game-ai`, level `BOT_LEVEL` = `casual`: a notch under `/play`'s
   medium, and not offered there) and merges its inputs before
+  `tick`. A bot runs inside the server with no lag, so `casual` is slowed
+  to an online player's pace: it notices a bomb only after `reactionTicks`
+  (45, ~0.75 s — a network trip plus a human reaction; its own bombs it
+  always knows), runs for a random nearby refuge `slipChance` (25%) of the
+  time, and does not read chains. Tune it in `levels.ts`; the tournament
+  spec keeps easy < casual < medium < hard.
   `tick`. A round goes into the records only with `ACCOUNTS_TO_RANK` (2)
   accounts (`countsForRanking`, shared with the page's "Ranked / Friendly"
   badge); `/status` and `Lobby.people()` count people — guests included.

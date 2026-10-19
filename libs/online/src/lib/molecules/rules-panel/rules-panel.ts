@@ -75,7 +75,7 @@ export class RulesPanelComponent {
         ? { key: 'ONLINE.RULES.OFF' }
         : { key: 'ONLINE.RULES.SECONDS', params: { s: value / 1000 } };
     }
-    if (field.unit === 'wins' && value === 0)
+    if ((field.unit === 'wins' || field.unit === 'players') && value === 0)
       return { key: 'ONLINE.RULES.OFF' };
     return { key: 'ONLINE.RULES.COUNT', params: { n: value } };
   }

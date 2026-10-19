@@ -1,5 +1,6 @@
 import { CHARACTERS, DEFAULT_CHARACTER_ID } from '@libs/game-core';
 import {
+  botsFor,
   Champion,
   LobbyPhase,
   LobbySnapshot,
@@ -307,7 +308,8 @@ export class Lobby {
 
   private enoughToPlay(watched: boolean): boolean {
     if (this.queue.length >= peopleNeeded(this.rules)) return true;
-    return this.rules.bots > 0 && watched;
+    // A round of bots alone, for whoever watches, only while nobody is waiting.
+    return this.queue.length === 0 && this.rules.bots > 0 && watched;
   }
 
   private startRound(): StartRound {
@@ -323,15 +325,12 @@ export class Lobby {
   }
 
   /**
-   * The bots of a new round: as many as the rule allows in the seats left,
+   * The bots of a new round: as many as {@link botsFor} says,
    * each with a name drawn from {@link BOT_NAMES} that nobody in the round
    * has, and a character no person in the round has, where one is left.
    */
   private bots(people: Seat[]): Seat[] {
-    const count = Math.min(
-      this.rules.bots,
-      this.rules.maxPlayers - people.length,
-    );
+    const count = botsFor(this.rules, people.length);
     const taken = new Set(people.map((s) => s.characterId));
     const free = CHARACTERS.filter((c) => !taken.has(c.id));
     const pool = free.length ? free : CHARACTERS;

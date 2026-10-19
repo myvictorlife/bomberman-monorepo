@@ -52,6 +52,8 @@ export class Bot {
   private last: [number, number] = [-1, -1];
   /** When each of our remote bombs was first seen, by bomb id: how long it has waited. */
   private readonly laidAt = new Map<number, number>();
+  /** When each bomb on the ground was first seen, by bomb id: whether it has been noticed yet. */
+  private readonly seenAt = new Map<number, number>();
 
   constructor(
     readonly id: string,
@@ -70,6 +72,7 @@ export class Bot {
     // Something in the hands goes straight back out: a bomb, or a player.
     if (me.carrying || me.heldBomb) return { direction: null, bomb: true };
 
+    this.notice(state);
     const danger = this.danger(state, me);
     const [col, row] = playerCell(me);
     this.trackStill(me);
@@ -99,7 +102,19 @@ export class Bot {
     me: Player,
     extra?: { col: number; row: number },
   ): DangerMap {
-    return dangerMap(state, {
+    const delay = this.profile.reactionTicks;
+    // Bombs too fresh to have been noticed are not feared yet; ours, always.
+    const seen = delay
+      ? {
+          ...state,
+          bombs: state.bombs.filter(
+            (b) =>
+              b.ownerId === me.id ||
+              state.tick - (this.seenAt.get(b.id) ?? state.tick) >= delay,
+          ),
+        }
+      : state;
+    return dangerMap(seen, {
       viewerId: me.id,
       readsChains: this.profile.readsChains,
       readsClosing: this.profile.readsClosing,
@@ -135,8 +150,10 @@ export class Bot {
       }
       // No refuge in reach: keep running the old way if there is one, else
       // to the cell that catches fire last — standing still is the one sure loss.
+      // Now and then, in a hurry, it runs for any refuge rather than the best.
+      const slip = this.rng() < this.profile.slipChance;
       this.path =
-        this.nearestSafe(reach, danger, here) ??
+        this.nearestSafe(reach, danger, here, slip) ??
         (this.path.length > 0 ? this.path : this.latestToBurn(reach, danger));
       return;
     }
@@ -302,6 +319,8 @@ export class Bot {
     reach: Reach,
     danger: DangerMap,
     here: number,
+    /** Any of the nearest few, not the roomiest: a bot in a hurry. */
+    slip = false,
   ): [number, number][] | null {
     let best = -1;
     let bestScore = -Infinity;
@@ -317,7 +336,9 @@ export class Bot {
         index - reach.cols,
         index + reach.cols,
       ].filter((n) => reach.steps[n] !== -1).length;
-      const score = room - (reach.steps[index] as number) * 0.5;
+      const score = slip
+        ? this.rng()
+        : room - (reach.steps[index] as number) * 0.5;
       if (score > bestScore) {
         bestScore = score;
         best = index;
@@ -325,6 +346,18 @@ export class Bot {
       if (++seen >= 6) break;
     }
     return best === -1 ? null : pathTo(reach, best);
+  }
+
+  /** Notes when each bomb on the ground was first seen, and forgets the ones gone. */
+  private notice(state: GameState): void {
+    if (!this.profile.reactionTicks) return;
+    const ids = new Set<number>();
+    for (const bomb of state.bombs) {
+      ids.add(bomb.id);
+      if (!this.seenAt.has(bomb.id)) this.seenAt.set(bomb.id, state.tick);
+    }
+    for (const id of this.seenAt.keys())
+      if (!ids.has(id)) this.seenAt.delete(id);
   }
 
   private latestToBurn(reach: Reach, danger: DangerMap): [number, number][] {

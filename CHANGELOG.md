@@ -13,6 +13,15 @@ config file. Ordinary app-level additions are minor.
 
 ### Added
 
+- **Fewer, weaker bots online.** A new room rule, `botsFillTo` (3 in the
+  public room): an empty room still gets five bots, but with people in
+  line bots only complete the round to three players — two for one person,
+  one for two, none from three. Bots got a reaction time
+  (`reactionTicks`): they notice a bomb only after ~0.75 s at the online
+  room's `casual` level and `/play`'s `easy` (their own they always know),
+  where they used to dodge on the very tick it landed. They also pick a
+  worse refuge now and then (`slipChance`). `casual` no longer reads chains
+  and bombs a little less. `medium` and `hard` are unchanged.
 - **Play online without an account.** With no sign-in, the queue panel asks
   for a name and "Play as a guest": the server answers with a guest id
   (`guest:<uuid>`) and a token the tab keeps for a reload. Guests queue and
@@ -191,6 +200,13 @@ config file. Ordinary app-level additions are minor.
 
 ### Fixed
 
+- **The online scoreboard no longer covers the arena.** The round's clock
+  and players sat over the top of the board, and a full round wrapped onto
+  its first playable row. They now have a strip of their own above the
+  arena (kept open between rounds, so the page does not jump), a phone
+  shows them as one row swiped sideways, and the strip leaves out a speed
+  of 0.
+
 - **`/online` flickered after leaving and coming back.** The router keeps a
   route's providers alive across visits, so the online store — and its
   socket — survived the page. Coming back opened a second connection beside
@@ -199,13 +215,6 @@ config file. Ordinary app-level additions are minor.
   connection before opening another, and the page leaves the room when it
   is destroyed, so a watcher who left no longer counts. The arena's
   text-field focus sync also no longer runs on a destroyed game.
-
-- **The online scoreboard no longer covers the arena.** The round's clock
-  and players sat over the top of the board, and a full round wrapped onto
-  its first playable row. They now have a strip of their own above the
-  arena (kept open between rounds, so the page does not jump), a phone
-  shows them as one row swiped sideways, and the strip leaves out a speed
-  of 0.
 
 - **Outsiders on the border are easy to see.** They were drawn under the
   arena's vignette and tinted darker, so on the dark wall — and worst in the

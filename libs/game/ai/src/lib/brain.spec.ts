@@ -134,6 +134,20 @@ describe('a bot', () => {
     expect(at(state, 'bot').alive).toBe(true);
   });
 
+  it('only fears a bomb once it has had time to notice it', () => {
+    // A bomb dropped with less fuse left than the bot's reaction time.
+    const late = (level: 'casual' | 'medium') => {
+      const state = arena();
+      place(state, 'bot', 5, 1);
+      place(state, 'p1', 5, 3);
+      bomb(state, 4, 1, 30);
+      play(state, new Bot('bot', level), 60);
+      return at(state, 'bot').alive;
+    };
+    expect(late('medium')).toBe(true);
+    expect(late('casual')).toBe(false);
+  });
+
   it('never drops a bomb it cannot get away from', () => {
     const state = arena();
     // Boxed in: stone and crates on every side but the way in, which a bomb covers.

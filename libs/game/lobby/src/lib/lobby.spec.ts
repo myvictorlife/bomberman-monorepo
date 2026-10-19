@@ -11,6 +11,7 @@ const RULES: RoomRules = {
   closingWalls: true,
   winnerStays: 0,
   bots: 0,
+  botsFillTo: 5,
 };
 const seat = (id: string): Seat => ({
   id,
@@ -506,6 +507,33 @@ describe('Lobby, winner stays', () => {
       const start = lobby.update(RULES.countdownMs);
 
       expect(ids(start?.players)).toEqual(['a', 'cpu1', 'cpu2']);
+    });
+
+    it('fills a round of people up to `botsFillTo`: two bots for one, one for two, none for three', () => {
+      const FILL: RoomRules = { ...BOTS, botsFillTo: 3 };
+      const round = (...people: string[]) => {
+        const lobby = new Lobby(FILL);
+        people.forEach((id) => lobby.join(seat(id)));
+        lobby.update(0);
+        return ids(lobby.update(RULES.countdownMs)?.players);
+      };
+
+      expect(round()).toEqual([1, 2, 3, 4, 5].map(botId));
+      expect(round('a')).toEqual(['a', 'cpu1', 'cpu2']);
+      expect(round('a', 'b')).toEqual(['a', 'b', 'cpu1']);
+      expect(round('a', 'b', 'c')).toEqual(['a', 'b', 'c']);
+    });
+
+    it('with `botsFillTo` off, plays bots only in an empty room', () => {
+      const lobby = new Lobby({ ...BOTS, botsFillTo: 0 });
+      lobby.join(seat('a'));
+
+      lobby.update(0);
+
+      expect(lobby.phase).toBe('waiting');
+      lobby.join(seat('b'));
+      lobby.update(0);
+      expect(ids(lobby.update(RULES.countdownMs)?.players)).toEqual(['a', 'b']);
     });
 
     it('puts newcomers on the border of a bots round; a kill puts them in it', () => {

@@ -1,5 +1,6 @@
 import { DEFAULT_CHARACTER_ID, MAX_PLAYERS } from '@libs/game-core';
 import {
+  botsFor,
   CHAT_MAX_LENGTH,
   countsForRanking,
   isGuestId,
@@ -263,6 +264,28 @@ describe('parseProfileUpdate', () => {
     expect(parseProfileUpdate({})).toBeNull();
     expect(parseProfileUpdate({ email: 'a@b.c' })).toBeNull();
     expect(parseProfileUpdate('Ana')).toBeNull();
+  });
+});
+
+describe('botsFor', () => {
+  const rules = { ...PUBLIC_ROOM_RULES, bots: 5, botsFillTo: 3 };
+
+  it('plays five in an empty room, then fills the round up to three', () => {
+    expect([0, 1, 2, 3, 4].map((n) => botsFor(rules, n))).toEqual([
+      5, 2, 1, 0, 0,
+    ]);
+  });
+
+  it('never plays more than `bots`, nor more than the seats left', () => {
+    expect(botsFor({ ...rules, bots: 1 }, 1)).toBe(1);
+    expect(botsFor({ ...rules, bots: 0 }, 0)).toBe(0);
+    expect(botsFor({ ...rules, botsFillTo: 5, maxPlayers: 3 }, 1)).toBe(2);
+    expect(botsFor({ ...rules, botsFillTo: 0 }, 1)).toBe(0);
+  });
+
+  it('needs one person to start when bots join people, else `minPlayers`', () => {
+    expect(peopleNeeded(rules)).toBe(1);
+    expect(peopleNeeded({ ...rules, botsFillTo: 0 })).toBe(rules.minPlayers);
   });
 });
 

@@ -3,13 +3,13 @@
   "BACK": "Voltar",
   "HEADER": {
     "HOME": "Início",
+    "PLAY": "Jogar",
     "START": "Jogar",
     "MENU_ARIA": "Abrir menu",
     "DESIGN": "Design system",
     "SETTINGS": "Definições",
     "GITHUB": "GitHub",
     "GITHUB_ARIA": "Ver o código-fonte no GitHub",
-    "PLAY": "Jogar",
     "CHARACTERS": "Personagens",
     "ARENAS": "Arenas",
     "ITEMS": "Itens",
@@ -698,7 +698,9 @@
       "WINNER_STAYS": "Vencedor continua",
       "WINNER_STAYS_DESC": "Quem vence joga a próxima rodada com os próximos da fila, até esse número de vitórias seguidas; depois vai para o fim da fila. Desligado: todos os jogadores voltam para o fim.",
       "BOTS": "Bots",
-      "BOTS_DESC": "Quantas vagas o computador pode ocupar. Sem ninguém na fila, essa quantidade de bots joga enquanto alguém assiste; com gente na fila, os bots completam as vagas e uma pessoa já basta para começar. 0: sem bots."
+      "BOTS_DESC": "Quantos bots jogam sozinhos enquanto alguém assiste e ninguém está na fila. 0: sem bots.",
+      "BOTS_FILL_TO": "Bots completam até",
+      "BOTS_FILL_TO_DESC": "Com gente na fila, os bots completam a partida até este número de jogadores: com 3, uma pessoa joga com dois bots, duas com um, três ou mais sem bots. Desligado: bots nunca jogam com pessoas."
     },
     "STATUS": {
       "CONNECTING": "Conectando à arena…",

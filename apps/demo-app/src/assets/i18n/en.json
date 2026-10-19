@@ -3,13 +3,13 @@
   "BACK": "Back",
   "HEADER": {
     "HOME": "Home",
+    "PLAY": "Play",
     "START": "Play",
     "MENU_ARIA": "Open menu",
     "DESIGN": "Design system",
     "SETTINGS": "Settings",
     "GITHUB": "GitHub",
     "GITHUB_ARIA": "View the source on GitHub",
-    "PLAY": "Play",
     "CHARACTERS": "Characters",
     "ARENAS": "Arenas",
     "ITEMS": "Items",
@@ -698,7 +698,9 @@
       "WINNER_STAYS": "Winner stays",
       "WINNER_STAYS_DESC": "The winner plays the next round with the next in line, up to this many wins in a row; then to the back of the line. Off: every player goes to the back.",
       "BOTS": "Bots",
-      "BOTS_DESC": "Seats the computer may take. With nobody in line, this many bots play while someone watches; with people in line, bots fill the empty seats and one person is enough to start. 0: no bots."
+      "BOTS_DESC": "How many bots play by themselves while someone watches and nobody is in line. 0: no bots.",
+      "BOTS_FILL_TO": "Bots fill up to",
+      "BOTS_FILL_TO_DESC": "With people in line, bots complete the round up to this many players: with 3, one person plays two bots, two play one, three or more play without bots. Off: bots never play with people."
     },
     "STATUS": {
       "CONNECTING": "Connecting to the arena…",
