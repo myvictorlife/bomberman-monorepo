@@ -1,4 +1,6 @@
+import { TestBed } from '@angular/core/testing';
 import { AudioSettingsService } from '@libs/audio-settings';
+import { ControlsSettingsService } from '@libs/controls-settings';
 import { provideRouter } from '@angular/router';
 import { Language } from '@libs/entity';
 import { ThemeService } from '@libs/theme';
@@ -38,6 +40,15 @@ class StubTranslateLoader implements TranslateLoader {
         SOUNDS: 'Sounds and announcer',
         SOUNDS_DESC: 'Hear every sound.',
         SOUNDS_OPEN: 'Open',
+        SECTION_CONTROLS: 'Controls',
+        KEYS: 'Keyboard',
+        KEYS_DESC: 'The hand player 1 drives with.',
+        KEYS_WASD: 'W A S D',
+        KEYS_ARROWS: 'Arrow keys',
+        KEYS_PLAYER_1: 'Player 1:',
+        KEYS_PLAYER_2: 'Player 2:',
+        KEYS_WASD_HINT: 'WASD walks · Space bombs',
+        KEYS_ARROWS_HINT: 'Arrows walk · Enter bombs',
       },
     });
   }
@@ -83,7 +94,7 @@ describe('Settings', () => {
   });
 
   it('renders one row per setting', () => {
-    expect(spectator.queryAll('lib-setting-row')).toHaveLength(6);
+    expect(spectator.queryAll('lib-setting-row')).toHaveLength(7);
   });
 
   it('renders the translated labels rather than raw keys', () => {
@@ -153,6 +164,22 @@ describe('Settings', () => {
     expect(audio.sfx()).toBe(false);
     expect(music()).toHaveAttribute('aria-checked', 'true');
     expect(sfx()).toHaveAttribute('aria-checked', 'false');
+  });
+
+  it('lets player 1 pick a hand on the keyboard, and says what each one does', () => {
+    expect(spectator.query('[data-testid="settings-controls"]')).toHaveText(
+      'Controls',
+    );
+    const hint = spectator.query('[data-testid="settings-keys-hint"]');
+    expect(hint).toHaveText('Player 1: WASD walks · Space bombs');
+    expect(hint).toHaveText('Player 2: Arrows walk · Enter bombs');
+
+    const arrows = spectator
+      .queryAll('[data-testid="settings-keys"] .segmented__segment')
+      .find((el) => el.textContent?.includes('Arrow keys'));
+    spectator.click(arrows!);
+    expect(TestBed.inject(ControlsSettingsService).scheme()).toBe('arrows');
+    expect(hint).toHaveText('Player 1: Arrows walk · Enter bombs');
   });
 
   it('groups audio in its own section, with the way to every sound', () => {

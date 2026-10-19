@@ -1,6 +1,7 @@
 import { DOCUMENT } from '@angular/common';
 import { computed, inject } from '@angular/core';
 import { AudioSettingsService } from '@libs/audio-settings';
+import { ControlsSettingsService, KeyScheme } from '@libs/controls-settings';
 import { Language } from '@libs/entity';
 import { ThemePreference, ThemeService } from '@libs/theme';
 import { UpdateLanguageService } from '@libs/translation';
@@ -45,6 +46,7 @@ export const SettingsStore = signalStore(
       theme = inject(ThemeService),
       language = inject(UpdateLanguageService),
       audio = inject(AudioSettingsService),
+      controls = inject(ControlsSettingsService),
     ) => ({
       themePreference: computed(() => theme.preference()),
       isDarkActive: computed(() => theme.isDark()),
@@ -52,6 +54,8 @@ export const SettingsStore = signalStore(
       // Audio lives in AudioSettingsService, shared with the game page.
       music: computed(() => audio.music()),
       sfx: computed(() => audio.sfx()),
+      // The keyboard hand lives in ControlsSettingsService, shared with the play page.
+      keyScheme: computed(() => controls.scheme()),
     }),
   ),
 
@@ -61,6 +65,7 @@ export const SettingsStore = signalStore(
       theme = inject(ThemeService),
       language = inject(UpdateLanguageService),
       audio = inject(AudioSettingsService),
+      controls = inject(ControlsSettingsService),
       document = inject(DOCUMENT),
     ) => {
       const applyReduceMotion = (enabled: boolean): void => {
@@ -82,6 +87,10 @@ export const SettingsStore = signalStore(
 
         setSfx(on: boolean): void {
           audio.setSfx(on);
+        },
+
+        setKeyScheme(scheme: KeyScheme): void {
+          controls.setScheme(scheme);
         },
 
         setReduceMotion(enabled: boolean): void {

@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { AudioSettingsService } from '@libs/audio-settings';
+import { ControlsSettingsService } from '@libs/controls-settings';
 import { Language } from '@libs/entity';
 import { ThemeService } from '@libs/theme';
 import { UpdateLanguageService } from '@libs/translation';
@@ -67,6 +68,15 @@ describe('SettingsStore', () => {
     expect(audio.sfx()).toBe(false);
     expect(store.music()).toBe(true);
     expect(store.sfx()).toBe(false);
+  });
+
+  it('reads and forwards the keyboard hand through ControlsSettingsService', () => {
+    const store = createStore();
+    const controls = TestBed.inject(ControlsSettingsService);
+    expect(store.keyScheme()).toBe('wasd');
+    store.setKeyScheme('arrows');
+    expect(controls.scheme()).toBe('arrows');
+    expect(store.keyScheme()).toBe('arrows');
   });
 
   it('forwards a language change to UpdateLanguageService', () => {

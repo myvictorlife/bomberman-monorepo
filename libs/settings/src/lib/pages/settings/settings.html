@@ -41,6 +41,31 @@
     </lib-setting-row>
   </div>
 
+  <h2 class="settings__section" id="controls" data-testid="settings-controls">
+    {{ 'SETTINGS.SECTION_CONTROLS' | translate }}
+  </h2>
+  <div class="settings__panel">
+    <lib-setting-row
+      labelKey="SETTINGS.KEYS"
+      descriptionKey="SETTINGS.KEYS_DESC"
+    >
+      <lib-segmented-control
+        [options]="keySchemeOptions"
+        [value]="keyScheme()"
+        [label]="'SETTINGS.KEYS' | translate"
+        (valueChange)="setKeyScheme($event)"
+        data-testid="settings-keys"
+      />
+    </lib-setting-row>
+    <p class="settings__keys" data-testid="settings-keys-hint">
+      <strong>{{ 'SETTINGS.KEYS_PLAYER_1' | translate }}</strong>
+      {{ keysKey(keyScheme()) | translate }}
+      <br />
+      <strong>{{ 'SETTINGS.KEYS_PLAYER_2' | translate }}</strong>
+      {{ keysKey(keyScheme() === 'wasd' ? 'arrows' : 'wasd') | translate }}
+    </p>
+  </div>
+
   <h2 class="settings__section" id="audio" data-testid="settings-audio">
     {{ 'SETTINGS.SECTION_AUDIO' | translate }}
   </h2>

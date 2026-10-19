@@ -19,3 +19,16 @@
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-card);
 }
+
+/* What each hand does, under the keyboard choice. */
+.settings__keys {
+  margin-top: var(--space-3);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  line-height: 1.7;
+
+  strong {
+    color: var(--color-text-primary);
+    font-weight: var(--font-weight-semibold);
+  }
+}
