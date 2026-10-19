@@ -6,6 +6,7 @@ import {
   output,
   signal,
 } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { AuthErrorCode, AuthProvider, AuthUser } from '@libs/auth';
 import { PlayerProfile } from '@libs/game-protocol';
 import { ButtonComponent } from '@libs/ui';
@@ -31,7 +32,7 @@ export const NAME_LENGTH = { min: 2, max: 20 };
  */
 @Component({
   selector: 'lib-account-panel',
-  imports: [TranslatePipe, ButtonComponent],
+  imports: [TranslatePipe, ButtonComponent, RouterLink],
   templateUrl: './account-panel.html',
   styleUrls: ['./account-panel.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,

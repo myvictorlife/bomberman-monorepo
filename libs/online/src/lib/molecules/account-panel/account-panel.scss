@@ -127,6 +127,14 @@
   font-variant-numeric: tabular-nums;
 }
 
+.account__profile {
+  color: var(--color-brand);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 .account__error {
   color: var(--color-danger);
   font-size: var(--font-size-sm);

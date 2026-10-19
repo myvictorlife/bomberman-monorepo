@@ -43,6 +43,14 @@ config file. Ordinary app-level additions are minor.
   colour (`PodiumLine.color`, a fourth `PodiumPainter` argument). Offline
   rounds keep the slot colours.
 
+- **The favourite character follows the account.** `ProfileSyncService`
+  (app-level, started by an app initializer) acts once someone is signed in:
+  the account's favourite becomes this browser's character, an account with
+  none takes this browser's, and picking another character on the roster
+  updates the account. It never loads the auth SDK itself. On `/online` the
+  welcome uses the ranking name, and the account panel links to `/profile`
+  — inviting a player still on their account's name to choose one.
+
 - **Chat beside the arena, and a full-screen mode.** On `/online` the chat
   is the first card of the right column, next to the arena, with the queue
   under it. A button in the stage's corner expands the page: the arena

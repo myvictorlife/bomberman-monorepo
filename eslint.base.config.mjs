@@ -263,6 +263,8 @@ const depConstraints = [
       // The title screen paints stills of the arena with the game's own skin.
       'scope:game-client-lib',
       'scope:game-core-lib',
+      // The account's favourite character is kept in step from here (`ProfileSyncService`).
+      'scope:game-protocol-lib',
       'scope:play',
       'scope:characters',
       'scope:arenas',

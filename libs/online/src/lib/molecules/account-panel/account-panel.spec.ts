@@ -1,4 +1,5 @@
 import { createComponentFactory, Spectator } from '@ngneat/spectator/vitest';
+import { provideRouter } from '@angular/router';
 import { provideTranslateService } from '@ngx-translate/core';
 import { AccountPanelComponent } from './account-panel';
 
@@ -11,6 +12,7 @@ const user = {
 const profile = {
   id: 'u1',
   name: 'Ana',
+  nameChosen: false,
   wins: 3,
   matches: 5,
   visits: 2,
@@ -24,7 +26,7 @@ describe('AccountPanelComponent', () => {
   let spectator: Spectator<AccountPanelComponent>;
   const createComponent = createComponentFactory({
     component: AccountPanelComponent,
-    providers: [provideTranslateService()],
+    providers: [provideTranslateService(), provideRouter([])],
   });
 
   const type = (testId: string, value: string) =>
@@ -160,6 +162,20 @@ describe('AccountPanelComponent', () => {
     );
     expect(spectator.query('[data-testid="account-stats"]')).not.toHaveText(
       'ONLINE.ACCOUNT.RANK',
+    );
+  });
+
+  it('links to the profile, inviting a player on their account name to choose one', () => {
+    spectator.setInput('user', user);
+    spectator.setInput('profile', profile);
+
+    const link = spectator.query('[data-testid="account-profile"]');
+    expect(link?.getAttribute('href')).toBe('/profile');
+    expect(link).toHaveText('ONLINE.ACCOUNT.CHOOSE_NAME');
+
+    spectator.setInput('profile', { ...profile, nameChosen: true });
+    expect(spectator.query('[data-testid="account-profile"]')).toHaveText(
+      'ONLINE.ACCOUNT.EDIT_PROFILE',
     );
   });
 

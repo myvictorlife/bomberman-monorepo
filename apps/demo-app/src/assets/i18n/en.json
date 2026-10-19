@@ -732,7 +732,9 @@
       "NOTICE": {
         "verification-sent": "Confirmation e-mail sent. Check your inbox and spam folder.",
         "reset-sent": "If that e-mail has an account, a reset link is on its way."
-      }
+      },
+      "EDIT_PROFILE": "Edit profile",
+      "CHOOSE_NAME": "Choose how you show up on the ranking →"
     },
     "AUTH_ERROR": {
       "invalid-credentials": "Wrong e-mail or password.",

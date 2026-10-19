@@ -34,6 +34,7 @@ import { provideFirebaseAuth } from '@libs/auth-firebase';
 import { GlobalErrorHandler, httpErrorInterceptor } from '@libs/ui';
 import { provideTranslation } from '@libs/translation';
 import { metaReducers, reducers } from './core/+state';
+import { ProfileSyncService } from './core/services/profile-sync/profile-sync.service';
 import { CustomSerializer } from './core/services/router/router-serializer';
 import { filter } from 'rxjs';
 
@@ -76,6 +77,10 @@ export const appConfig: ApplicationConfig = {
     // Devtools ship real code and keep every action in memory. Keep them out of
     // production builds entirely rather than merely switching them to logOnly.
     ...(environment.production ? [] : [provideStoreDevtools({ maxAge: 25 })]),
+
+    // The account's favourite character and this browser's, kept in step once
+    // someone is signed in. Loads nothing by itself.
+    provideAppInitializer(() => inject(ProfileSyncService).start()),
 
     // Initialize analytics and track route changes. Whatever `ANALYTICS` resolves
     // to — Firebase above, or the no-op default — this block is unchanged.

@@ -732,7 +732,9 @@
       "NOTICE": {
         "verification-sent": "E-mail de confirmação enviado. Veja a caixa de entrada e o spam.",
         "reset-sent": "Se esse e-mail tiver conta, o link para trocar a senha já foi enviado."
-      }
+      },
+      "EDIT_PROFILE": "Editar perfil",
+      "CHOOSE_NAME": "Escolha como você aparece no ranking →"
     },
     "AUTH_ERROR": {
       "invalid-credentials": "E-mail ou senha incorretos.",

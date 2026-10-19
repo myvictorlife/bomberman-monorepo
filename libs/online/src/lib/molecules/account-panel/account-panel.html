@@ -39,8 +39,8 @@
   <div class="account__me" data-testid="account-me">
     <p class="account__welcome" data-testid="account-welcome">
       {{ (profile()?.returning ? 'ONLINE.ACCOUNT.WELCOME_BACK' :
-      'ONLINE.ACCOUNT.WELCOME_NEW') | translate: { name: u.displayName ||
-      u.email } }}
+      'ONLINE.ACCOUNT.WELCOME_NEW') | translate: { name: profile()?.name ||
+      u.displayName || u.email } }}
     </p>
     @if (profile(); as p) {
     <p class="account__stats" data-testid="account-stats">
@@ -48,6 +48,14 @@
       } }} @if (p.rank) { · {{ 'ONLINE.ACCOUNT.RANK' | translate: { rank: p.rank
       } }} }
     </p>
+    <a
+      class="account__profile"
+      routerLink="/profile"
+      data-testid="account-profile"
+    >
+      {{ (p.nameChosen ? 'ONLINE.ACCOUNT.EDIT_PROFILE' :
+      'ONLINE.ACCOUNT.CHOOSE_NAME') | translate }}
+    </a>
     }
   </div>
   }
