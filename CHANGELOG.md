@@ -226,6 +226,12 @@ config file. Ordinary app-level additions are minor.
 
 ### Changed
 
+- **Three ways to play from the home page.** The hero now offers "Play
+  online", "Play without an account" (the online room as a guest) and
+  "Play offline" — the old "Local versus", renamed everywhere it appears,
+  since `/play` is the bots as much as a friend on the keyboard.
+  `play_click` reports the new button as `mode: 'guest'`.
+
 - **The game server moved to `https://api.detona.online`.** The hosting CSP
   `connect-src` lists it in place of `game.cragvia.com`; the tunnel route
   still points at `http://localhost:8086`.

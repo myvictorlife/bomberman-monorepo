@@ -15,7 +15,7 @@
           {{ 'HOME.HERO_SUBTITLE' | translate }}
         </p>
         <div
-          class="mt-9 flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3"
+          class="mt-9 flex flex-col sm:flex-row sm:flex-wrap items-center justify-center lg:justify-start gap-3"
         >
           <a
             routerLink="/online"
@@ -27,6 +27,17 @@
             data-testid="home-online"
           >
             {{ 'HOME.CTA_ONLINE' | translate }}
+          </a>
+          <a
+            routerLink="/online"
+            libButton
+            variant="secondary"
+            size="lg"
+            class="home-ghost w-full sm:w-auto"
+            (click)="trackPlay('guest', 'hero')"
+            data-testid="home-guest"
+          >
+            {{ 'HOME.CTA_GUEST' | translate }}
           </a>
           <a
             routerLink="/play"
