@@ -113,6 +113,8 @@ function groundShadow(ctx: Ctx, rx: number): void {
  */
 function planter(ctx: Ctx): void {
   const lip = 30;
+  // The cell is drawn with this texture alone: the lawn goes under it.
+  lawn(ctx, false);
   groundShadow(ctx, S * 0.46);
   // The box: front face down to the lawn, lighter top with a dark soil rim.
   roundRect(ctx, 6, lip, S - 12, S - lip - 4, 3);
@@ -241,6 +243,8 @@ function parkEdge(ctx: Ctx, seed: number, top: boolean): void {
 
 /** Crate: a block of pale, large-format brick with thin dark joints — a modern façade, not a chimney. */
 function brickBlock(ctx: Ctx): void {
+  // The cell is drawn with this texture alone: the lawn goes under it.
+  lawn(ctx, false);
   groundShadow(ctx, S * 0.44);
   const x0 = 5;
   const y0 = 6;
@@ -290,6 +294,8 @@ function brickBlock(ctx: Ctx): void {
 
 /** Feature: the old stone well with its wooden frame — for a map that wants one. */
 function well(ctx: Ctx): void {
+  // The cell is drawn with this texture alone: the lawn goes under it.
+  lawn(ctx, false);
   groundShadow(ctx, S * 0.46);
   ctx.fillStyle = WOOD_D;
   ctx.fillRect(13, 10, 4, 36);
