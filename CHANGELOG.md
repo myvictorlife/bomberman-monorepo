@@ -285,6 +285,14 @@ config file. Ordinary app-level additions are minor.
 
 ### Changed
 
+- **The home page's power-ups and controls read as one design.** The two
+  sections had left-aligned eyebrows over centred titles (the `--left`
+  modifiers lost to `.home-h2`'s centring) and a long power-up list beside
+  a short controls column. Power-ups are now a grid of equal cards — with
+  the glove and the kick, which were missing — and a link to `/items`;
+  the controls have a section of their own, two matching keyboards side
+  by side.
+
 - **Gramado leads the arena list, and the grid ends with "Coming soon".**
   The plain arena is now first in `MAPS`, so `/arenas`, the arena detail's
   "other arenas" and `/play`'s map picker list it first; a round still

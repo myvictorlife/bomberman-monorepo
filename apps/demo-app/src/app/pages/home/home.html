@@ -203,51 +203,51 @@
     </div>
   </section>
 
-  <!-- Power-ups and controls -->
+  <!-- Power-ups -->
   <section class="home-section">
-    <div class="home-wrap grid lg:grid-cols-2 gap-12 lg:gap-16">
-      <div>
-        <p class="home-eyebrow home-eyebrow--left">
-          {{ 'HOME.POWERUPS_EYEBROW' | translate }}
-        </p>
-        <h2 class="home-h2 home-h2--left">
-          {{ 'HOME.POWERUPS_TITLE' | translate }}
-        </h2>
-        <ul class="mt-8 space-y-4" role="list">
-          @for (powerUp of powerUps; track powerUp.kind) {
-          <li
-            class="home-card home-powerup"
-            [class]="'home-card home-powerup home-powerup--' + powerUp.kind"
-          >
-            <canvas
-              #sprite
-              class="home-powerup__icon"
-              [attr.data-sprites]="powerUpTexture(powerUp.kind)"
-              aria-hidden="true"
-            ></canvas>
-            <div>
-              <p class="home-card__title">{{ powerUp.titleKey | translate }}</p>
-              <p class="home-card__text mt-1">
-                {{ powerUp.descKey | translate }}
-              </p>
-            </div>
-          </li>
-          }
-        </ul>
-      </div>
-      <div>
-        <p class="home-eyebrow home-eyebrow--left">
-          {{ 'HOME.CONTROLS_EYEBROW' | translate }}
-        </p>
-        <h2 class="home-h2 home-h2--left">
-          {{ 'HOME.CONTROLS_TITLE' | translate }}
-        </h2>
-        <div class="mt-8 grid sm:grid-cols-2 gap-4">
-          @for (scheme of controls; track scheme.player) {
-          <div class="home-card home-keys">
-            <p class="home-card__title">
-              {{ 'PLAY.PLAYER' | translate: { n: scheme.player } }}
-            </p>
+    <div class="home-wrap">
+      <p class="home-eyebrow">{{ 'HOME.POWERUPS_EYEBROW' | translate }}</p>
+      <h2 class="home-h2">{{ 'HOME.POWERUPS_TITLE' | translate }}</h2>
+      <p class="home-sub">{{ 'HOME.POWERUPS_SUBTITLE' | translate }}</p>
+      <ul class="mt-10 grid sm:grid-cols-2 lg:grid-cols-4 gap-5" role="list">
+        @for (powerUp of powerUps; track powerUp.kind) {
+        <li
+          class="home-card home-powerup"
+          [class]="'home-card home-powerup home-powerup--' + powerUp.kind"
+        >
+          <canvas
+            #sprite
+            class="home-powerup__icon"
+            [attr.data-sprites]="powerUpTexture(powerUp.kind)"
+            aria-hidden="true"
+          ></canvas>
+          <p class="home-card__title">{{ powerUp.titleKey | translate }}</p>
+          <p class="home-card__text">{{ powerUp.descKey | translate }}</p>
+        </li>
+        }
+      </ul>
+      <p class="home-more">
+        <a routerLink="/items" class="home-more__link"
+          >{{ 'HOME.POWERUPS_ALL' | translate }}
+          <span aria-hidden="true">→</span></a
+        >
+      </p>
+    </div>
+  </section>
+
+  <!-- Controls -->
+  <section class="home-section home-section--alt">
+    <div class="home-wrap">
+      <p class="home-eyebrow">{{ 'HOME.CONTROLS_EYEBROW' | translate }}</p>
+      <h2 class="home-h2">{{ 'HOME.CONTROLS_TITLE' | translate }}</h2>
+      <p class="home-sub">{{ 'HOME.CONTROLS_SUBTITLE' | translate }}</p>
+      <div class="home-controls mt-10">
+        @for (scheme of controls; track scheme.player) {
+        <div class="home-card home-keys">
+          <p class="home-keys__player">
+            {{ 'PLAY.PLAYER' | translate: { n: scheme.player } }}
+          </p>
+          <div class="home-keys__group">
             <div
               class="home-keys__cluster"
               role="img"
@@ -260,29 +260,31 @@
             <p class="home-keys__label">
               {{ 'HOME.CONTROLS_MOVE' | translate }}
             </p>
+          </div>
+          <div class="home-keys__group">
             <kbd class="home-key home-key--wide"
               >{{ scheme.bombKey | translate }}</kbd
             >
             <p class="home-keys__label">
               {{ 'HOME.CONTROLS_BOMB' | translate }}
             </p>
-            <div class="home-keys__pair">
-              <div>
-                <kbd class="home-key">{{ scheme.detonateKey | translate }}</kbd>
-                <p class="home-keys__label">
-                  {{ 'HOME.CONTROLS_DETONATE' | translate }}
-                </p>
-              </div>
-              <div>
-                <kbd class="home-key">{{ scheme.abilityKey | translate }}</kbd>
-                <p class="home-keys__label">
-                  {{ 'HOME.CONTROLS_ABILITY' | translate }}
-                </p>
-              </div>
+          </div>
+          <div class="home-keys__pair">
+            <div class="home-keys__group">
+              <kbd class="home-key">{{ scheme.detonateKey | translate }}</kbd>
+              <p class="home-keys__label">
+                {{ 'HOME.CONTROLS_DETONATE' | translate }}
+              </p>
+            </div>
+            <div class="home-keys__group">
+              <kbd class="home-key">{{ scheme.abilityKey | translate }}</kbd>
+              <p class="home-keys__label">
+                {{ 'HOME.CONTROLS_ABILITY' | translate }}
+              </p>
             </div>
           </div>
-          }
         </div>
+        }
       </div>
     </div>
   </section>

@@ -169,6 +169,16 @@ export class HomePage {
       titleKey: 'HOME.POWERUP_VEST_TITLE',
       descKey: 'HOME.POWERUP_VEST_DESC',
     },
+    {
+      kind: 'glove',
+      titleKey: 'HOME.POWERUP_GLOVE_TITLE',
+      descKey: 'HOME.POWERUP_GLOVE_DESC',
+    },
+    {
+      kind: 'kick',
+      titleKey: 'HOME.POWERUP_KICK_TITLE',
+      descKey: 'HOME.POWERUP_KICK_DESC',
+    },
   ];
 
   readonly controls: ControlScheme[] = [
