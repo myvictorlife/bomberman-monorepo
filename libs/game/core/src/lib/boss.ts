@@ -19,7 +19,6 @@ import {
   CreatureBody,
   Direction,
   GameState,
-  Mound,
   Player,
   StageRun,
 } from './types';

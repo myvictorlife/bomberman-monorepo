@@ -66,9 +66,9 @@ describe('Stage', () => {
     convertToParamMap({ stageId: 'gramado-1' }),
   );
   const progress = signal<CampaignProgress>(EMPTY_PROGRESS);
-  const markCleared = vi.fn((id: string, _kit?: unknown, _tally?: unknown) =>
-    progress.set({ cleared: [...progress().cleared, id] }),
-  );
+  const markCleared = vi.fn<
+    (id: string, kit?: unknown, tally?: unknown) => void
+  >((id) => progress.set({ cleared: [...progress().cleared, id] }));
   let gameOver = false;
   const markFailed = vi.fn(() => {
     progress.set(EMPTY_PROGRESS);
