@@ -85,5 +85,18 @@
       </div>
     </li>
     }
+    <!-- The roster grows: the last place in the grid says another arena is on its way. -->
+    <li class="arena arena--soon" data-testid="arena-soon">
+      <div class="arena__soon-stage" aria-hidden="true">
+        <span class="arena__soon-pill"
+          >{{ 'ARENAS.SOON_TITLE' | translate }}</span
+        >
+      </div>
+      <div class="arena__body">
+        <p class="arena__owner">{{ 'ARENAS.SOON_OWNER' | translate }}</p>
+        <h2 class="arena__name">{{ 'ARENAS.SOON_TITLE' | translate }}</h2>
+        <p class="arena__desc">{{ 'ARENAS.SOON_DESC' | translate }}</p>
+      </div>
+    </li>
   </ul>
 </section>

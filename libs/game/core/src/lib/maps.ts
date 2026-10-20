@@ -14,16 +14,17 @@ export interface MapDefinition {
 }
 
 /**
- * Subestação first: the one a round plays on unless another is asked for.
- * Gramado is the plain one — a lawn, stone and brick, nothing happening.
+ * Gramado first: the plain one — a lawn, stone and brick, nothing happening —
+ * leads every list. A round still plays on {@link DEFAULT_MAP_ID} unless
+ * another is asked for.
  *
  * No map adds walls today: the centre cell, where the generator and the
  * start-light gantry used to stand, is the fifth player's spawn.
  */
 export const MAPS: readonly MapDefinition[] = [
+  { id: 'gramado', extraWalls: [] },
   { id: 'subestacao', extraWalls: [] },
   { id: 'autodromo', extraWalls: [] },
-  { id: 'gramado', extraWalls: [] },
 ];
 
 export const DEFAULT_MAP_ID: MapId = 'subestacao';

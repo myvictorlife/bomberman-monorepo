@@ -19,6 +19,7 @@ class StubTranslateLoader implements TranslateLoader {
         PLAY_SELECTED: 'Play',
       },
       MAPS: {
+        GRAMADO: { NAME: 'Lawn' },
         SUBESTACAO: { NAME: 'Substation' },
         AUTODROMO: { NAME: 'Race track' },
       },
@@ -58,17 +59,17 @@ describe('Arenas', () => {
 
     const cards = spectator.queryAll('[data-testid="arena-card"]');
     expect(cards.map((c) => c.getAttribute('data-map'))).toEqual([
+      'gramado',
       'subestacao',
       'autodromo',
-      'gramado',
     ]);
-    expect(cards[0]).toHaveText('Substation');
+    expect(cards[0]).toHaveText('Lawn');
     expect(play).toHaveBeenCalledTimes(1);
     const canvases = play.mock.calls[0]?.[0] ?? [];
     expect(canvases.map((c) => c.dataset['video'])).toEqual([
+      'arena:gramado',
       'arena:subestacao',
       'arena:autodromo',
-      'arena:gramado',
     ]);
 
     spectator.detectChanges();
@@ -78,10 +79,17 @@ describe('Arenas', () => {
     expect(stop).toHaveBeenCalled();
   });
 
+  it('ends the grid with a card for the arena still to come', () => {
+    const items = spectator.queryAll('.arenas__grid > li');
+
+    expect(items.at(-1)).toHaveAttribute('data-testid', 'arena-soon');
+    expect(spectator.query('[data-testid="arena-soon"] a')).toBeNull();
+  });
+
   it('links each arena to a match on it', () => {
     const links = spectator.queryAll('[data-testid="arena-play"]');
 
-    expect(links[1]?.getAttribute('href')).toBe('/play?map=autodromo');
+    expect(links[2]?.getAttribute('href')).toBe('/play?map=autodromo');
   });
 
   it('puts the clicked arena in focus and the header link follows it', () => {

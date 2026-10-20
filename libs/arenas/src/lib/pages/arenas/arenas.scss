@@ -65,6 +65,43 @@
     0 24px 50px -30px var(--arena-accent);
 }
 
+/* The card for the arena still on the drawing board: no picture, no link. */
+.arena--soon {
+  --arena-accent: var(--color-text-secondary);
+
+  border-style: dashed;
+  box-shadow: none;
+
+  &:hover {
+    transform: none;
+    box-shadow: none;
+  }
+}
+
+.arena__soon-stage {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 15 / 13;
+  background:
+    repeating-linear-gradient(
+      45deg,
+      transparent 0 18px,
+      rgb(255 255 255 / 0.04) 18px 36px
+    ),
+    #0b0d13;
+}
+
+.arena__soon-pill {
+  padding: var(--space-2) var(--space-4);
+  border: 1px dashed rgb(255 255 255 / 0.35);
+  border-radius: 999px;
+  color: #fff;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
 .arenas__live {
   margin-top: var(--space-1);
   color: var(--color-text-secondary);

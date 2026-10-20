@@ -285,6 +285,12 @@ config file. Ordinary app-level additions are minor.
 
 ### Changed
 
+- **Gramado leads the arena list, and the grid ends with "Coming soon".**
+  The plain arena is now first in `MAPS`, so `/arenas`, the arena detail's
+  "other arenas" and `/play`'s map picker list it first; a round still
+  plays on `DEFAULT_MAP_ID` unless another is asked for. The arena gallery
+  closes with a card for the arena still on the drawing board.
+
 - **Three ways to play from the home page.** The hero now offers "Play
   online", "Play without an account" (the online room as a guest) and
   "Play offline" — the old "Local versus", renamed everywhere it appears,
