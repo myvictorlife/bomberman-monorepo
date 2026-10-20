@@ -168,6 +168,9 @@ describe('hud', () => {
       glove: false,
       kick: false,
       vestSeconds: 0,
+      wallPass: false,
+      powerBomb: false,
+      curse: null,
     });
     expect(sameHud(null, hud)).toBe(false);
     expect(sameHud(hud, toHud(state))).toBe(true);
@@ -185,6 +188,52 @@ describe('hud', () => {
     state.phase = 'over';
     expect(sameHud(hud, toHud(state))).toBe(false);
     expect(sameHud(hud, { ...hud, players: hud.players.slice(1) })).toBe(false);
+  });
+
+  it('reports what is left of a stage, and nothing in a versus round', () => {
+    expect(toHud(createGame({ seed: 1, players })).stage).toBeNull();
+
+    const state = createGame({
+      seed: 1,
+      stageId: 'gramado-1',
+      players: [{ id: 'p1', name: 'P1' }],
+    });
+    const hud = toHud(state);
+    expect(hud.stage).toEqual({
+      creaturesLeft: 6,
+      exitOpen: false,
+      result: null,
+      boss: null,
+      score: 0,
+      livesGained: 0,
+      bonus: false,
+    });
+
+    const first = state.stage?.creatures[0];
+    if (first) first.alive = false;
+    expect(sameHud(hud, toHud(state))).toBe(false);
+
+    const scored = toHud(state);
+    if (state.stage) state.stage.score['p1'] = 100;
+    expect(sameHud(scored, toHud(state))).toBe(false);
+    const cursed = toHud(state);
+    const p1 = state.players[0];
+    if (p1) p1.curse = { kind: 'slow', untilTick: 99, sinceTick: 0 };
+    expect(toHud(state).players[0]?.curse).toBe('slow');
+    expect(sameHud(cursed, toHud(state))).toBe(false);
+  });
+
+  it('reports the boss health on a boss stage', () => {
+    const state = createGame({
+      seed: 1,
+      stageId: 'gramado-5',
+      players: [{ id: 'p1', name: 'P1' }],
+    });
+    const hud = toHud(state);
+    expect(hud.stage?.boss).toEqual({ hp: 8, maxHp: 8 });
+
+    if (state.stage?.boss) state.stage.boss.hp = 7;
+    expect(sameHud(hud, toHud(state))).toBe(false);
   });
 });
 

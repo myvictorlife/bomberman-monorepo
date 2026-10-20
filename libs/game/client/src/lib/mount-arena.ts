@@ -21,6 +21,8 @@ export interface ArenaOptions {
   seed?: number;
   /** Which arena to play on; defaults to the first of the roster. */
   mapId?: MapId;
+  /** Plays this stage of the campaign: its arena, creatures and gate; `mapId` is then ignored. */
+  stageId?: string;
   /** Defaults to the HD skin. */
   skin?: ArenaSkin;
   /** Start with sound off. */

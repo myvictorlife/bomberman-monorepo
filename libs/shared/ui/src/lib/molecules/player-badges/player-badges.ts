@@ -18,6 +18,12 @@ export interface PlayerBadgeStats {
   kick: boolean;
   /** Whole seconds of vest left; 0 when none. */
   vestSeconds: number;
+  /** Walks through soft blocks. */
+  wallPass?: boolean;
+  /** The first bomb of a volley reaches as far as fire goes. */
+  powerBomb?: boolean;
+  /** The skull's curse on them, if any — its key, e.g. `reverse`. */
+  curse?: string | null;
   /** The mount's id, or `null` on foot. */
   mount: string | null;
   /** Whole seconds until the mount ability is ready; 0 when ready. */
@@ -100,6 +106,28 @@ export class PlayerBadgesComponent {
       });
     if (s.kick)
       list.push({ key: 'kick', icon: '👟', value: null, tip: t('PLAY.KICK') });
+    if (s.wallPass)
+      list.push({
+        key: 'wallpass',
+        icon: '👻',
+        value: null,
+        tip: t('PLAY.WALLPASS'),
+      });
+    if (s.powerBomb)
+      list.push({
+        key: 'powerbomb',
+        icon: '💥',
+        value: null,
+        tip: t('PLAY.POWERBOMB'),
+      });
+    if (s.curse)
+      list.push({
+        key: 'curse',
+        icon: '💀',
+        value: null,
+        tip: `${t('PLAY.CURSE')}: ${t(`PLAY.CURSES.${s.curse.toUpperCase()}`)}`,
+        state: 'cooldown',
+      });
     if (s.vestSeconds > 0) {
       list.push({
         key: 'vest',

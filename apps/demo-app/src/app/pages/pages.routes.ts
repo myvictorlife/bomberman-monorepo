@@ -26,6 +26,11 @@ export const appPagesRoutes: Routes = [
       import('@libs/characters').then((m) => m.charactersRoutes),
   },
   {
+    path: 'campaign',
+    title: 'CAMPAIGN.TITLE',
+    loadChildren: () => import('@libs/campaign').then((m) => m.campaignRoutes),
+  },
+  {
     path: 'mounts',
     title: 'MOUNTS.TITLE',
     loadChildren: () => import('@libs/mounts').then((m) => m.mountsRoutes),

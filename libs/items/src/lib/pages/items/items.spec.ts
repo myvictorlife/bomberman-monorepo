@@ -62,6 +62,12 @@ describe('Items', () => {
       'vest',
       'glove',
       'kick',
+      'wallpass',
+      'fullfire',
+      'powerbomb',
+      'skull',
+      'clock',
+      'oneup',
     ]);
     expect(cards[0]).toHaveText('Egg');
     expect(

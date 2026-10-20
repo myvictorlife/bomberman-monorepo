@@ -1,0 +1,27 @@
+{
+  "name": "campaign",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/campaign/src",
+  "prefix": "lib",
+  "projectType": "library",
+  "tags": ["scope:campaign"],
+  "targets": {
+    "test": {
+      "executor": "@angular/build:unit-test",
+      "options": {
+        "coverageInclude": ["libs/campaign/src/**/*.ts"],
+        "coverageExclude": [
+          "libs/campaign/src/**/index.ts",
+          "libs/campaign/src/**/*.routes.ts",
+          "libs/campaign/src/**/*.spec.ts"
+        ],
+        "coverageThresholds": {
+          "statements": 95,
+          "branches": 90,
+          "functions": 90,
+          "lines": 95
+        }
+      }
+    }
+  }
+}

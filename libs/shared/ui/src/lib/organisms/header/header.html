@@ -28,6 +28,10 @@
         {{ 'HEADER.PLAY' | translate }}
       </a>
 
+      <a routerLink="/campaign" class="header__link">
+        {{ 'HEADER.CAMPAIGN' | translate }}
+      </a>
+
       <a routerLink="/characters" class="header__link">
         {{ 'HEADER.CHARACTERS' | translate }}
       </a>
@@ -100,6 +104,13 @@
       (click)="closeMobileMenu()"
     >
       {{ 'HEADER.PLAY' | translate }}
+    </a>
+    <a
+      routerLink="/campaign"
+      class="header__mobile-link"
+      (click)="closeMobileMenu()"
+    >
+      {{ 'HEADER.CAMPAIGN' | translate }}
     </a>
     <a
       routerLink="/characters"

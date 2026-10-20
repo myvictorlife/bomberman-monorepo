@@ -1,4 +1,4 @@
-import { GameState, PlayerInput } from '@libs/game-core';
+import { Direction, GameState, isCursed, PlayerInput } from '@libs/game-core';
 import { Bot } from './brain';
 import { BotLevel } from './levels';
 
@@ -32,7 +32,8 @@ export class BotDirector {
   /** What every bot presses this tick, by player id. */
   inputs(state: GameState): Record<string, PlayerInput> {
     const inputs: Record<string, PlayerInput> = {};
-    for (const bot of this.bots) inputs[bot.id] = bot.decide(state);
+    for (const bot of this.bots)
+      inputs[bot.id] = againstCurse(state, bot.id, bot.decide(state));
     return inputs;
   }
 
@@ -46,4 +47,25 @@ export class BotDirector {
       (s, i) => new Bot(s.id, s.level, this.seed * 31 + i),
     );
   }
+}
+
+const TURNED: Record<Direction, Direction> = {
+  up: 'down',
+  down: 'up',
+  left: 'right',
+  right: 'left',
+};
+
+/**
+ * A bot knows the curse it carries: with the keys turned round it presses
+ * the other way, so it still goes where it meant to.
+ */
+function againstCurse(
+  state: GameState,
+  id: string,
+  input: PlayerInput,
+): PlayerInput {
+  const me = state.players.find((p) => p.id === id);
+  if (!me || !isCursed(state, me, 'reverse') || !input.direction) return input;
+  return { ...input, direction: TURNED[input.direction] };
 }

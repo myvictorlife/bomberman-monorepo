@@ -2,6 +2,8 @@ import { tileAt } from './arena';
 import { findMount } from './characters';
 import {
   BASE_SPEED,
+  CURSE_FAST_SPEED,
+  CURSE_SLOW_SPEED,
   MOUNT_SPEED_BONUS,
   SPEED_PER_LEVEL,
   TICK_RATE,
@@ -27,12 +29,17 @@ export function speedOf(
     ability?.kind === 'dash' && tick < player.abilityUntilTick
       ? ability.speedBonus
       : 0;
-  return (
+  const cursed =
+    player.curse && tick < player.curse.untilTick ? player.curse.kind : null;
+  if (cursed === 'slow') return CURSE_SLOW_SPEED;
+  if (cursed === 'fast') return CURSE_FAST_SPEED;
+  const speed =
     BASE_SPEED +
     SPEED_PER_LEVEL * player.speedLevel +
     (player.mountId ? MOUNT_SPEED_BONUS : 0) +
-    dash
-  );
+    dash;
+  // A snail's slime: half speed while it sticks.
+  return tick < player.slimedUntilTick ? speed / 2 : speed;
 }
 
 /** The cell a player counts as standing on: the one under their centre. */
@@ -57,7 +64,14 @@ export function isBlockedFor(
   col: number,
   row: number,
 ): boolean {
-  if (tileAt(state, col, row) !== 'empty') return true;
+  const tile = tileAt(state, col, row);
+  // Wall pass: a soft block is no obstacle.
+  if (tile !== 'empty' && !(tile === 'block' && player.wallPass)) return true;
+  // A boss stage's anthill stands like a block.
+  if (
+    state.stage?.mounds.some((m) => m.alive && m.col === col && m.row === row)
+  )
+    return true;
   const bomb = state.bombs.find((b) => b.col === col && b.row === row);
   if (!bomb || bomb.passThrough.includes(player.id)) return false;
   return !(

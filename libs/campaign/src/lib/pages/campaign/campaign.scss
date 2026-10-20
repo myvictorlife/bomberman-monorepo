@@ -1,0 +1,315 @@
+.campaign {
+  max-width: 76rem;
+  margin: 0 auto;
+  padding: var(--space-6) var(--space-4) var(--space-10);
+}
+
+.campaign__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.campaign__eyebrow {
+  color: var(--color-warning);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.campaign__title {
+  margin-top: var(--space-1);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-bold);
+}
+
+.campaign__lead {
+  margin-top: var(--space-1);
+  max-width: 42rem;
+  color: var(--color-text-secondary);
+}
+
+/* The areas, in the order they open: one card each. */
+.campaign__areas {
+  display: grid;
+  gap: var(--space-4);
+  margin-top: var(--space-8);
+
+  @media (min-width: 720px) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.campaign__area {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  width: 100%;
+  height: 100%;
+  padding: var(--space-4) var(--space-5);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  background: var(--color-bg-surface);
+  color: var(--color-text-primary);
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+  transition:
+    border-color 160ms ease,
+    transform 160ms ease;
+
+  &:hover {
+    transform: translateY(-2px);
+  }
+
+  &[data-status='locked'],
+  &[data-status='soon'] {
+    border-style: dashed;
+    color: var(--color-text-secondary);
+  }
+}
+
+.campaign__area--selected {
+  border-color: var(--color-warning);
+  box-shadow: 0 0 0 1px var(--color-warning);
+}
+
+.campaign__area-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.campaign__area-number {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.campaign__area-name {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+}
+
+.campaign__area-hint {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.campaign__bars {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.campaign__bar {
+  flex: 1 1 0;
+  height: 0.375rem;
+  border-radius: 999px;
+  background: var(--color-border);
+}
+
+.campaign__bar--done {
+  background: #7cc055;
+}
+
+/* The map, and beside it the stage in focus; stacked on a phone. */
+.campaign__body {
+  display: grid;
+  gap: var(--space-6);
+  margin-top: var(--space-6);
+  align-items: start;
+
+  @media (min-width: 960px) {
+    grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr);
+  }
+}
+
+.campaign__side {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.campaign__panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-5);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  background: var(--color-bg-surface);
+  box-shadow: var(--shadow-card);
+}
+
+.campaign__panel-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.campaign__code {
+  color: var(--color-warning);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.campaign__stage-name {
+  color: var(--color-text-primary);
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+}
+
+.campaign__stage-desc {
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+}
+
+.campaign__foes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.campaign__foe {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-1) var(--space-3) var(--space-1) var(--space-1);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg-elevated);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-sm);
+}
+
+.campaign__foe--boss {
+  border: 1px solid color-mix(in srgb, var(--color-danger) 45%, transparent);
+}
+
+.campaign__how-title {
+  color: var(--color-text-primary);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+}
+
+.campaign__how {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+
+  li {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-3);
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+    line-height: 1.45;
+  }
+}
+
+.campaign__how-step {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: 50%;
+  background: #ff8a3d;
+  color: #1d1a17;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+}
+
+/* What the next stage starts with: a meter per stat, from the start to its limit. */
+.campaign__stats {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+
+  div {
+    display: grid;
+    grid-template-columns: 6rem 1fr;
+    align-items: center;
+    gap: var(--space-3);
+  }
+
+  dt {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+  }
+
+  dd {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    color: var(--color-text-primary);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+  }
+}
+
+.campaign__meter {
+  flex: 1 1 auto;
+  height: 0.5rem;
+  border-radius: var(--radius-full);
+  background: var(--color-border);
+  overflow: hidden;
+
+  span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: #ff8a3d;
+  }
+}
+
+/* The run: lives, points, the best on this device. */
+.campaign__run {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-2);
+
+  li {
+    display: flex;
+    flex-direction: column;
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-lg);
+    background: var(--color-bg-elevated);
+  }
+
+  span {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-xs);
+  }
+
+  strong {
+    color: var(--color-text-primary);
+    font-size: var(--font-size-lg);
+  }
+}
+
+/* Stages are played signed in: the sign-in takes the play button's place. */
+.campaign__signin {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+
+  p {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+  }
+}
+
+.campaign__signin-error {
+  color: var(--color-danger);
+}

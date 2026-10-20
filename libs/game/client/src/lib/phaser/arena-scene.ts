@@ -1,6 +1,11 @@
 import {
   BLOCK_BURN_TICKS,
   BOMB_FUSE_TICKS,
+  BossBody,
+  CreatureBody,
+  isBossExposed,
+  isExitOpen,
+  isExitRevealed,
   DEATH_TICKS,
   Direction,
   flightPosition,
@@ -25,6 +30,7 @@ import { ArenaSession } from '../session/arena-session';
 import { EGG_STAGES } from '../skins/hd/egg';
 import { loadArenaTheme, tileTextureKey } from '../skins/hd/themes';
 import { ArenaSkin } from '../skins/skin';
+import { paintCreatureFrame } from '../creatures/paint-creature';
 import { FACINGS, TEXTURE } from '../skins/texture-keys';
 
 export interface ArenaSceneConfig {
@@ -40,6 +46,7 @@ const DEPTH = {
   tile: 0,
   burning: 1,
   shadow: 2,
+  exit: 2.5,
   powerUp: 3,
   dark: 3.5,
   bomb: 4,
@@ -75,6 +82,16 @@ export class ArenaScene extends Phaser.Scene {
   private readonly players = new Map<string, Image>();
   private readonly outsiders = new Map<string, Image>();
   private readonly thrown = new Map<number, Image>();
+  /** Stage mode: the creatures, by id, and the gate once it is in the open. */
+  private readonly creatures = new Map<number, Image>();
+  private readonly exits = new Map<string, Image>();
+  /** A boss stage: the boss (or the mound of earth it moves under), its cracks, its anthills. */
+  private readonly bosses = new Map<string, Image>();
+  private readonly cracks = new Map<string, Image>();
+  private readonly mounds = new Map<number, Image>();
+  /** Snail slime on the floor, and the skull over a cursed player's head. */
+  private readonly slime = new Map<string, Image>();
+  private readonly skulls = new Map<string, Image>();
   /** Bombs held overhead with the glove, by holder. */
   private readonly held = new Map<string, Image>();
   /** Characters whose border textures the skin has painted so far. */
@@ -245,11 +262,16 @@ export class ArenaScene extends Phaser.Scene {
     this.renderMoment(state);
     this.renderTiles(state);
     this.renderBurningBlocks(state);
+    this.renderExit(state);
+    this.renderSlime(state);
     this.renderPowerUps(state);
     this.renderBombs(state);
     this.tintBombs(state);
     this.renderFlames(state);
     this.renderPlayers(state);
+    this.renderCreatures(state);
+    this.renderBoss(state);
+    this.renderSkulls(state);
     this.renderOutsiders(state);
     this.renderThrownBombs(state);
     this.renderHeldBombs(state);
@@ -273,6 +295,13 @@ export class ArenaScene extends Phaser.Scene {
       this.thrown,
       this.held,
       this.shadows,
+      this.creatures,
+      this.exits,
+      this.bosses,
+      this.cracks,
+      this.mounds,
+      this.slime,
+      this.skulls,
     ]) {
       for (const image of pool.values()) image.destroy();
       pool.clear();
@@ -544,6 +573,19 @@ export class ArenaScene extends Phaser.Scene {
           const [x, y, arc] = flightPosition(state, p.flight, state.tick);
           return { key: `p:${p.id}`, x, y, size: 0.9 - arc * 0.35 };
         }),
+      ...(state.stage?.creatures ?? [])
+        .filter((c) => c.alive)
+        .map((c) => ({ key: `c:${c.id}`, x: c.x, y: c.y, size: 0.8 })),
+      ...(state.stage?.boss && isBossExposed(state.stage.boss)
+        ? [
+            {
+              key: 'boss',
+              x: state.stage.boss.x,
+              y: state.stage.boss.y,
+              size: 1.3,
+            },
+          ]
+        : []),
       ...state.outsiders.map((o) => ({
         key: `o:${o.id}`,
         x: o.x,
@@ -571,6 +613,320 @@ export class ArenaScene extends Phaser.Scene {
         image.setPosition(x, y + this.tile * 0.36).setScale(c.size);
       },
     );
+  }
+
+  /**
+   * Stage mode: the gate, once its block has burnt — a grate in the floor
+   * that lights up when the last creature falls.
+   */
+  private renderExit(state: GameState): void {
+    const run = state.stage;
+    const shown = run && isExitRevealed(state, run) ? [run.exit] : [];
+    const open = !!run && isExitOpen(run);
+    this.sync(
+      this.exits,
+      shown,
+      (e) => `${e.col},${e.row}`,
+      (e) =>
+        this.add
+          .image(...this.cellToPixel(e.col, e.row), this.exitTexture(false))
+          .setDepth(DEPTH.exit),
+      (image) => {
+        image.setTexture(this.exitTexture(open));
+        image.setScale(open ? 1 + Math.sin(state.tick * 0.15) * 0.05 : 1);
+      },
+    );
+  }
+
+  /** The gate's two looks, painted once: shut, and open with a warm glow. */
+  private exitTexture(open: boolean): string {
+    const key = open ? 'stage-exit-open' : 'stage-exit-shut';
+    if (this.textures.exists(key)) return key;
+    const size = this.tile;
+    const texture = this.textures.createCanvas(key, size, size);
+    const ctx = texture?.getContext();
+    if (!texture || !ctx) return TEXTURE.floor;
+    const c = size / 2;
+    if (open) {
+      const glow = ctx.createRadialGradient(c, c, size * 0.2, c, c, size * 0.5);
+      glow.addColorStop(0, 'rgba(255, 211, 110, 0.9)');
+      glow.addColorStop(1, 'rgba(255, 211, 110, 0)');
+      ctx.fillStyle = glow;
+      ctx.fillRect(0, 0, size, size);
+    }
+    ctx.beginPath();
+    ctx.arc(c, c, size * 0.36, 0, Math.PI * 2);
+    ctx.fillStyle = '#2b3036';
+    ctx.fill();
+    ctx.lineWidth = size * 0.06;
+    ctx.strokeStyle = '#1d1a17';
+    ctx.stroke();
+    ctx.save();
+    ctx.clip();
+    ctx.fillStyle = open ? '#ffd36e' : '#5a6069';
+    for (let x = c - size * 0.3; x < c + size * 0.36; x += size * 0.14)
+      ctx.fillRect(x, 0, size * 0.06, size);
+    ctx.restore();
+    texture.refresh();
+    return key;
+  }
+
+  /** Stage mode: the creatures, painted from the campaign art, walking and falling. */
+  private renderCreatures(state: GameState): void {
+    const visible = (state.stage?.creatures ?? []).filter(
+      (c) =>
+        c.alive ||
+        (c.diedAtTick !== null && state.tick - c.diedAtTick < DEATH_TICKS),
+    );
+    this.sync(
+      this.creatures,
+      visible,
+      (c) => c.id,
+      (c) => this.add.image(0, 0, this.creatureTexture(c)),
+      (image, c) => this.updateCreature(image, c, state.tick),
+    );
+  }
+
+  private creatureTexture(creature: CreatureBody): string {
+    const key = `creature:${creature.creatureId}`;
+    if (!this.textures.exists(key)) {
+      const canvas = paintCreatureFrame(document, {
+        subject: { creature: creature.creatureId },
+        size: Math.round(this.tile * 1.1),
+      });
+      this.textures.addCanvas(key, canvas);
+    }
+    return key;
+  }
+
+  private updateCreature(image: Image, c: CreatureBody, tick: number): void {
+    const [x, y] = this.cellToPixel(c.x, c.y);
+    if (!c.alive) {
+      // Falls over and fades, like a player.
+      const t = Math.min(1, (tick - (c.diedAtTick ?? tick)) / DEATH_TICKS);
+      image
+        .setPosition(x, y - this.tile * 0.1)
+        .setAngle(90 * t)
+        .setAlpha(1 - t)
+        .setScale(1 - t * 0.4)
+        .setTint(0xff9050);
+      return;
+    }
+    // A little hop on every step, out of phase from one creature to the next.
+    const hop = Math.abs(Math.sin((tick + c.id * 7) * 0.35)) * this.tile * 0.06;
+    image
+      .setPosition(x, y - this.tile * 0.1 - hop)
+      .setFlipX(c.facing === 'left')
+      .setDepth(DEPTH.player + c.y);
+    if (tick < c.hurtUntilTick && Math.floor(tick / 4) % 2 === 0)
+      image.setTint(0xff6b57);
+    else if (this.dark > 0.5) image.setTint(DARK_TINT);
+    else image.clearTint();
+  }
+
+  /**
+   * A boss stage: the anthills, the cracks where the boss will come up (a
+   * feint among them from half health on), the mound of earth it moves under,
+   * and the boss itself — sinking, coming up, dizzy, falling.
+   */
+  private renderBoss(state: GameState): void {
+    const run = state.stage;
+    const boss = run?.boss ?? null;
+    this.sync(
+      this.mounds,
+      (run?.mounds ?? []).filter((m) => m.alive),
+      (m) => m.id,
+      (m) =>
+        this.add
+          .image(
+            ...this.cellToPixel(m.col, m.row),
+            this.paintedTexture('stage-mound', paintMound),
+          )
+          .setDepth(DEPTH.player + m.row - 0.2),
+      (image, m) => {
+        if (
+          state.tick < m.hurtUntilTick &&
+          Math.floor(state.tick / 4) % 2 === 0
+        )
+          image.setTint(0xff9050);
+        else image.clearTint();
+      },
+    );
+
+    const cracks =
+      boss?.alive && boss.phase === 'crack' ? [boss.target, ...boss.fakes] : [];
+    this.sync(
+      this.cracks,
+      cracks,
+      (c) => `${c.col},${c.row}`,
+      (c) =>
+        this.add
+          .image(
+            ...this.cellToPixel(c.col, c.row),
+            this.paintedTexture('stage-crack', paintCrack),
+          )
+          .setDepth(DEPTH.exit),
+      (image) => image.setAlpha(Math.floor(state.tick / 6) % 2 ? 1 : 0.45),
+    );
+
+    const shown: BossBody[] =
+      boss &&
+      (boss.alive ||
+        (boss.diedAtTick !== null &&
+          state.tick - boss.diedAtTick < DEATH_TICKS * 2))
+        ? [boss]
+        : [];
+    this.sync(
+      this.bosses,
+      shown,
+      (b) => b.bossId,
+      (b) => this.add.image(0, 0, this.bossTexture(b)),
+      (image, b) => this.updateBoss(image, b, state.tick),
+    );
+  }
+
+  private bossTexture(boss: BossBody): string {
+    const key = `boss:${boss.bossId}`;
+    if (!this.textures.exists(key)) {
+      const canvas = paintCreatureFrame(document, {
+        subject: { boss: boss.bossId },
+        size: Math.round(this.tile * 1.7),
+      });
+      this.textures.addCanvas(key, canvas);
+    }
+    return key;
+  }
+
+  private updateBoss(image: Image, b: BossBody, tick: number): void {
+    const [x, y] = this.cellToPixel(b.x, b.y);
+    const lift = this.tile * 0.3;
+    image
+      .setDepth(DEPTH.player + b.y)
+      .setAngle(0)
+      .setAlpha(1)
+      .setScale(1);
+    if (!b.alive) {
+      const t = Math.min(
+        1,
+        (tick - (b.diedAtTick ?? tick)) / (DEATH_TICKS * 2),
+      );
+      image
+        .setTexture(this.bossTexture(b))
+        .setPosition(x, y - lift)
+        .setAngle(-90 * t)
+        .setAlpha(1 - t)
+        .setTint(0xff9050);
+      return;
+    }
+    if (b.phase === 'under' || b.phase === 'crack') {
+      // Underground: only the mound of earth shows, running along.
+      const wobble = 1 + Math.sin(tick * 0.6) * 0.12;
+      image
+        .setTexture(this.paintedTexture('stage-burrow', paintBurrow))
+        .setPosition(x, y + this.tile * 0.15)
+        .setScale(wobble, 1 / wobble)
+        .setDepth(DEPTH.exit + 0.1)
+        .clearTint();
+      if (b.phase === 'crack') image.setAlpha(0);
+      return;
+    }
+    image.setTexture(this.bossTexture(b)).setPosition(x, y - lift);
+    const span = Math.max(1, b.phaseEndsAtTick - b.phaseStartedAtTick);
+    const t = Math.min(1, (tick - b.phaseStartedAtTick) / span);
+    if (b.phase === 'sinking') {
+      image
+        .setScale(1 - t * 0.6)
+        .setAlpha(1 - t)
+        .setY(y - lift * (1 - t));
+    } else if (b.phase === 'stunned') {
+      // Pops out of the ground, then sways, dizzy.
+      const pop = Math.min(1, (tick - b.phaseStartedAtTick) / 8);
+      image.setScale(0.5 + pop * 0.5).setAngle(Math.sin(tick * 0.25) * 8);
+    }
+    if (tick < b.hurtUntilTick && Math.floor(tick / 4) % 2 === 0)
+      image.setTint(0xff6b57);
+    else if (this.dark > 0.5) image.setTint(DARK_TINT);
+    else image.clearTint();
+  }
+
+  /** Snail slime: a glossy green smear that fades as it dries. */
+  private renderSlime(state: GameState): void {
+    this.sync(
+      this.slime,
+      state.stage?.slime ?? [],
+      (s) => `${s.col},${s.row}`,
+      (s) =>
+        this.add
+          .image(
+            ...this.cellToPixel(s.col, s.row),
+            this.paintedTexture('stage-slime', paintSlime),
+          )
+          .setDepth(DEPTH.exit),
+      (image, s) =>
+        image.setAlpha(Math.min(1, (s.untilTick - state.tick) / 60) * 0.85),
+    );
+  }
+
+  /** The skull's curse: a little skull bobbing over the head of whoever has it. */
+  private renderSkulls(state: GameState): void {
+    const cursed = state.players.filter(
+      (p) => p.alive && p.curse && state.tick < p.curse.untilTick,
+    );
+    this.sync(
+      this.skulls,
+      cursed,
+      (p) => p.id,
+      () =>
+        this.add
+          .image(0, 0, TEXTURE.powerUp('skull'))
+          .setScale(0.45)
+          .setDepth(DEPTH.thrown),
+      (image, p) => {
+        const [x, y] = this.cellToPixel(p.x, p.y);
+        image.setPosition(
+          x,
+          y - this.tile * (0.85 + Math.sin(state.tick * 0.2) * 0.05),
+        );
+      },
+    );
+  }
+
+  /** Points scored: a number floating up from where they were earned. */
+  private floatPoints(col: number, row: number, points: number): void {
+    const [x, y] = this.cellToPixel(col, row);
+    const text = this.add
+      .text(x, y, `+${points}`, {
+        fontFamily: 'system-ui, sans-serif',
+        fontSize: `${Math.round(this.tile * 0.34)}px`,
+        fontStyle: 'bold',
+        color: '#fff3c4',
+        stroke: '#1d1a17',
+        strokeThickness: Math.max(2, Math.round(this.tile * 0.06)),
+      })
+      .setOrigin(0.5)
+      .setDepth(DEPTH.fx);
+    this.tweens.add({
+      targets: text,
+      y: y - this.tile * 0.9,
+      alpha: 0,
+      duration: 900,
+      ease: 'Quad.easeOut',
+      onComplete: () => text.destroy(),
+    });
+  }
+
+  /** A texture painted once on a canvas the size of a tile. */
+  private paintedTexture(
+    key: string,
+    paint: (ctx: CanvasRenderingContext2D, size: number) => void,
+  ): string {
+    if (this.textures.exists(key)) return key;
+    const texture = this.textures.createCanvas(key, this.tile, this.tile);
+    const ctx = texture?.getContext();
+    if (!texture || !ctx) return TEXTURE.floor;
+    paint(ctx, this.tile);
+    texture.refresh();
+    return key;
   }
 
   /** The next in line, on the border wall, with their own character's look. */
@@ -801,6 +1157,72 @@ export class ArenaScene extends Phaser.Scene {
           sfx.play('round-over');
           voice.say(event.winnerId ? 'win' : 'draw');
           break;
+        case 'creature-hurt':
+          sfx.play('kick', 0.8);
+          this.burst(event.col, event.row, TEXTURE.spark, 6, true);
+          break;
+        case 'creature-died':
+          sfx.play('kick');
+          this.burst(event.col, event.row, TEXTURE.spark, 12, true);
+          break;
+        case 'exit-opened':
+          sfx.play('hatch');
+          this.burst(event.col, event.row, TEXTURE.spark, 20, true);
+          break;
+        case 'player-exited':
+          sfx.play('power-up');
+          break;
+        case 'boss-dug':
+          sfx.play('wall', 0.7);
+          this.burst(event.col, event.row, TEXTURE.debris, 10, false);
+          break;
+        case 'boss-crack':
+          sfx.play('alarm');
+          break;
+        case 'boss-emerged':
+          sfx.play('wall');
+          this.cameras.main.shake(180, 0.006);
+          this.burst(event.col, event.row, TEXTURE.debris, 14, false);
+          break;
+        case 'boss-hurt':
+          sfx.play('mount-lost');
+          this.burst(event.col, event.row, TEXTURE.spark, 14, true);
+          break;
+        case 'boss-died':
+          sfx.play('explode', 1.4);
+          this.cameras.main.shake(400, 0.01);
+          this.burst(event.col, event.row, TEXTURE.spark, 30, true);
+          break;
+        case 'cursed':
+          sfx.play('mount-lost');
+          break;
+        case 'curse-passed':
+          sfx.play('kick', 0.7);
+          break;
+        case 'time-added':
+          sfx.play('power-up');
+          break;
+        case 'life-gained':
+          sfx.play('hatch');
+          break;
+        case 'exit-bombed':
+          sfx.play('alarm');
+          this.burst(event.col, event.row, TEXTURE.debris, 10, false);
+          break;
+        case 'points':
+          this.floatPoints(event.col, event.row, event.points);
+          break;
+        case 'mound-hurt':
+          this.burst(event.col, event.row, TEXTURE.debris, 6, false);
+          break;
+        case 'mound-destroyed':
+          sfx.play('wall', 0.8);
+          this.burst(event.col, event.row, TEXTURE.debris, 12, false);
+          break;
+        case 'stage-over':
+          sfx.play('round-over');
+          voice.say(event.result === 'cleared' ? 'win' : 'draw');
+          break;
       }
     }
   }
@@ -1003,4 +1425,103 @@ function isTextField(element: Element | null): boolean {
     ].includes(element.type);
   }
   return element instanceof HTMLElement && element.isContentEditable;
+}
+
+/** An anthill: a cone of red earth with a dark hole on top. */
+function paintMound(ctx: CanvasRenderingContext2D, size: number): void {
+  const s = size / 100;
+  ctx.scale(s, s);
+  ctx.lineJoin = 'round';
+  ctx.fillStyle = 'rgba(0,0,0,0.35)';
+  ctx.beginPath();
+  ctx.ellipse(50, 86, 42, 10, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(8, 84);
+  ctx.quadraticCurveTo(50, -0, 92, 84);
+  ctx.closePath();
+  ctx.fillStyle = '#8a5a34';
+  ctx.fill();
+  ctx.lineWidth = 5;
+  ctx.strokeStyle = '#1d1a17';
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(30, 60);
+  ctx.quadraticCurveTo(50, 50, 70, 60);
+  ctx.lineWidth = 5;
+  ctx.strokeStyle = '#b07a4a';
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.ellipse(50, 40, 11, 7, 0, 0, Math.PI * 2);
+  ctx.fillStyle = '#2a1a10';
+  ctx.fill();
+}
+
+/** Where the boss will come up: a dark, broken patch with a red ring. */
+function paintCrack(ctx: CanvasRenderingContext2D, size: number): void {
+  const c = size / 2;
+  ctx.beginPath();
+  ctx.arc(c, c, size * 0.42, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(60, 34, 18, 0.75)';
+  ctx.fill();
+  ctx.lineWidth = size * 0.07;
+  ctx.strokeStyle = '#ff6b57';
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(c, size * 0.1);
+  ctx.lineTo(c - size * 0.08, c - size * 0.15);
+  ctx.lineTo(c + size * 0.08, c);
+  ctx.lineTo(c - size * 0.05, c + size * 0.15);
+  ctx.lineTo(c + size * 0.05, size * 0.9);
+  ctx.moveTo(size * 0.15, c - size * 0.05);
+  ctx.lineTo(c - size * 0.1, c);
+  ctx.moveTo(size * 0.85, c + size * 0.05);
+  ctx.lineTo(c + size * 0.1, c + size * 0.05);
+  ctx.lineWidth = size * 0.05;
+  ctx.strokeStyle = '#1d1a17';
+  ctx.stroke();
+}
+
+/** The mound of earth a boss pushes up as it moves underground. */
+function paintBurrow(ctx: CanvasRenderingContext2D, size: number): void {
+  const c = size / 2;
+  ctx.beginPath();
+  ctx.ellipse(c, c + size * 0.1, size * 0.36, size * 0.22, 0, Math.PI, 0);
+  ctx.closePath();
+  ctx.fillStyle = '#7a5030';
+  ctx.fill();
+  ctx.lineWidth = size * 0.06;
+  ctx.strokeStyle = '#1d1a17';
+  ctx.stroke();
+  ctx.fillStyle = '#5a3a1e';
+  for (const [dx, dy] of [
+    [-0.3, 0.18],
+    [0.32, 0.2],
+    [0.05, 0.24],
+  ] as const) {
+    ctx.beginPath();
+    ctx.arc(c + dx * size, c + dy * size, size * 0.04, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+/** Snail slime: a wet, glossy green smear. */
+function paintSlime(ctx: CanvasRenderingContext2D, size: number): void {
+  const c = size / 2;
+  ctx.fillStyle = 'rgba(150, 220, 170, 0.55)';
+  ctx.beginPath();
+  ctx.ellipse(c, c, size * 0.42, size * 0.3, 0.3, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = 'rgba(220, 255, 230, 0.6)';
+  ctx.beginPath();
+  ctx.ellipse(
+    c - size * 0.12,
+    c - size * 0.08,
+    size * 0.12,
+    size * 0.05,
+    0.3,
+    0,
+    Math.PI * 2,
+  );
+  ctx.fill();
 }

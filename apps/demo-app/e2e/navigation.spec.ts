@@ -128,6 +128,46 @@ test.describe('navigation', () => {
     ).toBeVisible();
   });
 
+  test('shows the campaign map and the collection of bosses', async ({
+    page,
+  }) => {
+    await page.goto('/campaign');
+
+    await expect(page.locator('[data-testid="campaign-area"]')).toHaveCount(3);
+    await expect(page.locator('[data-testid="area-map-stop"]')).toHaveCount(6);
+    await page.locator('[data-testid="area-map-stop"]').nth(5).click();
+    await expect(
+      page.locator('[data-testid="campaign-stage"]'),
+    ).toHaveAttribute('data-stage', 'gramado-5');
+
+    await page.locator('[data-testid="campaign-collection-link"]').click();
+    await expect(page).toHaveURL(/\/campaign\/collection$/);
+    await expect(page.locator('[data-testid="collection-boss"]')).toHaveCount(
+      3,
+    );
+    await expect(
+      page.locator('[data-testid="collection-boss"] canvas'),
+    ).toHaveCount(1);
+  });
+
+  test('the stages are played signed in', async ({ page }) => {
+    await page.goto('/campaign');
+
+    // With sign-in configured, a signed-out player is offered it in place of
+    // "play"; a build without it lets everyone play. Either way one shows.
+    await expect(
+      page
+        .locator(
+          '[data-testid="campaign-signin"], [data-testid="campaign-play"]:not([disabled])',
+        )
+        .first(),
+    ).toBeVisible();
+
+    // A direct link to a stage the player may not open goes back to the map.
+    await page.goto('/campaign/play/gramado-3');
+    await expect(page).toHaveURL(/\/campaign$/);
+  });
+
   test('opens an arena and an item up close', async ({ page }) => {
     await page.goto('/arenas');
     await page

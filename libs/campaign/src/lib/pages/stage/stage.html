@@ -1,0 +1,259 @@
+<section
+  class="stage"
+  [class.stage--game]="game()"
+  [class.stage--sideways]="sideways()"
+  [attr.data-stage]="stageId()"
+  data-testid="stage-page"
+>
+  <header class="stage__header">
+    <div>
+      <a routerLink="/campaign" class="stage__back" data-testid="stage-back"
+        >← {{ 'STAGE_PLAY.BACK' | translate }}</a
+      >
+      <p class="stage__code">
+        {{ 'CAMPAIGN.STAGE' | translate: { code: code() } }}
+      </p>
+      <h1 class="stage__title" data-testid="stage-title">
+        {{ stageKey(stageId(), 'NAME') | translate }}
+      </h1>
+    </div>
+    @if (me(); as player) {
+    <div class="stage__kit" data-testid="stage-kit">
+      <span class="stage__kit-label">{{ 'STAGE_PLAY.KIT' | translate }}</span>
+      <lib-player-badges [stats]="player" size="sm" testId="stage-kit" />
+    </div>
+    }
+    <ul class="stage__hud" role="list" data-testid="stage-hud">
+      <li class="stage__pill" data-testid="stage-lives">
+        {{ 'STAGE_PLAY.LIVES' | translate }} <strong>{{ lives() }}</strong>
+      </li>
+      <li class="stage__pill" data-testid="stage-score">
+        {{ 'STAGE_PLAY.SCORE' | translate }} <strong>{{ score() }}</strong>
+      </li>
+      @if (clock(); as time) {
+      <li class="stage__pill">
+        {{ 'STAGE_PLAY.TIME' | translate }} <strong>{{ time }}</strong>
+      </li>
+      } @if (!bonus()) {
+      <li class="stage__pill" data-testid="stage-creatures">
+        {{ 'STAGE_PLAY.CREATURES' | translate }}
+        <strong>{{ creaturesLeft() }}</strong>
+      </li>
+      }
+      <li
+        class="stage__pill"
+        [class.stage__pill--open]="exitOpen()"
+        data-testid="stage-exit"
+      >
+        {{ (exitOpen() ? 'STAGE_PLAY.EXIT_OPEN' : 'STAGE_PLAY.EXIT_SHUT') |
+        translate }}
+      </li>
+    </ul>
+  </header>
+
+  @if (boss(); as b) {
+  <div class="stage__boss" data-testid="stage-boss">
+    @if (bossId(); as id) {
+    <span class="stage__boss-name">{{ bossKey(id, 'NAME') | translate }}</span>
+    }
+    <span class="stage__boss-bar" aria-hidden="true">
+      @for (alive of b.segments; track $index) {
+      <span class="stage__boss-hp" [class.stage__boss-hp--gone]="!alive"></span>
+      }
+    </span>
+    <span class="stage__boss-count">{{ b.hp }}/{{ b.maxHp }}</span>
+  </div>
+  }
+
+  <div class="stage__board">
+    <div #arena class="stage__arena" data-testid="stage-arena"></div>
+
+    @if (status() === 'loading') {
+    <div class="stage__overlay">
+      <lib-spinner />
+      <p>{{ 'STAGE_PLAY.LOADING' | translate }}</p>
+    </div>
+    } @else if (status() === 'error') {
+    <div class="stage__overlay">
+      <lib-alert tone="danger">{{ 'STAGE_PLAY.ERROR' | translate }}</lib-alert>
+    </div>
+    } @else if (tapToPlay()) {
+    <button
+      type="button"
+      class="stage__overlay stage__tap"
+      (click)="tapPlay()"
+      data-testid="stage-tap"
+    >
+      <span class="stage__intro-code">
+        {{ 'CAMPAIGN.STAGE' | translate: { code: code() } }}
+      </span>
+      <span class="stage__result-title"
+        >{{ 'STAGE_PLAY.TAP' | translate }}</span
+      >
+      <span>{{ 'STAGE_PLAY.TAP_HINT' | translate }}</span>
+    </button>
+    } @else if (over() && result(); as r) {
+    <div
+      class="stage__overlay stage__overlay--result"
+      [attr.data-result]="r"
+      [attr.data-outcome]="outcome()"
+      data-testid="stage-result"
+    >
+      @if (r === 'cleared') {
+      <h2 class="stage__result-title">
+        {{ (bonus() ? 'STAGE_PLAY.BONUS_OVER' : 'STAGE_PLAY.CLEARED') |
+        translate }}
+      </h2>
+      <p>
+        {{ (bonus() ? 'STAGE_PLAY.BONUS_TEXT' : boss() ?
+        'STAGE_PLAY.BOSS_CLEARED_TEXT' : 'STAGE_PLAY.CLEARED_TEXT') | translate
+        }}
+      </p>
+      } @else if (outcome() === 'game-over') {
+      <h2 class="stage__result-title">
+        {{ 'STAGE_PLAY.GAME_OVER' | translate }}
+      </h2>
+      <p>
+        {{ 'STAGE_PLAY.GAME_OVER_TEXT' | translate: { code: startCode() } }}
+      </p>
+      } @else {
+      <h2 class="stage__result-title">{{ 'STAGE_PLAY.FAILED' | translate }}</h2>
+      <p>{{ 'STAGE_PLAY.RETRY_TEXT' | translate: { n: lives() } }}</p>
+      }
+      <dl class="stage__tally" data-testid="stage-tally">
+        <div>
+          <dt>{{ 'STAGE_PLAY.STAGE_POINTS' | translate }}</dt>
+          <dd>{{ tally().score }}</dd>
+        </div>
+        <div>
+          <dt>{{ 'STAGE_PLAY.RUN_POINTS' | translate }}</dt>
+          <dd>{{ score() }}</dd>
+        </div>
+        <div>
+          <dt>{{ 'STAGE_PLAY.BEST' | translate }}</dt>
+          <dd>{{ best() }}</dd>
+        </div>
+      </dl>
+      <div class="stage__actions">
+        @if (r === 'cleared' && next(); as id) {
+        <a
+          [routerLink]="['/campaign/play', id]"
+          libButton
+          variant="primary"
+          data-testid="stage-next"
+        >
+          {{ 'STAGE_PLAY.NEXT' | translate }}
+        </a>
+        } @if (r === 'failed') {
+        <button
+          type="button"
+          libButton
+          variant="primary"
+          (click)="startOver()"
+          data-testid="stage-retry"
+        >
+          {{ (outcome() === 'game-over' ? 'STAGE_PLAY.START_OVER' :
+          'STAGE_PLAY.RETRY') | translate: { code: startCode() } }}
+        </button>
+        }
+        <a routerLink="/campaign" libButton variant="secondary">
+          {{ 'STAGE_PLAY.BACK' | translate }}
+        </a>
+      </div>
+    </div>
+    } @else if (intro()) {
+    <div class="stage__overlay stage__overlay--intro" data-testid="stage-intro">
+      <p class="stage__intro-code">
+        {{ 'CAMPAIGN.STAGE' | translate: { code: code() } }}
+      </p>
+      <h2 class="stage__result-title">
+        {{ stageKey(stageId(), 'NAME') | translate }}
+      </h2>
+      @if (bonus()) {
+      <p>{{ 'STAGE_PLAY.BONUS_INTRO' | translate }}</p>
+      }
+    </div>
+    }
+
+    <div class="stage__buttons">
+      @if (game() && touch() && portrait()) {
+      <button
+        type="button"
+        class="stage__button"
+        [attr.aria-label]="(upright() ? 'PLAY.SIDEWAYS' : 'PLAY.UPRIGHT') | translate"
+        [title]="(upright() ? 'PLAY.SIDEWAYS' : 'PLAY.UPRIGHT') | translate"
+        [attr.aria-pressed]="upright()"
+        (click)="toggleUpright()"
+        data-testid="stage-turn"
+      >
+        <span aria-hidden="true">🔄</span>
+      </button>
+      } @if (game()) {
+      <button
+        type="button"
+        class="stage__button"
+        [attr.aria-label]="(pad() ? 'PLAY.PAD_OFF' : 'PLAY.PAD_ON') | translate"
+        [title]="(pad() ? 'PLAY.PAD_OFF' : 'PLAY.PAD_ON') | translate"
+        [attr.aria-pressed]="pad()"
+        (click)="togglePad()"
+        data-testid="stage-pad"
+      >
+        <span aria-hidden="true">🎮</span>
+      </button>
+      }
+      <button
+        type="button"
+        class="stage__button"
+        [attr.aria-label]="(game() ? 'PLAY.COLLAPSE' : 'PLAY.EXPAND') | translate"
+        [title]="(game() ? 'PLAY.COLLAPSE' : 'PLAY.EXPAND') | translate"
+        [attr.aria-pressed]="game()"
+        (click)="toggleGame()"
+        data-testid="stage-expand"
+      >
+        <span aria-hidden="true">{{ game() ? '✕' : '⛶' }}</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- In game mode the page's header is hidden: a strip over the arena says what matters -->
+  @if (game()) {
+  <div class="stage__strip" data-testid="stage-strip">
+    <span class="stage__chip">
+      {{ 'CAMPAIGN.STAGE' | translate: { code: code() } }}
+    </span>
+    <span class="stage__chip">❤️ {{ lives() }}</span>
+    <span class="stage__chip">⭐ {{ score() }}</span>
+    @if (clock(); as time) {
+    <span class="stage__chip">⏱ {{ time }}</span>
+    } @if (!bonus()) {
+    <span class="stage__chip">🐜 {{ creaturesLeft() }}</span>
+    } @if (exitOpen()) {
+    <span class="stage__chip stage__chip--open"
+      >{{ 'STAGE_PLAY.EXIT_OPEN' | translate }}</span
+    >
+    } @if (boss(); as b) {
+    <span class="stage__chip stage__chip--boss"
+      >👑 {{ b.hp }}/{{ b.maxHp }}</span
+    >
+    } @if (me(); as player) {
+    <span class="stage__chip">
+      <lib-player-badges [stats]="player" size="sm" testId="stage-strip-kit" />
+    </span>
+    }
+  </div>
+  } @if (game() && pad()) {
+  <lib-virtual-gamepad
+    class="stage__gamepad"
+    [ability]="!!me()?.mount"
+    [detonate]="!!me()?.remote"
+    [turned]="sideways()"
+    (direction)="onPadDirection($event)"
+    (bombPress)="padBomb()"
+    (abilityPress)="padAbility()"
+    (detonatePress)="padDetonate()"
+    data-testid="stage-gamepad"
+  />
+  } @if (!game()) {
+  <p class="stage__keys">{{ 'STAGE_PLAY.KEYS' | translate }}</p>
+  }
+</section>

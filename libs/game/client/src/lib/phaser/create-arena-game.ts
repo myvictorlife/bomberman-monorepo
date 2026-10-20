@@ -26,6 +26,7 @@ export function createArenaGame(
           seed: options.seed ?? Date.now(),
           players: options.players,
           mapId: options.mapId,
+          stageId: options.stageId,
         },
         options.bots,
       );

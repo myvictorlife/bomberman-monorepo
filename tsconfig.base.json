@@ -37,7 +37,8 @@
       "@libs/audio-settings": ["libs/shared/audio-settings/src/index.ts"],
       "@libs/controls-settings": ["libs/shared/controls-settings/src/index.ts"],
       "@libs/online": ["libs/online/src/index.ts"],
-      "@libs/mounts": ["libs/mounts/src/index.ts"]
+      "@libs/mounts": ["libs/mounts/src/index.ts"],
+      "@libs/campaign": ["libs/campaign/src/index.ts"]
     },
     "strict": true,
     "noUncheckedSideEffectImports": false,

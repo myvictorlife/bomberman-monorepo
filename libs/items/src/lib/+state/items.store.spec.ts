@@ -20,6 +20,12 @@ describe('ItemsStore', () => {
       'vest',
       'glove',
       'kick',
+      'wallpass',
+      'fullfire',
+      'powerbomb',
+      'skull',
+      'clock',
+      'oneup',
     ]);
     expect(store.selected()).toBe('egg');
   });

@@ -19,7 +19,11 @@ export interface Reach {
   order: number[];
 }
 
-/** Floor with no bomb on it — or the bomb the bot still stands on, which it can walk off. */
+/**
+ * Floor with no bomb on it — or the bomb the bot still stands on, which it
+ * can walk off. A skull lying there is walked round, like a wall: a curse
+ * would undo every plan.
+ */
 export function isWalkable(
   state: GameState,
   player: Player,
@@ -27,6 +31,12 @@ export function isWalkable(
   row: number,
 ): boolean {
   if (tileAt(state, col, row) !== 'empty') return false;
+  if (
+    state.powerUps.some(
+      (p) => p.kind === 'skull' && p.col === col && p.row === row,
+    )
+  )
+    return false;
   const bomb = state.bombs.find((b) => b.col === col && b.row === row);
   return !bomb || bomb.passThrough.includes(player.id);
 }

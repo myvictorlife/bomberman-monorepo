@@ -94,6 +94,12 @@ describe('ItemDetail', () => {
         '/items/vest',
         '/items/glove',
         '/items/kick',
+        '/items/wallpass',
+        '/items/fullfire',
+        '/items/powerbomb',
+        '/items/skull',
+        '/items/clock',
+        '/items/oneup',
       ]);
       // 1 stage + 3 sizes + EGG_STAGES crack stages.
       expect(spectator.queryAll('lib-sprite-tile')).toHaveLength(

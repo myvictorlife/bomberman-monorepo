@@ -35,7 +35,12 @@ export const MAX_SPEED_LEVEL = 4;
 export const BASE_SPEED = 3.2;
 export const SPEED_PER_LEVEL = 0.6;
 
-/** Power-ups hidden under the soft blocks of a fresh arena. */
+/**
+ * Power-ups hidden under the soft blocks of a fresh arena. The campaign's
+ * items (wall pass, full fire, power bomb, skull, clock, extra life) are
+ * hidden by each stage instead — see `items` in `campaign.ts` — so versus
+ * and the online room keep their balance until the bots are tuned for them.
+ */
 export const POWER_UP_COUNTS = {
   bomb: 8,
   fire: 8,
@@ -47,6 +52,16 @@ export const POWER_UP_COUNTS = {
   glove: 2,
   kick: 2,
 } as const;
+
+/** How long a skull's curse lasts. */
+export const CURSE_TICKS = 10 * TICK_RATE;
+/** Speeds the `slow` and `fast` curses force, in tiles per second. */
+export const CURSE_SLOW_SPEED = 1.6;
+export const CURSE_FAST_SPEED = 7;
+/** The `shortfuse` curse: bombs go off this soon. */
+export const CURSE_FUSE_TICKS = Math.round(1 * TICK_RATE);
+/** What the clock puts back on the round's clock. */
+export const CLOCK_BONUS_TICKS = 30 * TICK_RATE;
 
 /** How far the glove throws a bomb, before any bounce. */
 export const GLOVE_THROW_CELLS = 3;

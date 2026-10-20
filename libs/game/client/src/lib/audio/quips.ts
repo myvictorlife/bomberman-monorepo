@@ -15,6 +15,12 @@ export type QuipMoment =
   | 'power-vest'
   | 'power-glove'
   | 'power-kick'
+  | 'power-wallpass'
+  | 'power-fullfire'
+  | 'power-powerbomb'
+  | 'power-skull'
+  | 'power-clock'
+  | 'power-oneup'
   | 'mount-tatu'
   | 'mount-pato'
   | 'mount-bernardo'
@@ -46,6 +52,21 @@ export const QUIPS: Readonly<Record<QuipMoment, readonly string[]>> = {
   'power-vest': ['Blindado!', 'Colete novo!', 'Aguenta uma!'],
   'power-glove': ['Luva na mão!', 'Pega e joga!', 'Segura essa!'],
   'power-kick': ['Chuta que é gol!', 'Pé de ouro!', 'Lá vai bomba!'],
+  'power-wallpass': [
+    'Atravessa parede!',
+    'Virou fantasma!',
+    'Tijolo? Que tijolo?',
+  ],
+  'power-fullfire': ['Fogo no máximo!', 'Queima tudo!', 'Agora é incêndio!'],
+  'power-powerbomb': ['Superbomba!', 'Essa vai longe!', 'Bombão!'],
+  'power-skull': [
+    'Xi, caveira!',
+    'Deu ruim!',
+    'Que azar!',
+    'Passa pra frente!',
+  ],
+  'power-clock': ['Mais tempo!', 'Ganhou um fôlego!', 'Relógio na mão!'],
+  'power-oneup': ['Vida extra!', 'Mais uma chance!', 'Gato de sete vidas!'],
   'mount-tatu': ['Chocou um tatu!', 'Olha o tatu!', 'Blindado!'],
   'mount-pato': ['Um pato? Um pato!', 'Quá quá!', 'Pato de borracha, é sério?'],
   'mount-bernardo': ['Cachorrão!', 'Bom menino!', 'Resgate chegou!'],

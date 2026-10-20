@@ -1,0 +1,427 @@
+.stage {
+  max-width: 64rem;
+  margin: 0 auto;
+  padding: var(--space-4) var(--space-4) var(--space-8);
+}
+
+.stage__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.stage__back {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  text-decoration: none;
+
+  &:hover {
+    color: var(--color-text-primary);
+  }
+}
+
+.stage__code {
+  margin-top: var(--space-2);
+  color: var(--color-warning);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.stage__title {
+  color: var(--color-text-primary);
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+}
+
+.stage__hud {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.stage__kit {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.stage__kit-label {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.stage__pill {
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  background: var(--color-bg-surface);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+
+  strong {
+    color: var(--color-text-primary);
+  }
+}
+
+.stage__pill--open {
+  border-color: #c9a227;
+  background: #fff3c4;
+  color: #5c4500;
+}
+
+/* A boss stage: the boss's name and one segment per hit it still takes. */
+.stage__boss {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+}
+
+.stage__boss-name {
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-bold);
+}
+
+.stage__boss-bar {
+  display: flex;
+  flex: 1 1 auto;
+  gap: 0.25rem;
+}
+
+.stage__boss-hp {
+  flex: 1 1 0;
+  height: 0.6rem;
+  border-radius: var(--radius-sm);
+  background: #e2483d;
+}
+
+.stage__boss-hp--gone {
+  background: var(--color-border);
+}
+
+.stage__boss-count {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+/* The arena keeps the grid's 15 × 13 shape and never runs past the screen. */
+.stage__board {
+  position: relative;
+  margin: var(--space-4) auto 0;
+  width: min(100%, calc(75vh * 15 / 13));
+  aspect-ratio: 15 / 13;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: #0b0b12;
+}
+
+.stage__arena {
+  position: absolute;
+  inset: 0;
+
+  // Phaser sizes the canvas to fit; the page centres it. The canvas is
+  // Phaser's, not the template's, so the rule has to reach past the view
+  // encapsulation.
+  ::ng-deep canvas {
+    position: absolute;
+    inset: 0;
+    margin: auto;
+  }
+}
+
+.stage__overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  color: #ffffff;
+  text-align: center;
+}
+
+.stage__overlay--result {
+  background: rgb(10 12 16 / 72%);
+}
+
+.stage__result-title {
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-bold);
+}
+
+.stage__overlay--intro {
+  background: rgb(10 12 16 / 55%);
+  pointer-events: none;
+  animation: stage-intro 1.8s ease forwards;
+}
+
+@keyframes stage-intro {
+  0% {
+    opacity: 0;
+  }
+  15%,
+  75% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.stage__intro-code {
+  color: #ffd36e;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+/* The end of a stage: its points, the run's, the best. */
+.stage__tally {
+  display: flex;
+  gap: var(--space-5);
+
+  div {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  dt {
+    color: #c3ccd3;
+    font-size: var(--font-size-sm);
+  }
+
+  dd {
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-bold);
+  }
+}
+
+.stage__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+}
+
+.stage__keys {
+  margin-top: var(--space-3);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  text-align: center;
+}
+
+/* The expand, controller and turn buttons, tucked in the board's top corner. */
+.stage__buttons {
+  position: absolute;
+  top: var(--space-2);
+  inset-inline-end: var(--space-2);
+  z-index: 3;
+  display: flex;
+  gap: var(--space-2);
+}
+
+.stage__button {
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 1px solid rgb(255 255 255 / 0.3);
+  border-radius: var(--radius-md);
+  background: rgb(0 0 0 / 0.5);
+  color: #fff;
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  backdrop-filter: blur(2px);
+
+  &:hover {
+    background: rgb(0 0 0 / 0.7);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-warning);
+    outline-offset: 2px;
+  }
+}
+
+/* "Tap to play": the whole board is the button. */
+.stage__tap {
+  z-index: 2;
+  border: 0;
+  background: rgb(0 0 0 / 0.65);
+  font: inherit;
+  cursor: pointer;
+}
+
+/*
+ * Game mode's HUD: a strip over the top of the board, fading out below. A
+ * phone held sideways has slack beside the arena, so there it becomes a
+ * column in the top-left corner; held upright it sits under the arena.
+ */
+.stage__strip {
+  position: absolute;
+  top: env(safe-area-inset-top);
+  inset-inline: 0;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+  padding: var(--space-2) 8rem var(--space-3) var(--space-2);
+  background: linear-gradient(rgb(0 0 0 / 0.6), transparent);
+  pointer-events: none;
+}
+
+.stage__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 0.125rem var(--space-2);
+  border-radius: 999px;
+  background: rgb(0 0 0 / 0.45);
+  color: #fff;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.stage__chip--open {
+  background: rgb(201 162 39 / 0.85);
+  color: #1d1a17;
+}
+
+.stage__chip--boss {
+  color: #ffb4a8;
+}
+
+.stage__gamepad {
+  z-index: 4;
+}
+
+/*
+ * Game mode: the page steps aside and the arena fills the screen, the
+ * on-screen controller over it — the same layout as `/play`. Sideways the
+ * arena sits in the middle with room for the thumbs either side; upright it
+ * sits at the top with the controller below.
+ */
+@mixin short-screen {
+  .stage__strip {
+    inset-inline-end: auto;
+    flex-direction: column;
+    align-items: flex-start;
+    // The slack beside the arena, which is as wide as the screen is tall × 15/13.
+    max-width: calc((100% - 100cqh * 15 / 13) / 2 - var(--space-2));
+    padding-inline-end: 0;
+    background: none;
+  }
+
+  .stage__chip {
+    flex-wrap: wrap;
+    white-space: normal;
+  }
+
+  .stage__gamepad {
+    --gamepad-gutter: var(--space-2);
+    --gamepad-pad: clamp(5.5rem, 26vmin, 8rem);
+  }
+}
+
+// The upright phone: the arena the full width at the top, the HUD under it,
+// the controls in what is left.
+@mixin upright-layout {
+  grid-template-rows: auto auto minmax(0, 1fr);
+
+  .stage__board {
+    aspect-ratio: 15 / 13;
+    overflow: visible;
+  }
+
+  .stage__strip {
+    position: static;
+    padding: var(--space-2) 8rem var(--space-2) var(--space-2);
+    background: none;
+  }
+
+  .stage__buttons {
+    top: 100%;
+    margin-top: var(--space-2);
+  }
+
+  .stage__gamepad {
+    position: relative;
+    inset: auto;
+    align-items: center;
+    min-height: 0;
+  }
+}
+
+.stage--game {
+  position: fixed;
+  container-type: size;
+  inset: 0;
+  // Over the site's fixed header too: on an iPhone, where the browser refuses
+  // full screen, this layout is all there is.
+  z-index: var(--z-modal);
+  display: grid;
+  grid-template-rows: minmax(0, 1fr);
+  max-width: none;
+  margin: 0;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right)
+    env(safe-area-inset-bottom) env(safe-area-inset-left);
+  background: #000;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  overscroll-behavior: none;
+
+  .stage__header,
+  .stage__boss,
+  .stage__keys {
+    display: none;
+  }
+
+  .stage__board {
+    width: 100%;
+    margin: 0;
+    min-height: 0;
+    aspect-ratio: auto;
+    border-radius: 0;
+  }
+
+  @media (orientation: landscape) and (max-height: 32rem) {
+    @include short-screen;
+  }
+
+  @media (orientation: portrait) {
+    &:not(.stage--sideways) {
+      @include upright-layout;
+    }
+
+    // Turned a quarter clockwise around its top-left corner, after being moved
+    // to the screen's right edge: the game is laid out as a landscape screen
+    // and the phone shows it sideways.
+    &.stage--sideways {
+      inset: 0 auto auto 100%;
+      width: 100dvh;
+      height: 100dvw;
+      padding: env(safe-area-inset-right) env(safe-area-inset-bottom)
+        env(safe-area-inset-left) env(safe-area-inset-top);
+      transform: rotate(90deg);
+      transform-origin: 0 0;
+
+      @media (max-width: 32rem) {
+        @include short-screen;
+      }
+    }
+  }
+}

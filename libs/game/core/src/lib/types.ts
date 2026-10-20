@@ -1,4 +1,6 @@
+import type { BossId, CreatureId } from './campaign';
 import type { CharacterId, MountId } from './characters';
+import type { PlayerKit } from './kit';
 import type { PlayerColorId } from './colors';
 import type { MapId } from './maps';
 
@@ -15,6 +17,10 @@ export type Tile = 'empty' | 'wall' | 'block';
  * `remote` change every bomb the player drops from then on; `vest` is a few
  * seconds of immunity. `glove` lets the player pick up the bomb they just
  * dropped and throw it; `kick` sends a bomb they walk into hopping one cell on.
+ * `wallpass` walks through soft blocks; `fullfire` takes the fire to its
+ * limit; `powerbomb` makes the first bomb of a volley reach as far as fire
+ * goes; `skull` is a curse for a few seconds; `clock` puts time back on the
+ * round's clock; `oneup` is an extra life in stage mode.
  */
 export type PowerUpKind =
   | 'bomb'
@@ -25,7 +31,32 @@ export type PowerUpKind =
   | 'remote'
   | 'vest'
   | 'glove'
-  | 'kick';
+  | 'kick'
+  | 'wallpass'
+  | 'fullfire'
+  | 'powerbomb'
+  | 'skull'
+  | 'clock'
+  | 'oneup';
+
+/**
+ * The skull's curses: dropping bombs non-stop, not being able to drop any,
+ * the keys turned round, crawling, racing, or bombs on a short fuse.
+ */
+export type CurseKind =
+  | 'diarrhea'
+  | 'constipation'
+  | 'reverse'
+  | 'slow'
+  | 'fast'
+  | 'shortfuse';
+
+export interface Curse {
+  kind: CurseKind;
+  untilTick: number;
+  /** When this player caught it: it cannot pass on again right away. */
+  sinceTick: number;
+}
 
 export type Direction = 'up' | 'down' | 'left' | 'right';
 
@@ -117,6 +148,14 @@ export interface Player {
   flight: Flight | null;
   /** Dizzy after a landing: no moving, no bombs, until this tick. */
   stunnedUntilTick: number;
+  /** Walks through soft blocks. */
+  wallPass: boolean;
+  /** The first bomb of a volley reaches as far as fire goes. */
+  powerBomb: boolean;
+  /** The skull: a curse until its tick, passed on by touching another player. */
+  curse: Curse | null;
+  /** Stage mode: stepped in a snail's slime — slower until this tick. */
+  slimedUntilTick: number;
 }
 
 export interface Bomb {
@@ -239,7 +278,130 @@ export type GameEvent =
   /** The round's clock ran out: walls start dropping. */
   | { type: 'arena-closing' }
   | { type: 'wall-dropped'; col: number; row: number }
-  | { type: 'round-over'; winnerId: string | null };
+  | { type: 'round-over'; winnerId: string | null }
+  /** Stage mode: a creature fell; `killerId` is whose flame it was. */
+  | {
+      type: 'creature-died';
+      creatureId: CreatureId;
+      col: number;
+      row: number;
+      killerId: string | null;
+    }
+  /** Stage mode: a creature took a hit and lived (a shell broke). */
+  | { type: 'creature-hurt'; col: number; row: number }
+  /** Stage mode: the last creature fell — the gate is open. */
+  | { type: 'exit-opened'; col: number; row: number }
+  | { type: 'player-exited'; playerId: string }
+  | { type: 'stage-over'; result: StageResult }
+  /** The boss went underground; then the ground cracked where it will come up. */
+  /** The skull: a curse fell on a player, or passed from one to another. */
+  | { type: 'cursed'; playerId: string; curse: CurseKind }
+  | { type: 'curse-passed'; fromId: string; toId: string }
+  /** The clock: seconds put back on the round's clock. */
+  | { type: 'time-added'; seconds: number }
+  /** Stage mode: an extra life; points scored, and where. */
+  | { type: 'life-gained'; playerId: string }
+  | {
+      type: 'points';
+      playerId: string | null;
+      points: number;
+      col: number;
+      row: number;
+    }
+  /** Stage mode: a flame on the uncovered gate — more creatures come out. */
+  | { type: 'exit-bombed'; col: number; row: number }
+  | { type: 'boss-dug'; col: number; row: number }
+  | { type: 'boss-crack'; col: number; row: number }
+  | { type: 'boss-emerged'; col: number; row: number }
+  | { type: 'boss-hurt'; col: number; row: number }
+  | { type: 'boss-died'; col: number; row: number; killerId: string | null }
+  | { type: 'mound-hurt'; col: number; row: number }
+  | { type: 'mound-destroyed'; col: number; row: number };
+
+/**
+ * Where the boss is in its cycle: `up` at the start, then `sinking` into the
+ * ground, `under` it, the ground `cracking` where it will come up, and
+ * `stunned` once it is out — the only time, with `up`, a flame hurts it.
+ */
+export type BossPhase = 'up' | 'sinking' | 'under' | 'crack' | 'stunned';
+
+export interface BossBody {
+  bossId: BossId;
+  hp: number;
+  maxHp: number;
+  phase: BossPhase;
+  /** When the current phase ends. */
+  phaseEndsAtTick: number;
+  phaseStartedAtTick: number;
+  /** Position in tiles; underground, the mound of earth moving across. */
+  x: number;
+  y: number;
+  /** Where it set off from underground, and where it will come up. */
+  from: { col: number; row: number };
+  target: { col: number; row: number };
+  /** Cracks that come to nothing: a feint, from half health on. */
+  fakes: { col: number; row: number }[];
+  hurtUntilTick: number;
+  alive: boolean;
+  diedAtTick: number | null;
+}
+
+/** An anthill in a boss stage: a solid cell that sends out the boss's creatures. */
+export interface Mound {
+  id: number;
+  col: number;
+  row: number;
+  hp: number;
+  hurtUntilTick: number;
+  alive: boolean;
+  nextSpawnTick: number;
+}
+
+/** A creature of the campaign walking the arena; see `stage.ts`. */
+export interface CreatureBody {
+  id: number;
+  creatureId: CreatureId;
+  /** Position in tiles, like a player's: `(c, r)` is the centre of cell `c, r`. */
+  x: number;
+  y: number;
+  facing: Direction;
+  hp: number;
+  /** Flames do not hurt it again until this tick — one flame, one hit. */
+  hurtUntilTick: number;
+  alive: boolean;
+  diedAtTick: number | null;
+  /** A quero-quero dashing at a player it saw, until something stops it. */
+  charging?: boolean;
+}
+
+export type StageResult = 'cleared' | 'failed';
+
+/** What a stage adds to a round: its creatures, its gate, who went through it. */
+export interface StageRun {
+  stageId: string;
+  /** Seeds the creatures' choices: the same stage plays the same everywhere. */
+  seed: number;
+  creatures: CreatureBody[];
+  /** The gate, hidden under a block until it burns. */
+  exit: { col: number; row: number };
+  /** Players who went through the open gate, by id. */
+  exited: string[];
+  result: StageResult | null;
+  /** The stage's boss, on the last stage of an area; `null` elsewhere. */
+  boss: BossBody | null;
+  /** The boss's anthills; empty without a boss. */
+  mounds: Mound[];
+  /** A bonus stage: no creatures, items everywhere, the gate open, short on time. */
+  bonus: boolean;
+  /** Points scored in this stage, by player id. */
+  score: Record<string, number>;
+  /** Extra lives picked up in this stage, by player id. */
+  livesGained: Record<string, number>;
+  /** Snail slime on the floor: whoever steps in it slows down. */
+  slime: { col: number; row: number; untilTick: number }[];
+  /** A flame on the gate brings creatures out once per flame. */
+  exitHurtUntilTick: number;
+}
 
 export type GamePhase = 'playing' | 'over';
 
@@ -274,6 +436,8 @@ export interface GameState {
   closingWalls: boolean;
   /** What happened during the last tick — sounds and effects read these. */
   events: GameEvent[];
+  /** Stage mode: the creatures and the gate. Absent in a versus round. */
+  stage?: StageRun | null;
 }
 
 export interface PlayerSetup {
@@ -283,6 +447,8 @@ export interface PlayerSetup {
   characterId?: CharacterId;
   /** The colour they asked for; the round may give the closest free one. */
   color?: PlayerColorId;
+  /** Stage mode: what they bring from the last stage, instead of the starting kit. */
+  kit?: PlayerKit;
 }
 
 export interface GameOptions {
@@ -296,4 +462,9 @@ export interface GameOptions {
   closingWalls?: boolean;
   /** Who starts on the border, throwing bombs in. */
   outsiders?: PlayerSetup[];
+  /**
+   * Plays a stage of the campaign instead of a versus round: its arena, its
+   * creatures and its gate; `mapId` is ignored. See `stage.ts`.
+   */
+  stageId?: string;
 }

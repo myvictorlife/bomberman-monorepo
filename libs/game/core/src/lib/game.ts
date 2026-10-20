@@ -3,6 +3,9 @@ import { cellIndex, generateArena, inBounds, tileAt } from './arena';
 import {
   BLOCK_BURN_TICKS,
   BOMB_FUSE_TICKS,
+  CLOCK_BONUS_TICKS,
+  CURSE_FUSE_TICKS,
+  CURSE_TICKS,
   ENTRY_SHIELD_TICKS,
   FLAME_TICKS,
   GLOVE_THROW_CELLS,
@@ -16,9 +19,13 @@ import {
   SPAWN_CELLS,
   START_BOMBS,
   START_FIRE,
+  TICK_RATE,
   VEST_TICKS,
 } from './constants';
+import { findStage } from './campaign';
+import { applyKit } from './kit';
 import { DEFAULT_MAP_ID, findMap } from './maps';
+import { advanceStage, setUpStage, stageMapId, updateStageEnd } from './stage';
 import {
   DIRECTION_DELTA,
   movePlayer,
@@ -45,6 +52,7 @@ import {
 } from './grab';
 import {
   Bomb,
+  CurseKind,
   Direction,
   FlameShape,
   GameEvent,
@@ -61,12 +69,15 @@ export function createGame(options: GameOptions): GameState {
   if (options.players.length < 1 || options.players.length > MAX_PLAYERS) {
     throw new Error(`A round needs 1–${MAX_PLAYERS} players.`);
   }
-  const map = findMap(options.mapId ?? DEFAULT_MAP_ID);
+  const stageMap = options.stageId ? stageMapId(options.stageId) : undefined;
+  const map = findMap(stageMap ?? options.mapId ?? DEFAULT_MAP_ID);
   const arena = generateArena(options.seed, map);
   const colors = assignColors(options.players.map((p) => p.color));
   const players: Player[] = options.players.map((setup, slot) => {
     const [x, y] = SPAWN_CELLS[slot] as readonly [number, number];
-    return newPlayer(setup, slot, x, y, colors[slot]);
+    const player = newPlayer(setup, slot, x, y, colors[slot]);
+    if (setup.kit) applyKit(player, setup.kit);
+    return player;
   });
 
   const state: GameState = {
@@ -96,6 +107,18 @@ export function createGame(options: GameOptions): GameState {
     events: [],
   };
   for (const setup of options.outsiders ?? []) addOutsider(state, setup);
+  if (options.stageId) {
+    setUpStage(state, options.stageId, options.seed);
+    // A stage runs against the clock even alone: the walls close in on whoever
+    // is left. A bonus stage has its own, short one.
+    const seconds = findStage(options.stageId)?.seconds;
+    state.closesAtTick =
+      options.roundTicks !== undefined
+        ? options.roundTicks
+        : seconds
+          ? seconds * TICK_RATE
+          : ROUND_TIME_TICKS;
+  }
   return state;
 }
 
@@ -138,6 +161,10 @@ function newPlayer(
     carriedUntilTick: 0,
     flight: null,
     stunnedUntilTick: 0,
+    wallPass: false,
+    powerBomb: false,
+    curse: null,
+    slimedUntilTick: 0,
   };
 }
 
@@ -163,7 +190,9 @@ export function tick(
       player.moving = false;
       continue;
     }
-    const input = inputs[player.id];
+    if (player.curse && state.tick >= player.curse.untilTick)
+      player.curse = null;
+    const input = cursedInput(player, inputs[player.id]);
     if (input?.ability) useAbility(state, player, input.direction);
     if (input?.detonate) detonateOldest(state, player);
     if (player.jump) {
@@ -184,6 +213,7 @@ export function tick(
   }
 
   carryAlong(state);
+  passCurses(state);
 
   for (const outsider of state.outsiders) {
     const input = inputs[outsider.id];
@@ -201,7 +231,10 @@ export function tick(
   landThrownPlayers(state);
   closeArena(state);
   killPlayersInFlames(state);
-  updateRoundEnd(state);
+  if (state.stage) {
+    for (const player of advanceStage(state)) hitPlayer(state, player, null);
+    updateStageEnd(state);
+  } else updateRoundEnd(state);
   return state;
 }
 
@@ -466,7 +499,22 @@ function shortCircuit(state: GameState, player: Player, radius: number): void {
 
 function placeBomb(state: GameState, player: Player): void {
   if (activeBombCount(state, player.id) >= player.maxBombs) return;
-  placeBombAt(state, player, ...playerCell(player));
+  placeBombAt(
+    state,
+    player,
+    ...playerCell(player),
+    nextBombRange(state, player),
+  );
+}
+
+/**
+ * How far the next bomb a player drops will reach: their fire — or, with the
+ * power bomb, as far as fire goes for the first of a volley.
+ */
+export function nextBombRange(state: GameState, player: Player): number {
+  return player.powerBomb && activeBombCount(state, player.id) === 0
+    ? MAX_FIRE
+    : player.fireRange;
 }
 
 /**
@@ -495,6 +543,7 @@ function placeBombAt(
   player: Player,
   col: number,
   row: number,
+  range = player.fireRange,
 ): boolean {
   if (!inBounds(state, col, row)) return false;
   if (state.bombs.some((b) => b.col === col && b.row === row)) return false;
@@ -505,8 +554,10 @@ function placeBombAt(
     col,
     row,
     ownerId: player.id,
-    fuse: BOMB_FUSE_TICKS,
-    range: player.fireRange,
+    fuse: isCursed(state, player, 'shortfuse')
+      ? CURSE_FUSE_TICKS
+      : BOMB_FUSE_TICKS,
+    range,
     passThrough: state.players
       .filter((p) => p.alive && overlapsCell(p, col, row))
       .map((p) => p.id),
@@ -553,6 +604,16 @@ function collectPowerUps(state: GameState): void {
       });
     } else if (powerUp.kind === 'vest') {
       player.vestUntilTick = state.tick + VEST_TICKS;
+    } else if (powerUp.kind === 'skull') {
+      curse(state, player, col, row);
+    } else if (powerUp.kind === 'clock') {
+      addTime(state);
+    } else if (powerUp.kind === 'oneup') {
+      if (state.stage) {
+        const gained = state.stage.livesGained;
+        gained[player.id] = (gained[player.id] ?? 0) + 1;
+        state.events.push({ type: 'life-gained', playerId: player.id });
+      }
     } else {
       applyPowerUp(player, powerUp.kind);
     }
@@ -582,8 +643,20 @@ export function applyPowerUp(player: Player, kind: PowerUpKind): void {
     case 'kick':
       player.kick = true;
       break;
+    case 'wallpass':
+      player.wallPass = true;
+      break;
+    case 'fullfire':
+      player.fireRange = MAX_FIRE;
+      break;
+    case 'powerbomb':
+      player.powerBomb = true;
+      break;
     case 'egg':
     case 'vest':
+    case 'skull':
+    case 'clock':
+    case 'oneup':
       // These need the game state; see `collectPowerUps`.
       break;
   }
@@ -769,38 +842,46 @@ function killPlayersInFlames(state: GameState): void {
   // A copy: a kill by an outsider adds a player, who must not be judged this tick.
   for (const player of [...state.players]) {
     if (!player.alive) continue;
-    if (
-      state.tick < player.shieldedUntilTick ||
-      state.tick < player.vestUntilTick
-    )
-      continue;
     // In the air (jumping, held overhead or thrown), flames pass underneath.
     if (player.jump || isAirborne(player)) continue;
     const [col, row] = playerCell(player);
     const flame = state.flames.find((f) => f.col === col && f.row === row);
-    if (!flame) continue;
-    if (player.mountId) {
-      // The mount takes the hit; the rider gets a moment to leave the flame.
-      player.mountId = null;
-      player.abilityUntilTick = 0;
-      player.shieldedUntilTick = state.tick + MOUNT_SHIELD_TICKS;
-      state.events.push({ type: 'mount-lost', playerId: player.id });
-      continue;
-    }
-    player.alive = false;
-    player.moving = false;
-    player.diedAtTick = state.tick;
-    dropHeldBomb(state, player);
-    letGo(state, player);
-    state.events.push({
-      type: 'player-died',
-      playerId: player.id,
-      killerId: flame.ownerId,
-    });
+    if (!flame || !hitPlayer(state, player, flame.ownerId)) continue;
 
     const thrower = state.outsiders.find((o) => o.id === flame.ownerId);
     if (thrower) enterArena(state, thrower, player);
   }
+}
+
+/**
+ * Something deadly reached a player — a flame, or a creature in stage mode.
+ * Shielded or in the vest, nothing happens; on a mount, the mount takes the
+ * hit and the rider gets a moment to get away. Returns whether they are out.
+ */
+function hitPlayer(
+  state: GameState,
+  player: Player,
+  killerId: string | null,
+): boolean {
+  if (
+    state.tick < player.shieldedUntilTick ||
+    state.tick < player.vestUntilTick
+  )
+    return false;
+  if (player.mountId) {
+    player.mountId = null;
+    player.abilityUntilTick = 0;
+    player.shieldedUntilTick = state.tick + MOUNT_SHIELD_TICKS;
+    state.events.push({ type: 'mount-lost', playerId: player.id });
+    return false;
+  }
+  player.alive = false;
+  player.moving = false;
+  player.diedAtTick = state.tick;
+  dropHeldBomb(state, player);
+  letGo(state, player);
+  state.events.push({ type: 'player-died', playerId: player.id, killerId });
+  return true;
 }
 
 /**
@@ -848,4 +929,103 @@ function updateRoundEnd(state: GameState): void {
   state.phase = 'over';
   state.winnerId = alive.length === 1 ? (alive[0]?.id ?? null) : null;
   state.events.push({ type: 'round-over', winnerId: state.winnerId });
+}
+
+/** The skull's curses, in the order a pickup cycles through them. */
+export const CURSE_KINDS: readonly CurseKind[] = [
+  'diarrhea',
+  'constipation',
+  'reverse',
+  'slow',
+  'fast',
+  'shortfuse',
+];
+
+const REVERSED: Record<Direction, Direction> = {
+  up: 'down',
+  down: 'up',
+  left: 'right',
+  right: 'left',
+};
+
+/** Whether `player` is under the `kind` curse right now. */
+export function isCursed(
+  state: Pick<GameState, 'tick'>,
+  player: Player,
+  kind: CurseKind,
+): boolean {
+  return player.curse?.kind === kind && state.tick < player.curse.untilTick;
+}
+
+/**
+ * A skull: a curse for {@link CURSE_TICKS}. Which one is random to the eye —
+ * from the tick and the cell — and the same on every machine.
+ */
+function curse(
+  state: GameState,
+  player: Player,
+  col: number,
+  row: number,
+): void {
+  const kind = CURSE_KINDS[
+    (state.tick + col * 3 + row * 5) % CURSE_KINDS.length
+  ] as CurseKind;
+  player.curse = {
+    kind,
+    untilTick: state.tick + CURSE_TICKS,
+    sinceTick: state.tick,
+  };
+  state.events.push({ type: 'cursed', playerId: player.id, curse: kind });
+}
+
+/** The keys as a curse turns them: reversed, a bomb on every tick, or none at all. */
+function cursedInput(
+  player: Player,
+  input: PlayerInput | undefined,
+): PlayerInput | undefined {
+  const kind = player.curse?.kind;
+  if (!kind) return input;
+  const held = input ?? { direction: null, bomb: false };
+  if (kind === 'reverse')
+    return {
+      ...held,
+      direction: held.direction ? REVERSED[held.direction] : null,
+    };
+  if (kind === 'diarrhea') return { ...held, bomb: true };
+  if (kind === 'constipation') return { ...held, bomb: false };
+  return input;
+}
+
+/**
+ * Touching passes a curse on: the one who had it is rid of it, the other
+ * takes the time it had left. Not straight back — a curse caught this
+ * second does not pass on yet.
+ */
+function passCurses(state: GameState): void {
+  const players = state.players.filter((p) => p.alive && !isAirborne(p));
+  for (const from of players) {
+    const held = from.curse;
+    if (!held || state.tick - held.sinceTick < TICK_RATE) continue;
+    const to = players.find(
+      (p) =>
+        p !== from &&
+        !p.curse &&
+        Math.abs(p.x - from.x) < 0.7 &&
+        Math.abs(p.y - from.y) < 0.7,
+    );
+    if (!to) continue;
+    to.curse = { ...held, sinceTick: state.tick };
+    from.curse = null;
+    state.events.push({ type: 'curse-passed', fromId: from.id, toId: to.id });
+  }
+}
+
+/** The clock: more time before the arena closes in — only while it has not started to. */
+function addTime(state: GameState): void {
+  if (state.closesAtTick === null || state.tick >= state.closesAtTick) return;
+  state.closesAtTick += CLOCK_BONUS_TICKS;
+  state.events.push({
+    type: 'time-added',
+    seconds: CLOCK_BONUS_TICKS / TICK_RATE,
+  });
 }

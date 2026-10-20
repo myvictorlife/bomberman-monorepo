@@ -1,0 +1,112 @@
+<section class="collection">
+  <a routerLink=".." class="collection__back"
+    >← {{ 'COLLECTION.BACK' | translate }}</a
+  >
+  <header class="collection__header">
+    <div>
+      <h1 class="collection__title" data-testid="collection-title">
+        {{ 'COLLECTION.TITLE' | translate }}
+      </h1>
+      <p class="collection__lead">{{ 'COLLECTION.LEAD' | translate }}</p>
+    </div>
+    <lib-segmented-control
+      [options]="tabs"
+      [value]="tab()"
+      [label]="'COLLECTION.TABS' | translate"
+      (valueChange)="setTab($event)"
+    />
+  </header>
+
+  @if (tab() === 'bosses') {
+  <p class="collection__count" data-testid="collection-count">
+    {{ 'COLLECTION.COUNT' | translate: { n: bossesKnown(), total:
+    bosses().length } }}
+  </p>
+  <ul class="collection__bosses" role="list">
+    @for (b of bosses(); track b.areaId) {
+    <li
+      class="collection__boss"
+      [attr.data-status]="b.status"
+      data-testid="collection-boss"
+    >
+      <div class="collection__stage">
+        <lib-badge
+          class="collection__status"
+          [tone]="b.status === 'defeated' ? 'success' : b.status === 'known' ? 'warning' : 'neutral'"
+          variant="solid"
+          [pill]="true"
+          >{{ 'COLLECTION.STATUS.' + b.status | translate }}</lib-badge
+        >
+        @if ((b.status === 'known' || b.status === 'defeated') && b.bossId) {
+        <lib-creature-sprite [subject]="{ boss: b.bossId }" [size]="200" />
+        } @else {
+        <span class="collection__mystery" aria-hidden="true">?</span>
+        }
+      </div>
+      <div class="collection__body">
+        <span class="collection__area"
+          >{{ 'CAMPAIGN.AREA' | translate: { n: b.areaNumber } }} · {{
+          areaKey(b.areaId) | translate }}</span
+        >
+        @if ((b.status === 'known' || b.status === 'defeated') && b.bossId) {
+        <h2 class="collection__name">
+          {{ bossKey(b.bossId, 'NAME') | translate }}
+        </h2>
+        <p class="collection__desc">
+          {{ bossKey(b.bossId, 'DESC') | translate }}
+        </p>
+        <p class="collection__stat">
+          {{ 'COLLECTION.HITS' | translate: { n: boss(b.bossId).hp } }}
+        </p>
+        } @else {
+        <h2 class="collection__name collection__name--unknown">???</h2>
+        <p class="collection__desc">
+          {{ 'COLLECTION.HINT.' + b.status | translate }}
+        </p>
+        }
+      </div>
+    </li>
+    }
+  </ul>
+  } @else {
+  <p class="collection__count" data-testid="collection-count">
+    {{ 'COLLECTION.COUNT' | translate: { n: creaturesKnown(), total:
+    creatures().length } }}
+  </p>
+  <ul class="collection__creatures" role="list">
+    @for (c of creatures(); track c.areaId + (c.creatureId ?? '')) {
+    <li
+      class="collection__creature"
+      [class.collection__creature--unknown]="!c.creatureId"
+      data-testid="collection-creature"
+    >
+      @if (c.creatureId; as id) {
+      <lib-creature-sprite [subject]="{ creature: id }" [size]="96" />
+      <h2 class="collection__creature-name">
+        {{ creatureKey(id, 'NAME') | translate }}
+      </h2>
+      <span class="collection__creature-kind"
+        >{{ creatureKey(id, 'KIND') | translate }}</span
+      >
+      <p class="collection__desc">{{ creatureKey(id, 'DESC') | translate }}</p>
+      <p class="collection__stat">
+        {{ 'COLLECTION.CREATURE_STATS' | translate: { hp: creature(id).hp,
+        points: creature(id).points } }}
+      </p>
+      } @else {
+      <span
+        class="collection__mystery collection__mystery--small"
+        aria-hidden="true"
+        >?</span
+      >
+      <h2 class="collection__creature-name">???</h2>
+      <span class="collection__creature-kind"
+        >{{ 'CAMPAIGN.AREA' | translate: { n: c.areaNumber } }} · {{
+        areaKey(c.areaId) | translate }}</span
+      >
+      }
+    </li>
+    }
+  </ul>
+  }
+</section>

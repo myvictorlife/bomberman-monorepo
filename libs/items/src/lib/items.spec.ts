@@ -12,6 +12,12 @@ describe('items', () => {
       'vest',
       'glove',
       'kick',
+      'wallpass',
+      'fullfire',
+      'powerbomb',
+      'skull',
+      'clock',
+      'oneup',
     ]);
     expect(isItemId('egg')).toBe(true);
     expect(isItemId('sword')).toBe(false);

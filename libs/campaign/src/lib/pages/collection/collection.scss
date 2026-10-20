@@ -1,0 +1,188 @@
+.collection {
+  max-width: 76rem;
+  margin: 0 auto;
+  padding: var(--space-6) var(--space-4) var(--space-10);
+}
+
+.collection__back {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  text-decoration: none;
+
+  &:hover {
+    color: var(--color-text-primary);
+  }
+}
+
+.collection__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-top: var(--space-3);
+}
+
+.collection__title {
+  color: var(--color-text-primary);
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-bold);
+}
+
+.collection__lead {
+  margin-top: var(--space-1);
+  max-width: 40rem;
+  color: var(--color-text-secondary);
+}
+
+.collection__count {
+  margin-top: var(--space-6);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.collection__bosses {
+  display: grid;
+  gap: var(--space-5);
+  margin-top: var(--space-3);
+
+  @media (min-width: 760px) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.collection__boss {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  background: var(--color-bg-surface);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+
+  &[data-status='locked'],
+  &[data-status='soon'] {
+    border-style: dashed;
+    box-shadow: none;
+  }
+}
+
+/* The picture: the boss on the soil of its lair, or a silhouette in the dark. */
+.collection__stage {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 15rem;
+  background: radial-gradient(
+    circle at 50% 60%,
+    #6b4a2c 0,
+    #4a3220 50%,
+    #2a1c12 100%
+  );
+
+  [data-status='locked'] &,
+  [data-status='soon'] & {
+    background: #0e1215;
+  }
+}
+
+.collection__status {
+  position: absolute;
+  top: var(--space-3);
+  left: var(--space-3);
+}
+
+.collection__mystery {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 8rem;
+  height: 8rem;
+  border-radius: 50%;
+  background: #20262c;
+  color: #4a5560;
+  font-size: 4rem;
+  font-weight: var(--font-weight-bold);
+}
+
+.collection__mystery--small {
+  width: 6rem;
+  height: 6rem;
+  font-size: 2.5rem;
+  background: var(--color-bg-elevated);
+  color: var(--color-text-muted);
+}
+
+.collection__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-5);
+}
+
+.collection__area {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.collection__name {
+  color: var(--color-text-primary);
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+}
+
+.collection__name--unknown {
+  color: var(--color-text-muted);
+}
+
+.collection__desc {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  line-height: 1.5;
+}
+
+.collection__stat {
+  color: var(--color-text-primary);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+}
+
+.collection__creatures {
+  display: grid;
+  gap: var(--space-4);
+  margin-top: var(--space-3);
+  grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
+}
+
+.collection__creature {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-5) var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  background: var(--color-bg-surface);
+  text-align: center;
+}
+
+.collection__creature--unknown {
+  border-style: dashed;
+  justify-content: center;
+}
+
+.collection__creature-name {
+  margin-top: var(--space-2);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+}
+
+.collection__creature-kind {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-xs);
+}

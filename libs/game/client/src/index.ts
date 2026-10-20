@@ -6,6 +6,8 @@ export * from './lib/audio/music';
 export * from './lib/characters/cartoon/cartoon';
 export * from './lib/characters/paint-character';
 export * from './lib/controls';
+export * from './lib/creatures/creature-art';
+export * from './lib/creatures/paint-creature';
 export * from './lib/hud';
 export * from './lib/mount-arena';
 export * from './lib/preview/arena-preview';

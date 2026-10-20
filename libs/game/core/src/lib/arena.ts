@@ -65,8 +65,8 @@ export function generateArena(
   }
 
   const hiddenPowerUps: (PowerUpKind | null)[] = tiles.map(() => null);
-  const kinds = (Object.keys(POWER_UP_COUNTS) as PowerUpKind[]).flatMap(
-    (kind) => Array.from({ length: POWER_UP_COUNTS[kind] }, () => kind),
+  const kinds = Object.entries(POWER_UP_COUNTS).flatMap(([kind, count]) =>
+    Array.from({ length: count }, () => kind as PowerUpKind),
   );
   shuffle(blockCells, rng)
     .slice(0, kinds.length)

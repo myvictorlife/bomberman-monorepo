@@ -641,6 +641,36 @@ const PANEL: Record<PowerUpKind, { glow: string; from: string; to: string }> = {
     from: 'rgba(190, 130, 245, 0.55)',
     to: 'rgba(80, 35, 140, 0.75)',
   },
+  wallpass: {
+    glow: '#e8c9a0',
+    from: 'rgba(210, 180, 140, 0.55)',
+    to: 'rgba(100, 70, 40, 0.75)',
+  },
+  fullfire: {
+    glow: '#ff6a2a',
+    from: 'rgba(255, 110, 40, 0.6)',
+    to: 'rgba(150, 30, 10, 0.8)',
+  },
+  powerbomb: {
+    glow: '#ff3a3a',
+    from: 'rgba(220, 50, 50, 0.6)',
+    to: 'rgba(90, 10, 10, 0.8)',
+  },
+  skull: {
+    glow: '#b9a8ff',
+    from: 'rgba(90, 80, 120, 0.6)',
+    to: 'rgba(20, 15, 35, 0.85)',
+  },
+  clock: {
+    glow: '#7fd0ff',
+    from: 'rgba(90, 170, 230, 0.55)',
+    to: 'rgba(20, 70, 120, 0.75)',
+  },
+  oneup: {
+    glow: '#ff7aa8',
+    from: 'rgba(240, 100, 150, 0.55)',
+    to: 'rgba(130, 20, 60, 0.75)',
+  },
 };
 
 /** A small bomb for the glove and the kick cards. */
@@ -886,6 +916,18 @@ function paintPowerUp(ctx: Ctx, kind: PowerUpKind): void {
     paintGloveIcon(ctx);
   } else if (kind === 'kick') {
     paintKickIcon(ctx);
+  } else if (kind === 'wallpass') {
+    paintWallPassIcon(ctx);
+  } else if (kind === 'fullfire') {
+    paintFullFireIcon(ctx);
+  } else if (kind === 'powerbomb') {
+    paintPowerBombIcon(ctx);
+  } else if (kind === 'skull') {
+    paintSkullIcon(ctx);
+  } else if (kind === 'clock') {
+    paintClockIcon(ctx);
+  } else if (kind === 'oneup') {
+    paintOneUpIcon(ctx);
   } else if (kind === 'vest') {
     // A shield: a few seconds where nothing burns you.
     ctx.beginPath();
@@ -1066,4 +1108,152 @@ function paintEye(ctx: Ctx, x: number, y: number): void {
   ctx.fillStyle = HD.eye;
   ctx.fill();
   ctx.restore();
+}
+
+// ── the campaign's items ───────────────────────────────────────────────────
+
+/** Wall pass: a brick wall, and a pale figure walking out of it. */
+function paintWallPassIcon(ctx: Ctx): void {
+  for (const [x, y, w] of [
+    [14, 16, 16],
+    [32, 16, 18],
+    [14, 26, 8],
+    [42, 26, 8],
+    [14, 36, 14],
+    [32, 36, 18],
+  ] as const) {
+    roundRect(ctx, x, y, w, 8, 1.5);
+    fillStroke(ctx, linear(ctx, 0, y, 0, y + 8, ['#e8cfae', '#b48c62']), 1);
+  }
+  ctx.globalAlpha = 0.92;
+  circle(ctx, 32, 24, 5.5);
+  fillStroke(ctx, '#f4f6ff', 1.2);
+  ctx.beginPath();
+  ctx.moveTo(25, 46);
+  ctx.quadraticCurveTo(25, 30, 32, 30);
+  ctx.quadraticCurveTo(39, 30, 39, 46);
+  ctx.lineTo(35, 43);
+  ctx.lineTo(32, 46);
+  ctx.lineTo(29, 43);
+  ctx.closePath();
+  fillStroke(ctx, '#f4f6ff', 1.2);
+  ctx.globalAlpha = 1;
+}
+
+/** Full fire: a big flame over a full gauge. */
+function paintFullFireIcon(ctx: Ctx): void {
+  ctx.beginPath();
+  ctx.moveTo(32, 11);
+  ctx.bezierCurveTo(48, 26, 46, 42, 32, 44);
+  ctx.bezierCurveTo(18, 42, 16, 26, 32, 11);
+  ctx.closePath();
+  ctx.shadowColor = 'rgba(255,140,40,0.9)';
+  ctx.shadowBlur = 10;
+  fillStroke(
+    ctx,
+    linear(ctx, 0, 11, 0, 44, ['#fff3c0', '#ffb030', '#e8401a']),
+    1.2,
+  );
+  ctx.shadowBlur = 0;
+  roundRect(ctx, 16, 47, 32, 6, 3);
+  fillStroke(ctx, linear(ctx, 16, 0, 48, 0, ['#ffd24a', '#ff5a1a']), 1);
+}
+
+/** The power bomb: a big bomb glowing red at its heart. */
+function paintPowerBombIcon(ctx: Ctx): void {
+  const g = ctx.createRadialGradient(32, 35, 2, 32, 35, 20);
+  g.addColorStop(0, 'rgba(255,90,60,0.9)');
+  g.addColorStop(1, 'rgba(255,40,20,0)');
+  ctx.fillStyle = g;
+  circle(ctx, 32, 35, 20);
+  ctx.fill();
+  miniBomb(ctx, 32, 36, 14);
+  ctx.fillStyle = '#ff4030';
+  ctx.beginPath();
+  ctx.moveTo(32, 30);
+  ctx.lineTo(35, 36);
+  ctx.lineTo(32, 42);
+  ctx.lineTo(29, 36);
+  ctx.closePath();
+  ctx.fill();
+}
+
+/** The skull: a curse. */
+function paintSkullIcon(ctx: Ctx): void {
+  ctx.beginPath();
+  ctx.moveTo(18, 32);
+  ctx.bezierCurveTo(18, 14, 46, 14, 46, 32);
+  ctx.lineTo(42, 38);
+  ctx.lineTo(42, 45);
+  ctx.lineTo(22, 45);
+  ctx.lineTo(22, 38);
+  ctx.closePath();
+  ctx.shadowColor = 'rgba(190,170,255,0.8)';
+  ctx.shadowBlur = 8;
+  fillStroke(ctx, linear(ctx, 0, 16, 0, 45, ['#ffffff', '#c9c4dc']), 1.3);
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = '#1b1726';
+  ellipse(ctx, 26, 31, 4.5, 5, 0);
+  ctx.fill();
+  ellipse(ctx, 38, 31, 4.5, 5, 0);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(32, 35);
+  ctx.lineTo(29.5, 40);
+  ctx.lineTo(34.5, 40);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle = '#1b1726';
+  ctx.lineWidth = 1.4;
+  for (const x of [27, 32, 37]) {
+    ctx.beginPath();
+    ctx.moveTo(x, 42);
+    ctx.lineTo(x, 45);
+    ctx.stroke();
+  }
+}
+
+/** The clock: more time. */
+function paintClockIcon(ctx: Ctx): void {
+  circle(ctx, 32, 33, 15);
+  fillStroke(ctx, linear(ctx, 0, 18, 0, 48, ['#ffffff', '#cfe6f6']), 1.4);
+  ctx.strokeStyle = '#1b2430';
+  ctx.lineWidth = 2.2;
+  ctx.beginPath();
+  ctx.moveTo(32, 33);
+  ctx.lineTo(32, 23);
+  ctx.moveTo(32, 33);
+  ctx.lineTo(39, 37);
+  ctx.stroke();
+  for (let i = 0; i < 12; i++) {
+    const a = (i / 12) * Math.PI * 2;
+    ctx.beginPath();
+    ctx.moveTo(32 + Math.cos(a) * 12, 33 + Math.sin(a) * 12);
+    ctx.lineTo(32 + Math.cos(a) * 13.5, 33 + Math.sin(a) * 13.5);
+    ctx.stroke();
+  }
+  roundRect(ctx, 29, 14, 6, 4, 1);
+  fillStroke(ctx, '#cfe6f6', 1);
+}
+
+/** An extra life: a heart. */
+function paintOneUpIcon(ctx: Ctx): void {
+  ctx.beginPath();
+  ctx.moveTo(32, 47);
+  ctx.bezierCurveTo(14, 35, 16, 17, 27, 19);
+  ctx.bezierCurveTo(30, 20, 32, 23, 32, 25);
+  ctx.bezierCurveTo(32, 23, 34, 20, 37, 19);
+  ctx.bezierCurveTo(48, 17, 50, 35, 32, 47);
+  ctx.closePath();
+  ctx.shadowColor = 'rgba(255,90,140,0.9)';
+  ctx.shadowBlur = 10;
+  fillStroke(
+    ctx,
+    linear(ctx, 0, 18, 0, 47, ['#ffb0c8', '#ff3a6e', '#b0103c']),
+    1.3,
+  );
+  ctx.shadowBlur = 0;
+  ellipse(ctx, 25, 26, 3, 2, -0.6);
+  ctx.fillStyle = 'rgba(255,255,255,0.75)';
+  ctx.fill();
 }

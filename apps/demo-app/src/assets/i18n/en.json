@@ -14,7 +14,8 @@
     "ARENAS": "Arenas",
     "ITEMS": "Items",
     "MOUNTS": "Mounts",
-    "PROFILE": "Profile"
+    "PROFILE": "Profile",
+    "CAMPAIGN": "Stages"
   },
   "LANGUAGE_SELECT": {
     "TRIGGER_ARIA": "Change language",
@@ -280,7 +281,18 @@
     "SETUP_KEYS": "Player 1 keys",
     "KEYS_WASD": "W A S D",
     "KEYS_ARROWS": "Arrows",
-    "CONTROLS_SOLO": "W A S D or the arrow keys to move · Space or Enter drops a bomb · Shift or Ctrl uses the mount · E or / detonates"
+    "CONTROLS_SOLO": "W A S D or the arrow keys to move · Space or Enter drops a bomb · Shift or Ctrl uses the mount · E or / detonates",
+    "WALLPASS": "Wall pass",
+    "POWERBOMB": "Power bomb",
+    "CURSE": "Skull",
+    "CURSES": {
+      "DIARRHEA": "drops bombs non-stop",
+      "CONSTIPATION": "cannot drop bombs",
+      "REVERSE": "controls reversed",
+      "SLOW": "slow",
+      "FAST": "too fast",
+      "SHORTFUSE": "short fuse"
+    }
   },
   "CHARACTERS": {
     "TITLE": "Characters",
@@ -474,7 +486,7 @@
   },
   "ITEMS": {
     "TITLE": "Items",
-    "LEAD": "What hides under the crates. Three raise a number, two change your bomb, one protects you, and the egg hatches a mount for whoever picks it up.",
+    "LEAD": "What hides under the crates. Some raise a number, others change your bomb or the way you walk, one protects you, the egg hatches a mount — and the skull gets in your way. The ones marked for stages show up in the campaign.",
     "EYEBROW": "Item",
     "DETAILS": "Look closer",
     "BACK": "All items",
@@ -612,7 +624,73 @@
     "EFFECT_THROW": "Throw",
     "EFFECT_KICK": "Kick",
     "KEY_GLOVE": "Bomb key: drop, pick up, throw",
-    "KEY_GLOVE_HINT": "Press it on the bomb you just dropped to pick it up, and again to throw it the way you face."
+    "KEY_GLOVE_HINT": "Press it on the bomb you just dropped to pick it up, and again to throw it the way you face.",
+    "WALLPASS": {
+      "NAME": "Wall pass",
+      "EFFECT": "Walk through crates as if they were not there. Stone and walls are still walls.",
+      "DESC": "A brick-coloured glass with a figure stepping out of a wall.",
+      "NOTE_1_TITLE": "A hiding place",
+      "NOTE_1": "Inside a crate the fire cannot reach you: the flame stops at the brick. But once the crate blows up, the next flame gets you.",
+      "NOTE_2_TITLE": "Stages only, for now",
+      "NOTE_2": "Hidden in the campaign stages. It comes to versus once the bots learn to use it.",
+      "NOTE_3_TITLE": "It comes along",
+      "NOTE_3": "Like the other items, it carries over to the next stage — until you lose."
+    },
+    "FULLFIRE": {
+      "NAME": "Full fire",
+      "EFFECT": "Takes your fire straight to the limit, 8 cells.",
+      "DESC": "An orange glass with a big flame over a full gauge.",
+      "NOTE_1_TITLE": "A shortcut",
+      "NOTE_1": "Worth every fire item at once. Rare on purpose.",
+      "NOTE_2_TITLE": "Mind yourself",
+      "NOTE_2": "Full reach crosses the arena: plan the way out before you drop.",
+      "NOTE_3_TITLE": "Stages only, for now",
+      "NOTE_3": "Hidden in chosen campaign stages."
+    },
+    "POWERBOMB": {
+      "NAME": "Power bomb",
+      "EFFECT": "The first bomb of each volley reaches as far as fire goes; the rest use your normal fire.",
+      "DESC": "A red glass with a big bomb glowing inside.",
+      "NOTE_1_TITLE": "The first one counts",
+      "NOTE_1": "Only a bomb dropped with none of yours on the ground is a power bomb. Drop, wait for it to go off, and the next one is a power bomb again.",
+      "NOTE_2_TITLE": "The bots know",
+      "NOTE_2": "The bots plan their escape with the power bomb’s reach.",
+      "NOTE_3_TITLE": "It comes along",
+      "NOTE_3": "It carries over to the next stage with the rest of your kit."
+    },
+    "SKULL": {
+      "NAME": "Skull",
+      "EFFECT": "A curse for 10 seconds: dropping bombs non-stop, not being able to drop any, reversed controls, slow, too fast, or a short fuse. Touching another player passes it on.",
+      "DESC": "A dark glass with a pale skull.",
+      "NOTE_1_TITLE": "A bad item",
+      "NOTE_1": "The only item that hurts whoever picks it up. It lies on the floor like the others: look before you step on it.",
+      "NOTE_2_TITLE": "Pass it on",
+      "NOTE_2": "Touch, and it moves on: whoever had it is free. It does not come straight back — it takes a second before it can pass again.",
+      "NOTE_3_TITLE": "Which curse",
+      "NOTE_3": "Drawn from the moment and the cell, the same on every screen. The skull floats over your head while it lasts."
+    },
+    "CLOCK": {
+      "NAME": "Clock",
+      "EFFECT": "Puts 30 seconds back on the clock — while the walls have not started closing.",
+      "DESC": "A blue glass with a clock face.",
+      "NOTE_1_TITLE": "A breather",
+      "NOTE_1": "Handy in the busiest stages, when time runs short.",
+      "NOTE_2_TITLE": "Too late",
+      "NOTE_2": "Once the walls start dropping, the clock does not turn back.",
+      "NOTE_3_TITLE": "Stages only",
+      "NOTE_3": "In versus, the round’s clock is the same for everyone."
+    },
+    "ONEUP": {
+      "NAME": "Extra life",
+      "EFFECT": "One more life in the campaign.",
+      "DESC": "A pink glass with a heart.",
+      "NOTE_1_TITLE": "Rare",
+      "NOTE_1": "Found in few stages and in the bonus stage.",
+      "NOTE_2_TITLE": "It counts even if you fall",
+      "NOTE_2": "Picked up, it is yours: the life counts even if you lose the stage afterwards.",
+      "NOTE_3_TITLE": "Stages only",
+      "NOTE_3": "There are no lives to win in versus."
+    }
   },
   "SOUNDS": {
     "TITLE": "Sounds",
@@ -880,5 +958,169 @@
     "BOMB": "Drop a bomb",
     "ABILITY": "Use the mount's ability",
     "DETONATE": "Detonate"
+  },
+  "CAMPAIGN": {
+    "TITLE": "Stages",
+    "EYEBROW": "Stage mode · online co-op",
+    "LEAD": "Critters have taken over the city. Cross each area with up to 3 friends, stage by stage, up to the boss. Beating the boss opens the next area.",
+    "COLLECTION_LINK": "Bosses and critters",
+    "AREA": "Area {{n}}",
+    "AREA_STATUS": {
+      "open": "Open",
+      "locked": "Locked",
+      "soon": "Coming soon"
+    },
+    "AREA_HINT": {
+      "locked": "Beat the previous area’s boss to open it.",
+      "soon": "Arrives in a future update."
+    },
+    "PROGRESS": "{{done}} of {{total}} stages",
+    "MAP_SOON": "This area’s map is still being drawn.",
+    "STAGE": "Stage {{code}}",
+    "STAGE_STATUS": {
+      "cleared": "Cleared",
+      "open": "Next",
+      "locked": "Locked"
+    },
+    "BOSS": "Boss",
+    "PLAY_LOCKED": "Clear the previous stage",
+    "HOW": {
+      "TITLE": "How it works",
+      "STEP_1": "Join alone or with up to 3 friends, each with the character they picked.",
+      "STEP_2": "Take down every critter with bombs.",
+      "STEP_3": "Find the gate hidden under a block — it opens when the last critter falls.",
+      "STEP_4": "3 lives per area: losing one costs what you gathered. The 1-Up gives one more."
+    },
+    "PLAY": "Play {{code}}",
+    "KIT": {
+      "TITLE": "Your strength",
+      "LEAD": "What you pick up in a stage comes with you to the next, up to the limit. Died? You lose a life and what you gathered.",
+      "BOMBS": "Bombs",
+      "FIRE": "Fire",
+      "SPEED": "Speed",
+      "LIVES": "Lives",
+      "SCORE": "Points",
+      "BEST": "Best"
+    },
+    "SIGNIN": {
+      "LEAD": "Sign in to play the stages.",
+      "GOOGLE": "Sign in with Google",
+      "EMAIL": "Sign in with e-mail",
+      "FAILED": "Could not sign in right now. Try again.",
+      "VERIFY": "Confirm your e-mail to play: open the link we sent you.",
+      "VERIFY_LINK": "See my account"
+    }
+  },
+  "COLLECTION": {
+    "TITLE": "Collection",
+    "LEAD": "Every boss and critter of the campaign. The ones you have not reached yet stay in the dark.",
+    "BACK": "Back to the stages",
+    "TABS": "What to show",
+    "BOSSES": "Bosses",
+    "CREATURES": "Critters",
+    "COUNT": "{{n}} of {{total}} found",
+    "STATUS": {
+      "known": "Found",
+      "locked": "Locked",
+      "soon": "Coming soon",
+      "defeated": "Defeated"
+    },
+    "HINT": {
+      "locked": "Open this area to meet its boss.",
+      "soon": "This area arrives in a future update."
+    },
+    "HITS": "Takes {{n}} hits",
+    "CREATURE_STATS": "Health {{hp}} · {{points}} points"
+  },
+  "AREAS": {
+    "GRAMADO": "The Lawn",
+    "SUBESTACAO": "Substation",
+    "AUTODROMO": "Racetrack"
+  },
+  "STAGES": {
+    "GRAMADO_1": {
+      "NAME": "Park Gate",
+      "DESC": "The stage to learn on: only leafcutter ants, slow and easy. Take down all 6 and find the gate."
+    },
+    "GRAMADO_2": {
+      "NAME": "Bandstand",
+      "DESC": "The pigeons arrive: fast and aimless, they take off when a bomb lands nearby."
+    },
+    "GRAMADO_3": {
+      "NAME": "Promenade",
+      "DESC": "Snails survive two blasts and leave a slime trail that slows you down."
+    },
+    "GRAMADO_4": {
+      "NAME": "The Nest",
+      "DESC": "Lapwings dash at anyone in their row. Every critter at once."
+    },
+    "GRAMADO_5": {
+      "NAME": "Royal Anthill",
+      "DESC": "The mother of the leafcutters digs under the arena and cracks the ground to come out. Beat her to open the Substation."
+    },
+    "GRAMADO_BONUS": {
+      "NAME": "Lake Bonus",
+      "DESC": "No critters, an item under every block and 30 seconds to grab what you can. There is even an extra life hidden."
+    }
+  },
+  "CREATURES": {
+    "SAUVA": {
+      "NAME": "Leafcutter",
+      "KIND": "Leafcutter ant",
+      "DESC": "Slow and absent-minded, carrying her leaf. Walks straight and turns any way when she bumps into something."
+    },
+    "POMBO": {
+      "NAME": "Pigeon",
+      "KIND": "The one from the square",
+      "DESC": "Fast and aimless: picks a new way at every crossing. Flies off when a bomb is placed nearby."
+    },
+    "CARAMUJO": {
+      "NAME": "Snail",
+      "KIND": "Garden pest",
+      "DESC": "Very slow, but the shell survives one blast. Leaves a slime trail that slows whoever steps on it."
+    },
+    "QUEROQUERO": {
+      "NAME": "Lapwing",
+      "KIND": "Owner of the field",
+      "DESC": "Patrols slowly and dashes at anyone in the same row or column, until it hits something."
+    }
+  },
+  "BOSSES": {
+    "RAINHA": {
+      "NAME": "Leafcutter Queen",
+      "DESC": "The mother of every leafcutter in the park. Digs under the arena, cracks the ground to come out and is dizzy for 2 s — the time to strike."
+    }
+  },
+  "STAGE_PLAY": {
+    "TITLE": "Stage",
+    "BACK": "Stage map",
+    "TIME": "Time",
+    "CREATURES": "Critters",
+    "EXIT_OPEN": "Gate open!",
+    "EXIT_SHUT": "Gate shut",
+    "LOADING": "Setting the stage…",
+    "ERROR": "The stage could not open. Reload the page.",
+    "CLEARED": "Stage cleared!",
+    "CLEARED_TEXT": "Every critter down, and you made it through the gate.",
+    "FAILED": "Not this time",
+    "NEXT": "Next stage",
+    "KEYS": "Arrows or W A S D to walk · Enter or Space drops a bomb",
+    "KIT": "Gear",
+    "BOSS_CLEARED_TEXT": "You beat the Leafcutter Queen and cleared the Lawn. The next area arrives soon.",
+    "START_OVER": "Start over from {{code}}",
+    "LIVES": "Lives",
+    "SCORE": "Points",
+    "STAGE_POINTS": "Stage points",
+    "RUN_POINTS": "Total",
+    "BEST": "Best",
+    "RETRY": "Try again",
+    "RETRY_TEXT": "The critters got you. You lose a life and everything you gathered, and try this stage again. Lives: {{n}}.",
+    "GAME_OVER": "Game over",
+    "GAME_OVER_TEXT": "No lives left. You go back to {{code}} empty-handed, with 3 lives. Your best stays.",
+    "BONUS_OVER": "Bonus over!",
+    "BONUS_TEXT": "Everything you picked up comes with you to the next stage.",
+    "BONUS_INTRO": "No critters: grab what you can before time runs out.",
+    "TAP": "Tap to play",
+    "TAP_HINT": "The game opens full screen. Turn your phone, or play upright with the 🔄 button."
   }
 }

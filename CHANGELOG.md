@@ -13,6 +13,88 @@ config file. Ordinary app-level additions are minor.
 
 ### Added
 
+- **A stage plays on a phone like `/play`.** On a touch screen the stage
+  opens behind "tap to play", then fills the screen with the on-screen
+  controller over it; held upright the whole game turns a quarter to play
+  sideways, with 🔄 to stay upright (the same remembered choice as `/play`),
+  🎮 to hide the controller and ⛶ / ✕ to enter and leave game mode on any
+  screen. A strip over the arena shows the stage, lives, points, clock,
+  creatures, the gate, the boss's health and the kit. The browser chores of
+  game mode — full screen, orientation lock, the turned host's measurements,
+  the upright choice — are now shared in `@libs/ui` (`game-screen.ts`);
+  `/play` and `/online` still carry their own copies.
+- **The stages are played signed in.** On the campaign map a signed-out
+  player gets "sign in with Google" and a link to the e-mail sign-in on
+  `/online` in place of the play button; an account whose address is not
+  confirmed is asked to confirm it; a direct link to a stage goes back to the
+  map (`playableStageGuard`, `canEnterStages`). A build with no sign-in
+  configured lets everyone play, so a fork still runs without credentials.
+- **Classic Bomberman features for the campaign.** Six new items, shown on
+  `/items` and hidden by the stages that use them (`items` on a stage in
+  `campaign.ts`): wall pass (walk through crates), full fire, power bomb
+  (the first bomb of a volley reaches as far as fire goes), the skull (a
+  10-second curse — non-stop bombs, no bombs, reversed keys, slow, too fast
+  or a short fuse — passed on by touch), the clock (+30 s) and the extra
+  life. They stay out of versus and the online room for now; the bots
+  already route round skulls, read the power bomb's reach and press the
+  other way when cursed. Lives: three per area, a loss costs one and the kit
+  and replays the stage, the last one is game over back to the area's start
+  (`afterClear` / `afterLoss`). Points: each creature's catalogue value, 500
+  an anthill, 5000 the boss, 10 a second left on the clock, kept per run
+  with the best on this device. A flame on the uncovered gate brings out two
+  more creatures; the snail leaves slime that halves the speed of whoever
+  steps in it; the quero-quero dashes at a player in its line of sight. Area
+  1 gains a bonus stage (`1-B`): no creatures, an item under every block,
+  30 seconds. The stage page opens on a title card and ends on a tally;
+  lives, points and best are on the map.
+- **The first boss: the Rainha Saúva, on stage 1-5.** `boss.ts` in
+  `@libs/game-core` runs her cycle: she digs, moves under the arena (blocks
+  and pillars too), cracks the cell of the nearest player for a second and
+  comes up there — whoever stays on it is caught, a block there breaks, a
+  bomb there goes off — then stands dizzy for two seconds, the only time
+  (with the start) a flame hurts her: one hit per flame, eight in all. From
+  half health one of two cracks is a feint; on her last two hits she digs
+  faster and comes up with two leafcutters. Three anthills stand like blocks,
+  send out an ant every six seconds while she lives, and break after two
+  flames; her fall takes her ants and anthills with her and opens the gate.
+  The stage page shows her health bar; the collection marks a boss beaten.
+- **The kit carries over from stage to stage.** What a player picks up in a
+  stage — bombs, fire, speed, pierce, remote, glove, kick and the mount —
+  goes with them into the next one, up to the game's limits (8 bombs, 8
+  fire, speed 4). `PlayerKit` in `@libs/game-core` (`kit.ts`) is read off the
+  player when the stage is cleared, saved with the campaign progress and
+  handed to the next round through `PlayerSetup.kit`, clamped on the way
+  in. Losing a stage loses it all: the kit goes back to the start and the
+  area's stages count as never cleared, so the player starts over from its
+  first stage (`markFailed`). In a team a player who falls is out until the
+  stage ends; if the others clear it they come back next stage with the
+  starting kit (`kitsAfterStage`, ready for the co-op room). The campaign map
+  shows the kit against the limits.
+- **Stage mode is playable: `/campaign/play/<stage>`.** A round can now be a
+  stage (`GameOptions.stageId`): `stage.ts` in `@libs/game-core` thins the
+  blocks, places the stage's creatures away from the spawn and hides a gate
+  under a block. Creatures walk the grid on their own (`wander` turns when
+  blocked, `roam` picks a new way at every crossing), take one hit per flame
+  and catch a player they touch — a mount still takes that hit. The last
+  creature opens the gate; once everyone left has gone through it the stage
+  is cleared, and saved to the browser's progress. The arena draws the
+  creatures from the campaign art and the gate as a grate that lights up.
+  Stages 1-1 to 1-4 open in turn; the boss stage waits for its boss. Solo
+  only for now, and a stage has no lives yet: one catch ends the try.
+- **Stage mode, first the pages: `/campaign` and `/campaign/collection`.**
+  The campaign's catalogue lives in `@libs/game-core` (`campaign.ts`): areas
+  in the order they open, their stages and creatures, the boss of each, and
+  the rules that turn a player's progress into open, locked and cleared. Area
+  1, Gramado, has five stages, four creatures (saúva, pombo, caramujo,
+  quero-quero) and the Rainha Saúva; Subestação and Autódromo are announced
+  as "coming soon". The creatures' art is data in `@libs/game-client`
+  (`creature-art.ts`, painted by `paintCreatureFrame`), so the arena can use
+  the same drawings later. The new feature `@libs/campaign` shows the areas,
+  a map of the open one with its stages, and a collection where what is not
+  reached yet stays a silhouette. Progress is kept in the browser; the stages
+  are not playable yet, so the play button says "playable soon". A new area
+  is its entry in `AREAS`, its stages' texts in the bundles, and — for a map
+  — its art in `area-map.html` and its spots in `area-map-layouts.ts`.
 - **A newcomer no longer waits out a round of bots.** When someone queues
   while bots play alone for the audience, that round ends and the countdown
   to theirs starts — them plus the bots `botsFillTo` allows — instead of

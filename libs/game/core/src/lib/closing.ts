@@ -56,6 +56,8 @@ export function secondsUntilClosing(
 /** Runs once per tick: announces the closing, then drops the next wall when one is due. */
 export function closeArena(state: GameState): void {
   if (state.closesAtTick === null || state.tick < state.closesAtTick) return;
+  // A bonus stage just ends when its time is up; see `stage.ts`.
+  if (state.stage?.bonus) return;
   if (!state.closingWalls) {
     // No walls: time's up decides the round — whoever is left shares a draw.
     timeUp(state);

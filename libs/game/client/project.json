@@ -28,7 +28,8 @@
           "libs/game/client/src/lib/skins/hd/themes/**/*.ts",
           "libs/game/client/src/lib/skins/hd/egg.ts",
           "libs/game/client/src/lib/characters/paint-character.ts",
-          "libs/game/client/src/lib/characters/cartoon/**/*.ts"
+          "libs/game/client/src/lib/characters/cartoon/**/*.ts",
+          "libs/game/client/src/lib/creatures/paint-creature.ts"
         ],
         "coverageThresholds": {
           "statements": 95,

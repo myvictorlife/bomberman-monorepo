@@ -1,0 +1,144 @@
+<div class="area-map" [attr.data-area]="areaId()" data-testid="area-map">
+  @switch (areaId()) { @case ('gramado') {
+  <svg
+    class="area-map__art"
+    viewBox="0 0 760 560"
+    preserveAspectRatio="xMidYMid slice"
+    aria-hidden="true"
+  >
+    <defs>
+      <pattern
+        id="area-map-mow"
+        width="80"
+        height="80"
+        patternUnits="userSpaceOnUse"
+        patternTransform="rotate(-35)"
+      >
+        <rect width="40" height="80" fill="#4e8a3c" />
+        <rect x="40" width="40" height="80" fill="#467f35" />
+      </pattern>
+      <radialGradient id="area-map-vignette" cx="50%" cy="50%" r="75%">
+        <stop offset="55%" stop-color="#000" stop-opacity="0" />
+        <stop offset="100%" stop-color="#000" stop-opacity="0.5" />
+      </radialGradient>
+    </defs>
+    <rect width="760" height="560" fill="url(#area-map-mow)" />
+    <path
+      d="M470 300 q60 -40 130 -10 q60 30 30 90 q-40 50 -120 30 q-80 -30 -40 -110z"
+      fill="#2e6f86"
+      stroke="#1d1a17"
+      stroke-width="4"
+    />
+    <path
+      d="M500 320 q40 -20 90 0 M520 370 q30 -10 60 4"
+      stroke="#7fc3d6"
+      stroke-width="4"
+      fill="none"
+      stroke-linecap="round"
+      opacity="0.5"
+    />
+    <g stroke="#1d1a17" stroke-width="4">
+      <circle cx="70" cy="90" r="46" fill="#2d5a2a" />
+      <circle cx="690" cy="80" r="52" fill="#2d5a2a" />
+      <circle cx="60" cy="470" r="40" fill="#2d5a2a" />
+      <circle cx="330" cy="500" r="34" fill="#2d5a2a" />
+      <circle cx="430" cy="70" r="30" fill="#2d5a2a" />
+    </g>
+    <g fill="#3f7a39">
+      <circle cx="56" cy="76" r="18" />
+      <circle cx="672" cy="64" r="20" />
+      <circle cx="48" cy="458" r="15" />
+      <circle cx="320" cy="490" r="12" />
+      <circle cx="420" cy="60" r="11" />
+    </g>
+    <g transform="translate(320 160)" stroke="#1d1a17" stroke-width="4">
+      <circle r="44" fill="#d3d6da" />
+      <polygon points="0,-34 30,-17 30,17 0,34 -30,17 -30,-17" fill="#b0463a" />
+      <circle r="7" fill="#ffd36e" />
+    </g>
+    <path
+      class="area-map__trail"
+      d="M130 430 C 170 340, 120 260, 220 240 S 360 300, 420 230 S 560 120, 640 220 S 620 380, 650 430"
+      fill="none"
+      stroke="#e2d2ad"
+      stroke-width="30"
+      stroke-linecap="round"
+    />
+    <path
+      class="area-map__steps"
+      d="M130 430 C 170 340, 120 260, 220 240 S 360 300, 420 230 S 560 120, 640 220 S 620 380, 650 430"
+      fill="none"
+      stroke="#a89470"
+      stroke-width="3"
+      stroke-dasharray="4 16"
+      stroke-linecap="round"
+    />
+    <rect width="760" height="560" fill="url(#area-map-vignette)" />
+  </svg>
+  } @default {
+  <div class="area-map__soon" data-testid="area-map-soon">
+    <svg viewBox="0 0 24 24" width="40" height="40" aria-hidden="true">
+      <rect
+        x="5"
+        y="11"
+        width="14"
+        height="9"
+        rx="2"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+      />
+      <path
+        d="M8 11V8a4 4 0 0 1 8 0v3"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+      />
+    </svg>
+    <p>{{ 'CAMPAIGN.MAP_SOON' | translate }}</p>
+  </div>
+  } } @for (stop of stops(); track stop.stage.id) {
+  <button
+    type="button"
+    class="area-map__stop"
+    [class.area-map__stop--selected]="stop.stage.id === selectedId()"
+    [attr.data-status]="stop.stage.status"
+    [class.area-map__stop--boss]="stop.stage.boss"
+    [class.area-map__stop--bonus]="stop.stage.bonus"
+    [style.left.%]="stop.spot.x"
+    [style.top.%]="stop.spot.y"
+    [attr.aria-pressed]="stop.stage.id === selectedId()"
+    (click)="picked.emit(stop.stage.id)"
+    data-testid="area-map-stop"
+  >
+    <span class="area-map__badge">
+      @switch (stop.stage.status) { @case ('cleared') {
+      <svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true">
+        <path
+          d="M5 12.5l4.5 4.5L19 7.5"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="3.2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+      </svg>
+      } @case ('locked') {
+      <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+        <rect x="5" y="11" width="14" height="9" rx="2" fill="currentColor" />
+        <path
+          d="M8 11V8a4 4 0 0 1 8 0v3"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.4"
+        />
+      </svg>
+      } @default { {{ stop.stage.code }} } }
+    </span>
+    <span class="area-map__label"
+      >{{ stageKey(stop.stage.id, 'NAME') | translate }}</span
+    >
+  </button>
+  }
+</div>

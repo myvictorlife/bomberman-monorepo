@@ -1,0 +1,268 @@
+<section class="campaign">
+  <header class="campaign__header">
+    <div>
+      <p class="campaign__eyebrow">{{ 'CAMPAIGN.EYEBROW' | translate }}</p>
+      <h1 class="campaign__title" data-testid="campaign-title">
+        {{ 'CAMPAIGN.TITLE' | translate }}
+      </h1>
+      <p class="campaign__lead">{{ 'CAMPAIGN.LEAD' | translate }}</p>
+    </div>
+    <a
+      routerLink="collection"
+      libButton
+      variant="secondary"
+      data-testid="campaign-collection-link"
+    >
+      {{ 'CAMPAIGN.COLLECTION_LINK' | translate }}
+    </a>
+  </header>
+
+  <ul class="campaign__areas" role="list">
+    @for (a of areas(); track a.id) {
+    <li>
+      <button
+        type="button"
+        class="campaign__area"
+        [class.campaign__area--selected]="a.id === area().id"
+        [attr.data-status]="a.status"
+        [attr.aria-pressed]="a.id === area().id"
+        (click)="selectArea(a.id)"
+        data-testid="campaign-area"
+      >
+        <span class="campaign__area-top">
+          <span class="campaign__area-number"
+            >{{ 'CAMPAIGN.AREA' | translate: { n: a.number } }}</span
+          >
+          <lib-badge
+            [tone]="a.status === 'open' ? 'success' : 'neutral'"
+            variant="soft"
+            [pill]="true"
+            >{{ 'CAMPAIGN.AREA_STATUS.' + a.status | translate }}</lib-badge
+          >
+        </span>
+        <span class="campaign__area-name">{{ areaKey(a.id) | translate }}</span>
+        @if (a.status === 'open') {
+        <span class="campaign__bars" aria-hidden="true">
+          @for (done of segments(a.total, a.cleared); track $index) {
+          <span class="campaign__bar" [class.campaign__bar--done]="done"></span>
+          }
+        </span>
+        <span class="campaign__area-hint"
+          >{{ 'CAMPAIGN.PROGRESS' | translate: { done: a.cleared, total: a.total
+          } }}</span
+        >
+        } @else {
+        <span class="campaign__area-hint"
+          >{{ 'CAMPAIGN.AREA_HINT.' + a.status | translate }}</span
+        >
+        }
+      </button>
+    </li>
+    }
+  </ul>
+
+  <div class="campaign__body">
+    <lib-area-map
+      class="campaign__map"
+      [areaId]="area().id"
+      [stages]="stages()"
+      [selectedId]="stage()?.id ?? null"
+      (picked)="selectStage($event)"
+    />
+
+    <aside class="campaign__side">
+      @if (stage(); as s) {
+      <div
+        class="campaign__panel"
+        data-testid="campaign-stage"
+        [attr.data-stage]="s.id"
+      >
+        <div class="campaign__panel-top">
+          <span class="campaign__code"
+            >{{ 'CAMPAIGN.STAGE' | translate: { code: s.code } }}</span
+          >
+          <lib-badge
+            [tone]="s.status === 'cleared' ? 'success' : s.status === 'open' ? 'warning' : 'neutral'"
+            variant="soft"
+            [pill]="true"
+            >{{ 'CAMPAIGN.STAGE_STATUS.' + s.status | translate }}</lib-badge
+          >
+        </div>
+        <h2 class="campaign__stage-name">
+          {{ stageKey(s.id, 'NAME') | translate }}
+        </h2>
+        <p class="campaign__stage-desc">
+          {{ stageKey(s.id, 'DESC') | translate }}
+        </p>
+
+        <ul class="campaign__foes" role="list">
+          @if (s.boss; as boss) {
+          <li class="campaign__foe campaign__foe--boss">
+            <lib-creature-sprite [subject]="{ boss }" [size]="40" />
+            <span
+              >{{ 'CAMPAIGN.BOSS' | translate }}:
+              <strong>{{ bossKey(boss, 'NAME') | translate }}</strong></span
+            >
+          </li>
+          } @for (foe of s.foes; track foe.creature) {
+          <li class="campaign__foe">
+            <lib-creature-sprite
+              [subject]="{ creature: foe.creature }"
+              [size]="40"
+            />
+            <span
+              >{{ creatureKey(foe.creature, 'NAME') | translate }}
+              <strong>×{{ foe.count }}</strong></span
+            >
+          </li>
+          }
+        </ul>
+
+        @if (s.playable && !canEnter()) {
+        <div class="campaign__signin" data-testid="campaign-signin">
+          @if (unverified()) {
+          <p>{{ 'CAMPAIGN.SIGNIN.VERIFY' | translate }}</p>
+          <a routerLink="/online" libButton variant="primary" [block]="true">
+            {{ 'CAMPAIGN.SIGNIN.VERIFY_LINK' | translate }}
+          </a>
+          } @else {
+          <p>{{ 'CAMPAIGN.SIGNIN.LEAD' | translate }}</p>
+          <button
+            type="button"
+            libButton
+            variant="primary"
+            [block]="true"
+            [disabled]="signingIn() || !authReady()"
+            (click)="signInWithGoogle()"
+            data-testid="campaign-signin-google"
+          >
+            {{ 'CAMPAIGN.SIGNIN.GOOGLE' | translate }}
+          </button>
+          <a
+            routerLink="/online"
+            libButton
+            variant="secondary"
+            [block]="true"
+            data-testid="campaign-signin-email"
+          >
+            {{ 'CAMPAIGN.SIGNIN.EMAIL' | translate }}
+          </a>
+          @if (signInFailed()) {
+          <p class="campaign__signin-error" role="alert">
+            {{ 'CAMPAIGN.SIGNIN.FAILED' | translate }}
+          </p>
+          } }
+        </div>
+        } @else if (s.playable) {
+        <a
+          [routerLink]="['play', s.id]"
+          libButton
+          variant="primary"
+          [block]="true"
+          data-testid="campaign-play"
+        >
+          {{ 'CAMPAIGN.PLAY' | translate: { code: s.code } }}
+        </a>
+        } @else {
+        <button
+          type="button"
+          libButton
+          variant="primary"
+          [block]="true"
+          disabled
+          data-testid="campaign-play"
+        >
+          {{ 'CAMPAIGN.PLAY_LOCKED' | translate }}
+        </button>
+        }
+      </div>
+      } @else {
+      <div class="campaign__panel" data-testid="campaign-stage-none">
+        <h2 class="campaign__stage-name">
+          {{ areaKey(area().id) | translate }}
+        </h2>
+        <p class="campaign__stage-desc">
+          {{ 'CAMPAIGN.AREA_HINT.' + area().status | translate }}
+        </p>
+      </div>
+      }
+
+      <div class="campaign__panel" data-testid="campaign-kit">
+        <h2 class="campaign__how-title">
+          {{ 'CAMPAIGN.KIT.TITLE' | translate }}
+        </h2>
+        <p class="campaign__stage-desc">
+          {{ 'CAMPAIGN.KIT.LEAD' | translate }}
+        </p>
+        <ul class="campaign__run" role="list" data-testid="campaign-run">
+          <li>
+            <span>{{ 'CAMPAIGN.KIT.LIVES' | translate }}</span
+            ><strong>{{ lives() }}</strong>
+          </li>
+          <li>
+            <span>{{ 'CAMPAIGN.KIT.SCORE' | translate }}</span
+            ><strong>{{ score() }}</strong>
+          </li>
+          <li>
+            <span>{{ 'CAMPAIGN.KIT.BEST' | translate }}</span
+            ><strong>{{ best() }}</strong>
+          </li>
+        </ul>
+        <dl class="campaign__stats">
+          <div>
+            <dt>{{ 'CAMPAIGN.KIT.BOMBS' | translate }}</dt>
+            <dd>
+              <span class="campaign__meter"
+                ><span
+                  [style.width.%]="percent(kit().maxBombs, start.maxBombs, limits().maxBombs)"
+                ></span
+              ></span>
+              <span>{{ kit().maxBombs }}/{{ limits().maxBombs }}</span>
+            </dd>
+          </div>
+          <div>
+            <dt>{{ 'CAMPAIGN.KIT.FIRE' | translate }}</dt>
+            <dd>
+              <span class="campaign__meter"
+                ><span
+                  [style.width.%]="percent(kit().fireRange, start.fireRange, limits().fireRange)"
+                ></span
+              ></span>
+              <span>{{ kit().fireRange }}/{{ limits().fireRange }}</span>
+            </dd>
+          </div>
+          <div>
+            <dt>{{ 'CAMPAIGN.KIT.SPEED' | translate }}</dt>
+            <dd>
+              <span class="campaign__meter"
+                ><span
+                  [style.width.%]="percent(kit().speedLevel, start.speedLevel, limits().speedLevel)"
+                ></span
+              ></span>
+              <span>{{ kit().speedLevel }}/{{ limits().speedLevel }}</span>
+            </dd>
+          </div>
+        </dl>
+        <lib-player-badges
+          [stats]="kitBadges(kit())"
+          size="sm"
+          testId="campaign-kit"
+        />
+      </div>
+
+      <div class="campaign__panel">
+        <h2 class="campaign__how-title">
+          {{ 'CAMPAIGN.HOW.TITLE' | translate }}
+        </h2>
+        <ol class="campaign__how" role="list">
+          @for (n of how; track n) {
+          <li>
+            <span class="campaign__how-step" aria-hidden="true">{{ n }}</span>
+            <span>{{ 'CAMPAIGN.HOW.STEP_' + n | translate }}</span>
+          </li>
+          }
+        </ol>
+      </div>
+    </aside>
+  </div>
+</section>

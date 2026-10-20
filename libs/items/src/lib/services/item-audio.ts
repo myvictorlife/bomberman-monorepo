@@ -31,5 +31,7 @@ export function itemEffects(kind: PowerUpKind): SoundEffect[] {
     ];
   if (kind === 'glove') return ['power-up', 'throw'];
   if (kind === 'kick') return ['power-up', 'kick'];
+  if (kind === 'skull') return ['power-up', 'mount-lost'];
+  if (kind === 'oneup') return ['power-up', 'hatch'];
   return ['power-up'];
 }

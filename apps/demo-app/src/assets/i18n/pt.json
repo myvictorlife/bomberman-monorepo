@@ -14,7 +14,8 @@
     "ARENAS": "Arenas",
     "ITEMS": "Itens",
     "MOUNTS": "Montarias",
-    "PROFILE": "Perfil"
+    "PROFILE": "Perfil",
+    "CAMPAIGN": "Fases"
   },
   "LANGUAGE_SELECT": {
     "TRIGGER_ARIA": "Alterar idioma",
@@ -280,7 +281,18 @@
     "SETUP_KEYS": "Teclas do jogador 1",
     "KEYS_WASD": "W A S D",
     "KEYS_ARROWS": "Setas",
-    "CONTROLS_SOLO": "W A S D ou as setas para andar · Espaço ou Enter solta bomba · Shift ou Ctrl usa a montaria · E ou / detona"
+    "CONTROLS_SOLO": "W A S D ou as setas para andar · Espaço ou Enter solta bomba · Shift ou Ctrl usa a montaria · E ou / detona",
+    "WALLPASS": "Atravessa blocos",
+    "POWERBOMB": "Superbomba",
+    "CURSE": "Caveira",
+    "CURSES": {
+      "DIARRHEA": "solta bombas sem parar",
+      "CONSTIPATION": "não solta bomba",
+      "REVERSE": "controles invertidos",
+      "SLOW": "lento",
+      "FAST": "rápido demais",
+      "SHORTFUSE": "pavio curto"
+    }
   },
   "CHARACTERS": {
     "TITLE": "Personagens",
@@ -474,7 +486,7 @@
   },
   "ITEMS": {
     "TITLE": "Itens",
-    "LEAD": "O que se esconde embaixo dos caixotes. Três aumentam um número, dois mudam a sua bomba, um te protege, e o ovo choca uma montaria para quem o pega.",
+    "LEAD": "O que se esconde embaixo dos caixotes. Uns aumentam um número, outros mudam a sua bomba ou o seu jeito de andar, um te protege, o ovo choca uma montaria — e a caveira atrapalha. Os marcados como fases aparecem no modo campanha.",
     "EYEBROW": "Item",
     "DETAILS": "Ver de perto",
     "BACK": "Todos os itens",
@@ -612,7 +624,73 @@
     "EFFECT_THROW": "Arremesso",
     "EFFECT_KICK": "Chute",
     "KEY_GLOVE": "Tecla de bomba: soltar, pegar, jogar",
-    "KEY_GLOVE_HINT": "Aperte em cima da bomba que acabou de soltar para pegá-la, e de novo para jogá-la na direção em que olha."
+    "KEY_GLOVE_HINT": "Aperte em cima da bomba que acabou de soltar para pegá-la, e de novo para jogá-la na direção em que olha.",
+    "WALLPASS": {
+      "NAME": "Atravessa-blocos",
+      "EFFECT": "Anda por dentro dos caixotes como se não estivessem ali. Pedras e paredes continuam paredes.",
+      "DESC": "Um vidro cor de tijolo com um vulto saindo da parede.",
+      "NOTE_1_TITLE": "Esconderijo",
+      "NOTE_1": "Dentro de um caixote o fogo não te alcança: a chama para no tijolo. Mas se o caixote explodir com você dentro, o próximo fogo já te pega.",
+      "NOTE_2_TITLE": "Só nas fases, por enquanto",
+      "NOTE_2": "Aparece escondido nas fases do modo campanha. No versus entra quando os bots aprenderem a usá-lo.",
+      "NOTE_3_TITLE": "Vai junto",
+      "NOTE_3": "Como os outros itens, passa para a próxima fase — até você perder."
+    },
+    "FULLFIRE": {
+      "NAME": "Fogo total",
+      "EFFECT": "Leva o seu fogo direto para o máximo, 8 casas.",
+      "DESC": "Um vidro laranja com uma chama grande sobre um medidor cheio.",
+      "NOTE_1_TITLE": "Atalho",
+      "NOTE_1": "Equivale a pegar todos os fogos de uma vez. Raro de propósito.",
+      "NOTE_2_TITLE": "Cuidado com você",
+      "NOTE_2": "Alcance máximo atravessa a arena: planeje a fuga antes de soltar.",
+      "NOTE_3_TITLE": "Só nas fases, por enquanto",
+      "NOTE_3": "Escondido em fases escolhidas da campanha."
+    },
+    "POWERBOMB": {
+      "NAME": "Superbomba",
+      "EFFECT": "A primeira bomba de cada leva alcança o máximo de fogo; as outras usam o seu fogo normal.",
+      "DESC": "Um vidro vermelho com uma bomba grande brilhando por dentro.",
+      "NOTE_1_TITLE": "A primeira conta",
+      "NOTE_1": "Só a bomba que você solta sem nenhuma outra sua no chão vira superbomba. Solte, espere explodir, e a próxima volta a ser super.",
+      "NOTE_2_TITLE": "Os bots sabem",
+      "NOTE_2": "O cálculo de fuga dos bots já considera o alcance da superbomba.",
+      "NOTE_3_TITLE": "Vai junto",
+      "NOTE_3": "Passa para a próxima fase com o resto do equipamento."
+    },
+    "SKULL": {
+      "NAME": "Caveira",
+      "EFFECT": "Uma maldição por 10 segundos: soltar bombas sem parar, não conseguir soltar, controles invertidos, lento, rápido demais ou pavio curto. Encostar em outro jogador passa a maldição para ele.",
+      "DESC": "Um vidro escuro com uma caveira pálida.",
+      "NOTE_1_TITLE": "Item ruim",
+      "NOTE_1": "É o único item que atrapalha quem pega. Fica no chão como os outros: olhe antes de passar por cima.",
+      "NOTE_2_TITLE": "Passa adiante",
+      "NOTE_2": "Encostou, passou: quem estava amaldiçoado fica livre. Não volta na hora — leva um segundo para poder passar de novo.",
+      "NOTE_3_TITLE": "Qual maldição",
+      "NOTE_3": "Sorteada pelo momento e pela casa, igual em todas as telas. O ícone de caveira fica sobre a cabeça enquanto dura."
+    },
+    "CLOCK": {
+      "NAME": "Relógio",
+      "EFFECT": "Põe 30 segundos de volta no relógio — enquanto as paredes ainda não começaram a fechar.",
+      "DESC": "Um vidro azul com um relógio de ponteiros.",
+      "NOTE_1_TITLE": "Fôlego",
+      "NOTE_1": "Bom nas fases mais cheias de bichos, quando o tempo aperta.",
+      "NOTE_2_TITLE": "Tarde demais",
+      "NOTE_2": "Depois que as paredes começam a cair, o relógio não volta mais.",
+      "NOTE_3_TITLE": "Só nas fases",
+      "NOTE_3": "No versus o relógio da rodada é o mesmo para todos."
+    },
+    "ONEUP": {
+      "NAME": "Vida extra",
+      "EFFECT": "Mais uma vida na campanha.",
+      "DESC": "Um vidro rosa com um coração.",
+      "NOTE_1_TITLE": "Raro",
+      "NOTE_1": "Aparece em poucas fases e na fase bônus.",
+      "NOTE_2_TITLE": "Conta mesmo se você cair",
+      "NOTE_2": "Pegou, ganhou: a vida entra na conta mesmo que você perca a fase depois.",
+      "NOTE_3_TITLE": "Só nas fases",
+      "NOTE_3": "No versus não há vidas para ganhar."
+    }
   },
   "SOUNDS": {
     "TITLE": "Áudios",
@@ -880,5 +958,169 @@
     "BOMB": "Soltar bomba",
     "ABILITY": "Usar a habilidade da montaria",
     "DETONATE": "Detonar"
+  },
+  "CAMPAIGN": {
+    "TITLE": "Fases",
+    "EYEBROW": "Modo fases · online co-op",
+    "LEAD": "A cidade foi tomada por bichos. Atravesse cada área com até 3 amigos, fase por fase, até o chefe. Vencer o chefe abre a próxima área.",
+    "COLLECTION_LINK": "Coleção de chefes e bichos",
+    "AREA": "Área {{n}}",
+    "AREA_STATUS": {
+      "open": "Aberta",
+      "locked": "Bloqueada",
+      "soon": "Em breve"
+    },
+    "AREA_HINT": {
+      "locked": "Vença o chefe da área anterior para abrir.",
+      "soon": "Chega numa próxima atualização."
+    },
+    "PROGRESS": "{{done}} de {{total}} fases",
+    "MAP_SOON": "O mapa desta área ainda está sendo desenhado.",
+    "STAGE": "Fase {{code}}",
+    "STAGE_STATUS": {
+      "cleared": "Concluída",
+      "open": "Próxima",
+      "locked": "Bloqueada"
+    },
+    "BOSS": "Chefe",
+    "PLAY_LOCKED": "Conclua a fase anterior",
+    "HOW": {
+      "TITLE": "Como funciona",
+      "STEP_1": "Entre sozinho ou com até 3 amigos, cada um com o personagem que escolheu.",
+      "STEP_2": "Derrube todos os bichos com bombas.",
+      "STEP_3": "Ache o portão escondido sob um bloco — ele abre quando o último bicho cai.",
+      "STEP_4": "3 vidas por área: perder uma tira o que você juntou. O 1-Up dá mais uma."
+    },
+    "PLAY": "Jogar {{code}}",
+    "KIT": {
+      "TITLE": "Sua força",
+      "LEAD": "O que você junta numa fase vai junto para a próxima, até o limite. Morreu? Perde uma vida e o que juntou.",
+      "BOMBS": "Bombas",
+      "FIRE": "Fogo",
+      "SPEED": "Velocidade",
+      "LIVES": "Vidas",
+      "SCORE": "Pontos",
+      "BEST": "Recorde"
+    },
+    "SIGNIN": {
+      "LEAD": "Para jogar as fases, entre na sua conta.",
+      "GOOGLE": "Entrar com Google",
+      "EMAIL": "Entrar com e-mail",
+      "FAILED": "Não deu para entrar agora. Tente de novo.",
+      "VERIFY": "Confirme o seu e-mail para jogar: abra o link que enviamos.",
+      "VERIFY_LINK": "Ver minha conta"
+    }
+  },
+  "COLLECTION": {
+    "TITLE": "Coleção",
+    "LEAD": "Todo chefe e bicho da campanha. Os que você ainda não alcançou ficam no escuro.",
+    "BACK": "Voltar às fases",
+    "TABS": "O que mostrar",
+    "BOSSES": "Chefes",
+    "CREATURES": "Bichos",
+    "COUNT": "{{n}} de {{total}} encontrados",
+    "STATUS": {
+      "known": "Encontrado",
+      "locked": "Bloqueado",
+      "soon": "Em breve",
+      "defeated": "Vencido"
+    },
+    "HINT": {
+      "locked": "Abra esta área para conhecer o chefe.",
+      "soon": "Esta área chega numa próxima atualização."
+    },
+    "HITS": "Aguenta {{n}} golpes",
+    "CREATURE_STATS": "Vida {{hp}} · {{points}} pontos"
+  },
+  "AREAS": {
+    "GRAMADO": "Gramado",
+    "SUBESTACAO": "Subestação",
+    "AUTODROMO": "Autódromo"
+  },
+  "STAGES": {
+    "GRAMADO_1": {
+      "NAME": "Portão do Parque",
+      "DESC": "A fase de aprender: só saúvas, devagar e sem pressa. Derrube as 6 e ache o portão."
+    },
+    "GRAMADO_2": {
+      "NAME": "Coreto",
+      "DESC": "Chegam os pombos: rápidos e sem rumo, levantam voo quando a bomba cai perto."
+    },
+    "GRAMADO_3": {
+      "NAME": "Alameda",
+      "DESC": "Caramujos aguentam duas explosões e deixam uma gosma que te deixa mais devagar."
+    },
+    "GRAMADO_4": {
+      "NAME": "Ninho",
+      "DESC": "Os quero-queros disparam em quem estiver na mesma linha. Todos os bichos juntos."
+    },
+    "GRAMADO_5": {
+      "NAME": "Formigueiro Real",
+      "DESC": "A mãe das saúvas cava por baixo da arena e racha o chão para sair. Vença para abrir a Subestação."
+    },
+    "GRAMADO_BONUS": {
+      "NAME": "Bônus do Lago",
+      "DESC": "Sem bichos, um item embaixo de cada bloco e 30 segundos para pegar o que puder. Tem até vida extra escondida."
+    }
+  },
+  "CREATURES": {
+    "SAUVA": {
+      "NAME": "Saúva",
+      "KIND": "Formiga cortadeira",
+      "DESC": "Lenta e distraída, carrega sua folha. Anda reto e vira para um lado qualquer quando bate em algo."
+    },
+    "POMBO": {
+      "NAME": "Pombo",
+      "KIND": "O da praça",
+      "DESC": "Rápido e sem rumo: em todo cruzamento escolhe um caminho novo. Voa quando uma bomba é posta perto."
+    },
+    "CARAMUJO": {
+      "NAME": "Caramujo",
+      "KIND": "Praga do jardim",
+      "DESC": "Muito lento, mas a concha aguenta uma explosão. Deixa um rastro de gosma que deixa quem pisa mais devagar."
+    },
+    "QUEROQUERO": {
+      "NAME": "Quero-quero",
+      "KIND": "O dono do campo",
+      "DESC": "Patrulha devagar e dispara em quem aparece na mesma linha ou coluna, até bater em algo."
+    }
+  },
+  "BOSSES": {
+    "RAINHA": {
+      "NAME": "Rainha Saúva",
+      "DESC": "A mãe de todas as saúvas do parque. Cava por baixo da arena, racha o chão para sair e fica tonta por 2 s — a hora de bater."
+    }
+  },
+  "STAGE_PLAY": {
+    "TITLE": "Fase",
+    "BACK": "Mapa das fases",
+    "TIME": "Tempo",
+    "CREATURES": "Bichos",
+    "EXIT_OPEN": "Portão aberto!",
+    "EXIT_SHUT": "Portão fechado",
+    "LOADING": "Preparando a fase…",
+    "ERROR": "Não deu para abrir a fase. Recarregue a página.",
+    "CLEARED": "Fase concluída!",
+    "CLEARED_TEXT": "Todos os bichos no chão e você passou pelo portão.",
+    "FAILED": "Não foi dessa vez",
+    "NEXT": "Próxima fase",
+    "KEYS": "Setas ou W A S D para andar · Enter ou Espaço solta bomba",
+    "KIT": "Equipamento",
+    "BOSS_CLEARED_TEXT": "Você venceu a Rainha Saúva e limpou o Gramado. A próxima área chega em breve.",
+    "START_OVER": "Recomeçar da {{code}}",
+    "LIVES": "Vidas",
+    "SCORE": "Pontos",
+    "STAGE_POINTS": "Pontos da fase",
+    "RUN_POINTS": "Total",
+    "BEST": "Recorde",
+    "RETRY": "Tentar de novo",
+    "RETRY_TEXT": "Os bichos te pegaram. Você perde uma vida e tudo o que juntou, e tenta esta fase de novo. Vidas: {{n}}.",
+    "GAME_OVER": "Fim de jogo",
+    "GAME_OVER_TEXT": "Acabaram as vidas. Você volta para a {{code}} sem nada, com 3 vidas. O recorde fica.",
+    "BONUS_OVER": "Fim do bônus!",
+    "BONUS_TEXT": "Tudo o que você pegou vai junto para a próxima fase.",
+    "BONUS_INTRO": "Sem bichos: pegue o que puder antes do tempo acabar.",
+    "TAP": "Toque para jogar",
+    "TAP_HINT": "O jogo abre em tela cheia. Vire o celular, ou jogue em pé com o botão 🔄."
   }
 }

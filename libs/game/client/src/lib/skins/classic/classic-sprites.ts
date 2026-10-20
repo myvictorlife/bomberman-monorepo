@@ -175,7 +175,123 @@ export const POWER_UP_PANELS = {
   vest: { fill: '#30a090', light: '#70d8c8', dark: '#186058' },
   glove: { fill: '#d88830', light: '#f8c070', dark: '#884818' },
   kick: { fill: '#8848c8', light: '#c090f0', dark: '#482078' },
+  wallpass: { fill: '#9a7a5a', light: '#d0b090', dark: '#5a4028' },
+  fullfire: { fill: '#e86020', light: '#f8a060', dark: '#902808' },
+  powerbomb: { fill: '#a01818', light: '#e05050', dark: '#580808' },
+  skull: { fill: '#383848', light: '#707088', dark: '#18181f' },
+  clock: { fill: '#2878a8', light: '#70b0e0', dark: '#104868' },
+  oneup: { fill: '#d83878', light: '#f080b0', dark: '#801840' },
 } as const;
+
+export const WALLPASS_ICON: PixelGrid = [
+  '............',
+  '.BBBBB.BBBB.',
+  '.BBBBB.BBBB.',
+  '............',
+  '.BB.WWW.BBB.',
+  '.BB.WKWKBBB.',
+  '....WWWW....',
+  '.BBBWWWW.BB.',
+  '.BBBW.W.WBB.',
+  '............',
+  '.BBBBB.BBBB.',
+  '............',
+];
+export const WALLPASS_ICON_PALETTE: Palette = {
+  B: '#c8a078',
+  W: '#f0f0f8',
+  K: '#14141c',
+};
+
+export const FULLFIRE_ICON: PixelGrid = [
+  '.....RR.....',
+  '....RRRR....',
+  '...RRYYRR...',
+  '..RRYYYYRR..',
+  '..RYYWWYYR..',
+  '.RRYWWWWYRR.',
+  '.RYYWWWWYYR.',
+  '.RYYYWWYYYR.',
+  '..RYYYYYYR..',
+  '...RRRRRR...',
+  '.KKKKKKKKKK.',
+  '.KWWWWWWWWK.',
+];
+export const FULLFIRE_ICON_PALETTE: Palette = {
+  R: '#e83818',
+  Y: '#ffc040',
+  W: '#fff8d0',
+  K: '#14141c',
+};
+
+export const POWERBOMB_ICON: PixelGrid = [
+  '.......YY...',
+  '......Y..Y..',
+  '.....KK.....',
+  '...KKKKKK...',
+  '..KKKKKKKK..',
+  '.KKWKKKKKKK.',
+  '.KWKKKKKKKK.',
+  '.KKKKRRKKKK.',
+  '.KKKRRRRKKK.',
+  '..KKKRRKKK..',
+  '...KKKKKK...',
+  '............',
+];
+export const POWERBOMB_ICON_PALETTE: Palette = {
+  K: '#14141c',
+  W: '#ffffff',
+  R: '#ff4030',
+  Y: '#ffd870',
+};
+
+export const SKULL_ICON: PixelGrid = [
+  '............',
+  '...WWWWWW...',
+  '..WWWWWWWW..',
+  '.WWWWWWWWWW.',
+  '.WKKWWWWKKW.',
+  '.WKKWWWWKKW.',
+  '.WWWWKKWWWW.',
+  '..WWWWWWWW..',
+  '...WKWKWW...',
+  '...WWWWWW...',
+  '....W.W.....',
+  '............',
+];
+export const SKULL_ICON_PALETTE: Palette = { W: '#e8e8f0', K: '#14141c' };
+
+export const CLOCK_ICON: PixelGrid = [
+  '............',
+  '....KKKK....',
+  '..KKWWWWKK..',
+  '..KWWWKWWK..',
+  '.KWWWWKWWWK.',
+  '.KWWWWKWWWK.',
+  '.KWWWWKKKWK.',
+  '.KWWWWWWWWK.',
+  '..KWWWWWWK..',
+  '..KKWWWWKK..',
+  '....KKKK....',
+  '............',
+];
+export const CLOCK_ICON_PALETTE: Palette = { W: '#f8f4e0', K: '#14141c' };
+
+export const ONEUP_ICON: PixelGrid = [
+  '............',
+  '..RR....RR..',
+  '.RRRR..RRRR.',
+  '.RWRRRRRRRR.',
+  '.RRRRRRRRRR.',
+  '.RRRRRRRRRR.',
+  '..RRRRRRRR..',
+  '...RRRRRR...',
+  '....RRRR....',
+  '.....RR.....',
+  '............',
+  '............',
+];
+export const ONEUP_ICON_PALETTE: Palette = { R: '#ff3060', W: '#ffd0e0' };
 
 export const PIERCE_ICON: PixelGrid = [
   '............',

@@ -1,11 +1,15 @@
 import {
+  creaturesLeft,
+  CurseKind,
   findMount,
   GamePhase,
   GameState,
   isClosing,
   MountId,
   playerColor,
+  isExitOpen,
   secondsUntilClosing,
+  StageResult,
   TICK_RATE,
 } from '@libs/game-core';
 import { colorSlot } from './characters/cartoon/ink';
@@ -32,6 +36,11 @@ export interface HudPlayer {
   kick: boolean;
   /** Whole seconds of vest left; 0 when none. */
   vestSeconds: number;
+  /** The campaign's items: absent in snapshots from before they existed. */
+  wallPass?: boolean;
+  powerBomb?: boolean;
+  /** The skull's curse on them right now, if any. */
+  curse?: CurseKind | null;
 }
 
 export interface HudSnapshot {
@@ -42,6 +51,21 @@ export interface HudSnapshot {
   secondsLeft: number | null;
   /** The clock ran out: walls are dropping. */
   closing: boolean;
+  /** Stage mode: what is left to do; `null` in a versus round. */
+  stage?: HudStage | null;
+}
+
+export interface HudStage {
+  creaturesLeft: number;
+  exitOpen: boolean;
+  result: StageResult | null;
+  /** The boss's health, on a boss stage; `null` elsewhere. */
+  boss: { hp: number; maxHp: number } | null;
+  /** Points scored in this stage, everyone together. */
+  score: number;
+  /** Extra lives picked up in this stage, everyone together. */
+  livesGained: number;
+  bonus: boolean;
 }
 
 /** `m:ss`, the way the round's clock reads. */
@@ -56,6 +80,19 @@ export function toHud(state: GameState): HudSnapshot {
     winnerId: state.winnerId,
     secondsLeft: secondsUntilClosing(state, TICK_RATE),
     closing: isClosing(state),
+    stage: state.stage
+      ? {
+          creaturesLeft: creaturesLeft(state.stage),
+          exitOpen: isExitOpen(state.stage),
+          result: state.stage.result,
+          boss: state.stage.boss
+            ? { hp: state.stage.boss.hp, maxHp: state.stage.boss.maxHp }
+            : null,
+          score: sum(state.stage.score),
+          livesGained: sum(state.stage.livesGained),
+          bonus: state.stage.bonus,
+        }
+      : null,
     players: state.players.map((p) => ({
       id: p.id,
       slot: p.slot,
@@ -82,6 +119,9 @@ export function toHud(state: GameState): HudSnapshot {
         0,
         Math.ceil((p.vestUntilTick - state.tick) / TICK_RATE),
       ),
+      wallPass: p.wallPass,
+      powerBomb: p.powerBomb,
+      curse: p.curse && state.tick < p.curse.untilTick ? p.curse.kind : null,
     })),
   };
 }
@@ -89,6 +129,15 @@ export function toHud(state: GameState): HudSnapshot {
 export function sameHud(a: HudSnapshot | null, b: HudSnapshot): boolean {
   if (!a || a.phase !== b.phase || a.winnerId !== b.winnerId) return false;
   if (a.secondsLeft !== b.secondsLeft || a.closing !== b.closing) return false;
+  if (
+    a.stage?.creaturesLeft !== b.stage?.creaturesLeft ||
+    a.stage?.exitOpen !== b.stage?.exitOpen ||
+    a.stage?.result !== b.stage?.result ||
+    a.stage?.boss?.hp !== b.stage?.boss?.hp ||
+    a.stage?.score !== b.stage?.score ||
+    a.stage?.livesGained !== b.stage?.livesGained
+  )
+    return false;
   if (a.players.length !== b.players.length) return false;
   return a.players.every((p, i) => {
     const q = b.players[i];
@@ -107,7 +156,14 @@ export function sameHud(a: HudSnapshot | null, b: HudSnapshot): boolean {
       p.glove === q.glove &&
       p.kick === q.kick &&
       p.vestSeconds === q.vestSeconds &&
+      p.wallPass === q.wallPass &&
+      p.powerBomb === q.powerBomb &&
+      p.curse === q.curse &&
       p.name === q.name
     );
   });
+}
+
+function sum(values: Record<string, number>): number {
+  return Object.values(values).reduce((total, n) => total + n, 0);
 }

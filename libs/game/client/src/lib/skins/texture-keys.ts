@@ -35,6 +35,12 @@ export const POWER_UP_KINDS: readonly PowerUpKind[] = [
   'vest',
   'glove',
   'kick',
+  'wallpass',
+  'fullfire',
+  'powerbomb',
+  'skull',
+  'clock',
+  'oneup',
 ];
 export const MOUNT_IDS: readonly MountId[] = MOUNTS.map((m) => m.id);
 export const FACINGS: readonly Direction[] = ['down', 'up', 'left', 'right'];

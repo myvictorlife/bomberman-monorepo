@@ -32,6 +32,18 @@ import {
   PLAYER_PALETTES,
   playerGrid,
   POWER_UP_PANELS,
+  WALLPASS_ICON,
+  WALLPASS_ICON_PALETTE,
+  FULLFIRE_ICON,
+  FULLFIRE_ICON_PALETTE,
+  POWERBOMB_ICON,
+  POWERBOMB_ICON_PALETTE,
+  SKULL_ICON,
+  SKULL_ICON_PALETTE,
+  CLOCK_ICON,
+  CLOCK_ICON_PALETTE,
+  ONEUP_ICON,
+  ONEUP_ICON_PALETTE,
   SKATE_ICON,
   SKATE_ICON_PALETTE,
   TILE,
@@ -282,6 +294,18 @@ function paintPowerUp(ctx: Ctx, kind: PowerUpKind): void {
     paintGrid(ctx, GLOVE_ICON, GLOVE_ICON_PALETTE, 2, 2);
   } else if (kind === 'kick') {
     paintGrid(ctx, KICK_ICON, KICK_ICON_PALETTE, 2, 2);
+  } else if (kind === 'wallpass') {
+    paintGrid(ctx, WALLPASS_ICON, WALLPASS_ICON_PALETTE, 2, 2);
+  } else if (kind === 'fullfire') {
+    paintGrid(ctx, FULLFIRE_ICON, FULLFIRE_ICON_PALETTE, 2, 2);
+  } else if (kind === 'powerbomb') {
+    paintGrid(ctx, POWERBOMB_ICON, POWERBOMB_ICON_PALETTE, 2, 2);
+  } else if (kind === 'skull') {
+    paintGrid(ctx, SKULL_ICON, SKULL_ICON_PALETTE, 2, 2);
+  } else if (kind === 'clock') {
+    paintGrid(ctx, CLOCK_ICON, CLOCK_ICON_PALETTE, 2, 2);
+  } else if (kind === 'oneup') {
+    paintGrid(ctx, ONEUP_ICON, ONEUP_ICON_PALETTE, 2, 2);
   } else {
     // A small bomb with a lit fuse.
     for (let y = 0; y < TILE; y++) {

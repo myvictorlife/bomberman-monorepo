@@ -11,6 +11,12 @@ export const ITEM_IDS: readonly PowerUpKind[] = [
   'vest',
   'glove',
   'kick',
+  'wallpass',
+  'fullfire',
+  'powerbomb',
+  'skull',
+  'clock',
+  'oneup',
 ];
 
 export function isItemId(value: string): value is PowerUpKind {

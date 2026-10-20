@@ -147,6 +147,10 @@ export function findMount(id: MountId): Mount {
 
 export const DEFAULT_CHARACTER_ID: CharacterId = 'novato';
 
+export function isMountId(value: string): value is MountId {
+  return MOUNTS.some((m) => m.id === value);
+}
+
 export function isCharacterId(value: string): value is CharacterId {
   return CHARACTERS.some((c) => c.id === value);
 }

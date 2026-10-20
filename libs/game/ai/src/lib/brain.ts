@@ -2,9 +2,12 @@ import {
   activeBombCount,
   BOMB_FUSE_TICKS,
   createRng,
+  CURSE_FUSE_TICKS,
+  isCursed,
   Direction,
   GameState,
   isAirborne,
+  nextBombRange,
   Player,
   PlayerInput,
   playerCell,
@@ -120,9 +123,11 @@ export class Bot {
       readsClosing: this.profile.readsClosing,
       extra: extra && {
         ...extra,
-        range: me.fireRange,
+        range: nextBombRange(state, me),
         pierce: me.pierce,
-        at: BOMB_FUSE_TICKS,
+        at: isCursed(state, me, 'shortfuse')
+          ? CURSE_FUSE_TICKS
+          : BOMB_FUSE_TICKS,
       },
     });
   }
@@ -192,7 +197,9 @@ export class Bot {
       const r = Math.floor(index / state.cols);
       if (!isSafe(danger, c, r)) continue;
       let base = 0;
-      if (state.powerUps.some((p) => p.col === c && p.row === r)) base += 6;
+      const item = state.powerUps.find((p) => p.col === c && p.row === r);
+      // Every item is worth the walk, except the skull: a curse is to be avoided.
+      if (item) base += item.kind === 'skull' ? -12 : 6;
       const nearest = Math.min(
         ...enemies.map(
           (e) =>
@@ -247,7 +254,7 @@ export class Bot {
     for (const [c, r] of blastCells(state, {
       col,
       row,
-      range: me.fireRange,
+      range: nextBombRange(state, me),
       pierce: me.pierce,
     })) {
       if (
@@ -287,9 +294,11 @@ export class Bot {
       extra: {
         col,
         row,
-        range: me.fireRange,
+        range: nextBombRange(state, me),
         pierce: me.pierce,
-        at: BOMB_FUSE_TICKS,
+        at: isCursed(state, me, 'shortfuse')
+          ? CURSE_FUSE_TICKS
+          : BOMB_FUSE_TICKS,
       },
     });
     const reach = reachable(state, enemy, map);
