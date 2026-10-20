@@ -7,7 +7,7 @@
   align-items: flex-end;
   justify-content: space-between;
   // The page may pull the controls in (`--gamepad-gutter`) and shrink the pad
-  // (`--gamepad-pad`) where the screen is short.
+  // (`--gamepad-pad`) and the buttons (`--gamepad-button`) where the screen is short.
   padding: var(--gamepad-gutter, var(--space-4));
   padding-bottom: max(
     var(--gamepad-gutter, var(--space-4)),
@@ -86,7 +86,7 @@
 // Where the thumb lands on a pad held sideways: the bomb nearest and biggest,
 // the ability under it, the detonator off to the side.
 .gamepad__buttons {
-  --button: clamp(3.25rem, 15vmin, 5rem);
+  --button: var(--gamepad-button, clamp(3.25rem, 15vmin, 5rem));
   display: grid;
   grid-template-columns: var(--button) var(--button);
   grid-template-rows: var(--button) var(--button);

@@ -285,6 +285,12 @@ config file. Ordinary app-level additions are minor.
 
 ### Changed
 
+- **The home page's controls show the phone too.** Beside the two
+  keyboards, a picture of a phone held sideways plays a little match under
+  the game's own controller (inert, out of the tab order), with a legend
+  of its four controls. `lib-virtual-gamepad` takes `--gamepad-button`,
+  like `--gamepad-pad`, to size its buttons.
+
 - **The home page's power-ups and controls read as one design.** The two
   sections had left-aligned eyebrows over centred titles (the `--left`
   modifiers lost to `.home-h2`'s centring) and a long power-up list beside

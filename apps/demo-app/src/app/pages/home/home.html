@@ -285,6 +285,45 @@
           </div>
         </div>
         }
+        <!-- On a phone: the game's own controller, laid over a little match. -->
+        <div class="home-card home-keys home-keys--phone">
+          <p class="home-keys__player">
+            {{ 'HOME.CONTROLS_PHONE' | translate }}
+          </p>
+          <div class="home-phone" aria-hidden="true" inert>
+            <canvas
+              #modeVideo
+              data-video="hero"
+              class="home-phone__screen"
+            ></canvas>
+            <lib-virtual-gamepad />
+          </div>
+          <ul class="home-phone__legend" role="list">
+            <li>
+              <span class="home-phone__chip" aria-hidden="true">✛</span>
+              {{ 'HOME.CONTROLS_MOVE' | translate }}
+            </li>
+            <li>
+              <span
+                class="home-phone__chip home-phone__chip--bomb"
+                aria-hidden="true"
+                >💣</span
+              >
+              {{ 'HOME.CONTROLS_BOMB' | translate }}
+            </li>
+            <li>
+              <span class="home-phone__chip" aria-hidden="true">🎯</span>
+              {{ 'HOME.CONTROLS_DETONATE' | translate }}
+            </li>
+            <li>
+              <span class="home-phone__chip" aria-hidden="true">⚡</span>
+              {{ 'HOME.CONTROLS_ABILITY' | translate }}
+            </li>
+          </ul>
+          <p class="home-phone__hint">
+            {{ 'HOME.CONTROLS_PHONE_HINT' | translate }}
+          </p>
+        </div>
       </div>
     </div>
   </section>

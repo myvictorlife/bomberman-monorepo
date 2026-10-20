@@ -13,7 +13,7 @@ import { RouterLink } from '@angular/router';
 import { DemoVideos, paintSprites, TEXTURE } from '@libs/game-client';
 import { PowerUpKind } from '@libs/game-core';
 import { ANALYTICS } from '@libs/analytics';
-import { ButtonComponent } from '@libs/ui';
+import { ButtonComponent, VirtualGamepadComponent } from '@libs/ui';
 import { TranslatePipe } from '@ngx-translate/core';
 import { PodiumComponent } from './podium/podium';
 import { PresenceComponent } from './presence/presence';
@@ -63,6 +63,7 @@ interface ControlScheme {
     TranslatePipe,
     PodiumComponent,
     PresenceComponent,
+    VirtualGamepadComponent,
   ],
   templateUrl: './home.html',
   styleUrl: './home.scss',

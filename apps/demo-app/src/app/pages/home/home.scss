@@ -559,6 +559,84 @@
   min-width: 10rem;
 }
 
+/* The phone: a handset held sideways, the real controller over a match. */
+.home-keys--phone {
+  grid-column: 1 / -1;
+}
+
+.home-phone {
+  position: relative;
+  width: min(100%, 34rem);
+  aspect-ratio: 19.5 / 9;
+  border: 0.55rem solid #05060a;
+  border-radius: 1.6rem;
+  background: #0b0b12;
+  box-shadow:
+    0 0 0 1px var(--color-border-strong),
+    var(--shadow-lg);
+  overflow: hidden;
+
+  // The controller's own sizes, scaled to a picture of a phone.
+  --gamepad-pad: 5.5rem;
+  --gamepad-button: 3.25rem;
+  --gamepad-gutter: 0.6rem;
+
+  // Narrow cards shrink the controller with the picture.
+  @media (max-width: 480px) {
+    --gamepad-pad: 3.75rem;
+    --gamepad-button: 2.1rem;
+    --gamepad-gutter: 0.35rem;
+  }
+}
+
+.home-phone__screen {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.home-phone__legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-3) var(--space-6);
+  font-size: var(--font-size-xs);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+
+  li {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+}
+
+.home-phone__chip {
+  display: inline-grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 50%;
+  background: var(--color-bg-elevated);
+  color: var(--color-text-primary);
+  font-size: 0.85rem;
+  letter-spacing: 0;
+}
+
+.home-phone__chip--bomb {
+  border-color: color-mix(in srgb, var(--color-danger) 60%, transparent);
+}
+
+.home-phone__hint {
+  max-width: 28rem;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
 /* ── Closing band ────────────────────────────────────────────────────── */
 
 /* The system's inverted surface, as the header's call to action uses it.
