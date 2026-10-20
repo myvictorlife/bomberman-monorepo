@@ -156,6 +156,13 @@ config file. Ordinary app-level additions are minor.
   hands drive player 1, as online. `PLAY.CONTROLS_P1/P2` became
   `PLAY.KEYS_WASD_HINT/KEYS_ARROWS_HINT`.
 
+- **The idle rule.** A new room rule, `idleMs` (30 s in the public room,
+  `0` off): a person in a round who sends no input for that long is taken
+  out of it — eliminated, so the others can finish — and out of the line,
+  told why (`error: idle`), with a line in the chat (`idle-out`). A phone
+  that went dark or a tab left open no longer stands in the arena round
+  after round. Bots are never idle. On the rules panel like the others.
+
 - **Phones play online too.** `/online` now has what `/play` had: on a
   touch screen, joining the queue fills the screen with the room and the
   on-screen controller (`lib-virtual-gamepad`, driving the first keyboard

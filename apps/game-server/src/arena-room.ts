@@ -170,6 +170,8 @@ export function createArenaRoom(deps: ArenaRoomDeps) {
     /** Plays the round's bots; `null` in a round of people only. */
     private bots: BotDirector | null = null;
     private readonly heldInputs = new Map<string, HeldInput>();
+    /** When each person in the round last sent an input — the idle rule's clock. */
+    private readonly lastInputAt = new Map<string, number>();
     /** Players whose last connection dropped, waiting to come back before they lose their place. */
     private readonly leaving = new Map<string, Delayed>();
     private pendingEvents: GameEvent[] = [];
@@ -583,6 +585,7 @@ export function createArenaRoom(deps: ArenaRoomDeps) {
       )
         return;
 
+      this.lastInputAt.set(account.id, now());
       const held = this.heldInputs.get(account.id) ?? {
         direction: null,
         bomb: false,
@@ -601,6 +604,7 @@ export function createArenaRoom(deps: ArenaRoomDeps) {
     step(): void {
       const game = this.game;
       if (!game || game.phase !== 'playing') return;
+      this.kickIdle(game);
 
       const inputs: Record<string, PlayerInput> = {};
       for (const { id } of [...game.players, ...game.outsiders]) {
@@ -640,6 +644,33 @@ export function createArenaRoom(deps: ArenaRoomDeps) {
       if (over) this.endRound(game);
     }
 
+    /**
+     * The idle rule: a person in the round who has sent nothing for
+     * `rules.idleMs` is out of it — eliminated, so the others can finish —
+     * and out of the line, told why. Bots are never idle.
+     */
+    private kickIdle(game: GameState): void {
+      const limit = this.lobby.rules.idleMs;
+      if (!limit) return;
+      const at = now();
+      for (const player of game.players) {
+        if (!player.alive || isBotId(player.id)) continue;
+        if (!this.lobby.isPlaying(player.id)) continue;
+        const last = this.lastInputAt.get(player.id);
+        if (last === undefined || at - last < limit) continue;
+        this.lastInputAt.delete(player.id);
+        this.lobby.leave(player.id);
+        this.heldInputs.delete(player.id);
+        const event = eliminatePlayer(game, player.id);
+        if (event) this.pendingEvents.push(event);
+        this.announce({ type: 'idle-out', name: player.name });
+        for (const client of this.clients)
+          if (this.player(client)?.id === player.id) this.fail(client, 'idle');
+        this.forgetGuest(player.id);
+        this.refreshLobby();
+      }
+    }
+
     refreshLobby(): void {
       const start = this.lobby.update(now(), this.clients.length > 0);
       // The lobby ended a round of bots alone for people who queued: stop playing it.
@@ -664,6 +695,11 @@ export function createArenaRoom(deps: ArenaRoomDeps) {
               seed,
             )
           : null;
+        // The idle clock starts for every person at the round's start.
+        this.lastInputAt.clear();
+        const startedAt = now();
+        for (const seat of start.players)
+          if (!seat.bot) this.lastInputAt.set(seat.id, startedAt);
         this.game = createGame({
           seed,
           mapId: MAPS[Math.floor(random() * MAPS.length)]?.id,

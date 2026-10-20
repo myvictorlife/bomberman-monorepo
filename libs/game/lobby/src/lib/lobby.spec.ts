@@ -12,6 +12,7 @@ const RULES: RoomRules = {
   winnerStays: 0,
   bots: 0,
   botsFillTo: 5,
+  idleMs: 0,
 };
 const seat = (id: string): Seat => ({
   id,

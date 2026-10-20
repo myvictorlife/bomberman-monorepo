@@ -712,7 +712,9 @@
       "BOTS": "Bots",
       "BOTS_DESC": "How many bots play by themselves while someone watches and nobody is in line. 0: no bots.",
       "BOTS_FILL_TO": "Bots fill up to",
-      "BOTS_FILL_TO_DESC": "With people in line, bots complete the round up to this many players: with 3, one person plays two bots, two play one, three or more play without bots. Off: bots never play with people."
+      "BOTS_FILL_TO_DESC": "With people in line, bots complete the round up to this many players: with 3, one person plays two bots, two play one, three or more play without bots. Off: bots never play with people.",
+      "IDLE_MS": "Idle limit",
+      "IDLE_MS_DESC": "A player who sends nothing for this long is taken out of the round and the line. Off: nobody is ever removed for standing still."
     },
     "STATUS": {
       "CONNECTING": "Connecting to the arena…",
@@ -822,7 +824,8 @@
       "chat-slow-down": "Easy there: wait a moment before writing again.",
       "chat-muted": "An admin silenced you in the chat.",
       "name-taken": "That name is taken. Pick another.",
-      "guest-limit": "Too many guests from your connection are already playing. Sign in to join."
+      "guest-limit": "Too many guests from your connection are already playing. Sign in to join.",
+      "idle": "You were taken out of the round for standing still too long. Join the queue to play again."
     },
     "PLAYERS": {
       "TITLE": "In the arena",
@@ -851,7 +854,8 @@
         "round-draw": "🤝 The round ended in a draw",
         "outsider-entered": "💣 {{name}} got in from the border",
         "champion-stays": "👑 {{name}} won and stays: {{streak}} in a row",
-        "champion-limit": "🏆 {{name}} won {{streak}} in a row, the most the room allows: to the back of the line"
+        "champion-limit": "🏆 {{name}} won {{streak}} in a row, the most the room allows: to the back of the line",
+        "idle-out": "💤 {{name}} left the round by standing still"
       },
       "BLOCKED": {
         "sign-in": "Sign in to write in the chat. Anyone can react.",

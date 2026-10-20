@@ -78,6 +78,12 @@ export interface RoomRules {
    * `bots`. `0`: bots only play when nobody is queued.
    */
   botsFillTo: number;
+  /**
+   * A player in a round who sends no input for this long is out of it — and
+   * out of the line: a phone that went dark, a tab left open and forgotten.
+   * `0` never kicks anyone.
+   */
+  idleMs: number;
 }
 
 /**
@@ -156,6 +162,12 @@ export const RULE_FIELDS: readonly RuleField[] = [
     options: [0, ...range(2, MAX_PLAYERS)],
     unit: 'players',
   },
+  {
+    key: 'idleMs',
+    kind: 'number',
+    options: [0, 15_000, 30_000, 60_000, 120_000],
+    unit: 'seconds',
+  },
 ];
 
 /**
@@ -194,6 +206,7 @@ export const PUBLIC_ROOM_RULES: RoomRules = {
   winnerStays: 5,
   bots: MAX_PLAYERS,
   botsFillTo: 3,
+  idleMs: 30_000,
 };
 
 /**
@@ -372,7 +385,9 @@ export type ServerErrorCode =
   /** A guest asked for a name an account or another guest already has. */
   | 'name-taken'
   /** Too many guests from the same address are already queued or playing. */
-  | 'guest-limit';
+  | 'guest-limit'
+  /** Out of the round and the line: no input for the room's `idleMs`. */
+  | 'idle';
 
 /** A player's name on the ranking, in characters (an emoji is one). */
 export const PLAYER_NAME_LENGTH = { min: 2, max: 20 } as const;
@@ -418,7 +433,9 @@ export type ChatEvent =
   /** Won again, but that was the last win in a row the room allows: to the back of the line. */
   | { type: 'champion-limit'; name: string; streak: number }
   | { type: 'round-draw' }
-  | { type: 'outsider-entered'; name: string };
+  | { type: 'outsider-entered'; name: string }
+  /** Sent no input for the room's `idleMs`: out of the round and the line. */
+  | { type: 'idle-out'; name: string };
 
 export interface ChatMessage {
   /** Grows with each message of the room; an admin removes one by it. */

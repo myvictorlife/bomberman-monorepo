@@ -40,6 +40,7 @@ const RULES: RoomRules = {
   winnerStays: 0,
   bots: 0,
   botsFillTo: 5,
+  idleMs: 0,
 };
 const saved: RoomRules[] = [];
 const PORT = 18_000 + Math.floor(Math.random() * 1_000);
@@ -106,6 +107,14 @@ beforeAll(async () => {
     'no-outsiders',
     createArenaRoom({
       rules: { ...RULES, outsiders: 0 },
+      verify: fakeVerify,
+      records,
+    }),
+  );
+  server.define(
+    'idle',
+    createArenaRoom({
+      rules: { ...RULES, idleMs: 600 },
       verify: fakeVerify,
       records,
     }),
@@ -697,6 +706,51 @@ describe('ArenaRoom', () => {
       (f) => f.state.tick > 5,
     );
     expect(frame.state.outsiders).toEqual([]);
+  });
+
+  it('takes a player who stands still too long out of the round and the line, and says so', async () => {
+    const ana = await signedIn('ana', true, 'idle');
+    const bia = await signedIn('bia', true, 'idle');
+    ana.room.send(CLIENT_MESSAGE.joinQueue, {});
+    bia.room.send(CLIENT_MESSAGE.joinQueue, {});
+    await ana.next<LobbySnapshot>(
+      SERVER_MESSAGE.lobby,
+      (l) => l.phase === 'playing',
+    );
+    // Ana keeps moving; Bia never touches a key.
+    const moving = setInterval(
+      () => ana.room.send(CLIENT_MESSAGE.input, { direction: 'right' }),
+      150,
+    );
+    try {
+      const out = await bia.next<{ code: string }>(
+        SERVER_MESSAGE.error,
+        (e) => e.code === 'idle',
+        3_000,
+      );
+      expect(out.code).toBe('idle');
+      const told = await ana.next<ChatMessage>(
+        SERVER_MESSAGE.chat,
+        (m) => m.event?.type === 'idle-out',
+        3_000,
+      );
+      expect(told.event).toEqual({ type: 'idle-out', name: 'BIA' });
+      // With Bia out, Ana is the last one standing; Bia is not put back in line.
+      const results = await ana.next<LobbySnapshot>(
+        SERVER_MESSAGE.lobby,
+        (l) => l.phase === 'results',
+        3_000,
+      );
+      expect(results.winnerId).toBe('ana');
+      const next = await ana.next<LobbySnapshot>(
+        SERVER_MESSAGE.lobby,
+        (l) => l.phase !== 'results' && l.phase !== 'playing',
+        3_000,
+      );
+      expect(next.queue.map((q) => q.id)).toEqual(['ana']);
+    } finally {
+      clearInterval(moving);
+    }
   });
 
   it('holds a dropped player’s session: back by token within the grace, place and identity kept', async () => {

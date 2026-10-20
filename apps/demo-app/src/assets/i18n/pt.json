@@ -712,7 +712,9 @@
       "BOTS": "Bots",
       "BOTS_DESC": "Quantos bots jogam sozinhos enquanto alguém assiste e ninguém está na fila. 0: sem bots.",
       "BOTS_FILL_TO": "Bots completam até",
-      "BOTS_FILL_TO_DESC": "Com gente na fila, os bots completam a partida até este número de jogadores: com 3, uma pessoa joga com dois bots, duas com um, três ou mais sem bots. Desligado: bots nunca jogam com pessoas."
+      "BOTS_FILL_TO_DESC": "Com gente na fila, os bots completam a partida até este número de jogadores: com 3, uma pessoa joga com dois bots, duas com um, três ou mais sem bots. Desligado: bots nunca jogam com pessoas.",
+      "IDLE_MS": "Limite de inatividade",
+      "IDLE_MS_DESC": "Quem fica esse tempo sem mandar nenhum comando sai da rodada e da fila. Desligado: ninguém é removido por ficar parado."
     },
     "STATUS": {
       "CONNECTING": "Conectando à arena…",
@@ -822,7 +824,8 @@
       "chat-slow-down": "Calma: espere um pouco antes de escrever de novo.",
       "chat-muted": "Um admin silenciou você no chat.",
       "name-taken": "Esse nome já está em uso. Escolha outro.",
-      "guest-limit": "Já há convidados demais jogando da sua conexão. Entre na sua conta para jogar."
+      "guest-limit": "Já há convidados demais jogando da sua conexão. Entre na sua conta para jogar.",
+      "idle": "Você saiu da rodada por ficar parado tempo demais. Entre na fila para jogar de novo."
     },
     "PLAYERS": {
       "TITLE": "Na arena",
@@ -851,7 +854,8 @@
         "round-draw": "🤝 A rodada terminou empatada",
         "outsider-entered": "💣 {{name}} entrou jogando de fora",
         "champion-stays": "👑 {{name}} venceu e continua: {{streak}} seguidas",
-        "champion-limit": "🏆 {{name}} venceu {{streak}} seguidas, o máximo da sala: vai para o fim da fila"
+        "champion-limit": "🏆 {{name}} venceu {{streak}} seguidas, o máximo da sala: vai para o fim da fila",
+        "idle-out": "💤 {{name}} saiu da rodada por inatividade"
       },
       "BLOCKED": {
         "sign-in": "Entre na sua conta para escrever no chat. Qualquer um pode reagir.",

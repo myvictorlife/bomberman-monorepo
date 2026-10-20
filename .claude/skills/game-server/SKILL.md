@@ -159,6 +159,12 @@ on `/online` draws itself from the schema; `parseRules` validates a change.
   on a guest's connection ends the guest (their place goes with it);
   `guest` on a signed-in connection is `bad-message`.
 
+- **Idle rule** (`rules.idleMs`, 30 s public, `0` off): `kickIdle` runs
+  every tick for people in the round (`lastInputAt`, set on every input and
+  at round start); past the limit they are eliminated (`eliminatePlayer`),
+  left out of the line, told `error: idle`, and the chat gets an `idle-out`
+  event. Bots and outsiders are not checked.
+
 ## Chat and reactions
 
 `Chat` in `@libs/game-lobby` holds every limit; the room only passes messages
