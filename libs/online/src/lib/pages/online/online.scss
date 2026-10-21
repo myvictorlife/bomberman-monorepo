@@ -343,6 +343,12 @@
   }
 }
 
+// The sound switch sits at the far right of the strip, round or not.
+.online__sound {
+  flex: none;
+  margin-left: auto;
+}
+
 .online__clock {
   padding: 0.125rem var(--space-2);
   border-radius: var(--radius-sm);

@@ -77,7 +77,10 @@ describe('Online', () => {
   let spectator: Spectator<Online>;
   let connection: FakeConnection;
   let launched: ArenaOptions[];
-  let handles: { destroy: ReturnType<typeof vi.fn> }[];
+  let handles: {
+    destroy: ReturnType<typeof vi.fn>;
+    setMuted: ReturnType<typeof vi.fn>;
+  }[];
   const user = signal<AuthUser | null>(null);
   const auth = {
     available: true,
@@ -544,6 +547,38 @@ describe('Online', () => {
       false,
     );
     expect(spectator.component.watching()).toBe(true);
+  });
+
+  it('switches the sound off and on, for the arena on screen and for the next round', async () => {
+    localStorage.removeItem('detona-audio');
+    await render();
+    connection.push(SERVER_MESSAGE.frame, frame(['a', 'b']));
+    await flush();
+    spectator.detectChanges();
+    expect(launched[0]?.muted).toBe(false);
+    expect(spectator.query('[data-testid="online-sound"]')).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+
+    spectator.click('[data-testid="online-sound"]');
+    expect(handles[0]?.setMuted).toHaveBeenCalledWith(true);
+    expect(spectator.query('[data-testid="online-sound"]')).toHaveAttribute(
+      'aria-pressed',
+      'false',
+    );
+    expect(spectator.query('[data-testid="online-sound"]')).toHaveAttribute(
+      'aria-label',
+      'PLAY.SOUND_OFF',
+    );
+
+    // The next round starts with the choice.
+    connection.push(SERVER_MESSAGE.frame, frame(['c', 'd']));
+    await flush();
+    expect(launched[1]?.muted).toBe(true);
+
+    spectator.click('[data-testid="online-sound"]');
+    expect(handles[1]?.setMuted).toHaveBeenCalledWith(false);
   });
 
   it('gives a player both control schemes, feeds frames to the same round and remounts on a new one', async () => {

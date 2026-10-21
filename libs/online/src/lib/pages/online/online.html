@@ -115,6 +115,24 @@
             [compact]="true"
           />
           }
+          <!-- Sound is yours to switch here, mid-round: the choice is the
+               same one the settings page keeps, and it survives a reload. -->
+          <button
+            type="button"
+            libButton
+            variant="secondary"
+            size="sm"
+            class="online__sound"
+            [attr.aria-pressed]="!muted()"
+            [attr.aria-label]="
+              (muted() ? 'PLAY.SOUND_OFF' : 'PLAY.SOUND_ON') | translate
+            "
+            [title]="(muted() ? 'PLAY.SOUND_OFF' : 'PLAY.SOUND_ON') | translate"
+            (click)="toggleSound()"
+            data-testid="online-sound"
+          >
+            <span aria-hidden="true">{{ muted() ? '🔇' : '🔊' }}</span>
+          </button>
         </div>
         <div class="online__stage" data-testid="online-stage">
           <div #arena class="online__arena" data-testid="online-arena"></div>

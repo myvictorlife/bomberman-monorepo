@@ -221,6 +221,8 @@ export class Online {
   readonly admin = this.store.admin;
   /** Players of the round on screen, with what they picked up. */
   readonly hudPlayers = computed(() => this.store.hud()?.players ?? []);
+  /** Sound effects off: read from `AudioSettingsService`, shared with the settings page. */
+  readonly muted = computed(() => !this.audio.sfx());
   /** The round's clock as `m:ss`, or `null` with no round on. */
   readonly roundClock = computed(() => {
     const seconds = this.store.hud()?.secondsLeft;
@@ -533,6 +535,12 @@ export class Online {
   }
 
   /** Admin: silences an account in the chat until the server restarts. */
+  /** Switches the effects for the arena on screen and for every round after it. */
+  toggleSound(): void {
+    this.audio.setSfx(this.muted());
+    this.handle?.setMuted(this.muted());
+  }
+
   muteChat(accountId: string): void {
     this.store.muteChat(accountId);
   }
