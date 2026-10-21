@@ -41,6 +41,7 @@ import {
 } from './outsiders';
 import { landThrownBombs, launchBomb } from './throw';
 import { closeArena } from './closing';
+import { scatterItems } from './scatter';
 import { assignColors, PlayerColorId } from './colors';
 import {
   carryAlong,
@@ -104,6 +105,7 @@ export function createGame(options: GameOptions): GameState {
           : options.roundTicks,
     closedCells: 0,
     closingWalls: options.closingWalls ?? true,
+    dropItems: options.dropItems ?? true,
     events: [],
   };
   for (const setup of options.outsiders ?? []) addOutsider(state, setup);
@@ -648,6 +650,7 @@ export function applyPowerUp(player: Player, kind: PowerUpKind): void {
       break;
     case 'fullfire':
       player.fireRange = MAX_FIRE;
+      player.fullFire = true;
       break;
     case 'powerbomb':
       player.powerBomb = true;
@@ -833,6 +836,7 @@ export function eliminatePlayer(
   player.diedAtTick = state.tick;
   dropHeldBomb(state, player);
   letGo(state, player);
+  scatterItems(state, player);
   return { type: 'player-died', playerId, killerId: null };
 }
 
@@ -881,6 +885,7 @@ function hitPlayer(
   dropHeldBomb(state, player);
   letGo(state, player);
   state.events.push({ type: 'player-died', playerId: player.id, killerId });
+  scatterItems(state, player);
   return true;
 }
 

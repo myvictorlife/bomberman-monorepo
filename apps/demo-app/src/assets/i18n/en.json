@@ -785,6 +785,8 @@
       "ROUND_TIMER_MS_DESC": "How long a round lasts. Off means no clock.",
       "CLOSING_WALLS": "Closing walls",
       "CLOSING_WALLS_DESC": "When the clock runs out, walls fall in a spiral until one is left. Off: time-up is a draw.",
+      "DROP_ITEMS": "Fallen players drop items",
+      "DROP_ITEMS_DESC": "Whoever falls leaves what they picked up scattered across the arena for the others. Off: the items fall with them.",
       "WINNER_STAYS": "Winner stays",
       "WINNER_STAYS_DESC": "The winner plays the next round with the next in line, up to this many wins in a row; then to the back of the line. Off: every player goes to the back.",
       "BOTS": "Bots",

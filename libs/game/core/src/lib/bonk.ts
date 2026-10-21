@@ -91,7 +91,12 @@ function dropCells(state: GameState, player: Player): [number, number][] {
   return cells;
 }
 
-function isFreeFloor(state: GameState, col: number, row: number): boolean {
+/** Floor an item can land on: no block, bomb, item or flame on it. */
+export function isFreeFloor(
+  state: GameState,
+  col: number,
+  row: number,
+): boolean {
   return (
     tileAt(state, col, row) === 'empty' &&
     !state.bombs.some((b) => b.col === col && b.row === row) &&

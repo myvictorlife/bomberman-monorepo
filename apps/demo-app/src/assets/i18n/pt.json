@@ -785,6 +785,8 @@
       "ROUND_TIMER_MS_DESC": "Quanto tempo dura uma rodada. Desligado: sem cronômetro.",
       "CLOSING_WALLS": "Paredes fechando",
       "CLOSING_WALLS_DESC": "Quando o tempo acaba, as paredes caem em espiral até sobrar um. Desligado: empate quando o tempo acaba.",
+      "DROP_ITEMS": "Quem cai solta os itens",
+      "DROP_ITEMS_DESC": "Quem morre deixa o que coletou espalhado pela arena para os outros. Desligado: os itens somem com ele.",
       "WINNER_STAYS": "Vencedor continua",
       "WINNER_STAYS_DESC": "Quem vence joga a próxima rodada com os próximos da fila, até esse número de vitórias seguidas; depois vai para o fim da fila. Desligado: todos os jogadores voltam para o fim.",
       "BOTS": "Bots",

@@ -75,6 +75,10 @@ on `/online` draws itself from the schema; `parseRules` validates a change.
   the border is never reseated mid-round and a round never changes length.
 - `roundTimerMs` (0 = no clock) and `closingWalls` are the round's clock and
   spiral of falling walls (`game-core`), set per round in `refreshLobby`.
+- `dropItems` (on in the public room) is the scavenger rule: whoever falls —
+  by flame, by leaving or by standing idle — leaves what they picked up
+  scattered over free floor (`scatter.ts` in `game-core`), never on the cell
+  they fell on, where an outsider steps in. Never in a stage.
 
 - Max 5 (four corners + the middle), min 2, countdown 15 s, results 5 s.
 - Fifth player in line starts the round at once; the countdown never restarts

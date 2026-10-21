@@ -9,6 +9,7 @@ const RULES: RoomRules = {
   outsiders: 2,
   roundTimerMs: 180_000,
   closingWalls: true,
+  dropItems: true,
   winnerStays: 0,
   bots: 0,
   botsFillTo: 5,

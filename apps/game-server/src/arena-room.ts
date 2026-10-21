@@ -714,6 +714,7 @@ export function createArenaRoom(deps: ArenaRoomDeps) {
               ? Math.round((rules.roundTimerMs / 1000) * TICK_RATE)
               : null,
           closingWalls: rules.closingWalls,
+          dropItems: rules.dropItems,
         });
         this.heldInputs.clear();
         this.pendingEvents = [];

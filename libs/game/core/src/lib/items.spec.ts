@@ -33,7 +33,7 @@ function cursed(state: GameState, id: string, kind: CurseKind): Player {
 }
 
 describe('new items', () => {
-  it('are hidden by the stages, and kept out of versus for now', () => {
+  it('are hidden in versus too, all but the extra life, which only a stage gives', () => {
     const versus = createGame({
       seed: 3,
       players: [
@@ -41,10 +41,16 @@ describe('new items', () => {
         { id: 'p2', name: 'P2' },
       ],
     });
-    for (const kind of ['skull', 'wallpass', 'oneup', 'clock'] as const) {
-      expect(versus.hiddenPowerUps).not.toContain(kind);
-      expect(POWER_UP_COUNTS).not.toHaveProperty(kind);
-    }
+    for (const kind of [
+      'skull',
+      'wallpass',
+      'clock',
+      'fullfire',
+      'powerbomb',
+    ] as const)
+      expect(versus.hiddenPowerUps).toContain(kind);
+    expect(versus.hiddenPowerUps).not.toContain('oneup');
+    expect(POWER_UP_COUNTS).not.toHaveProperty('oneup');
 
     const stage = createGame({
       seed: 3,

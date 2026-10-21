@@ -36,6 +36,7 @@ const RULES: RoomRules = {
   outsiders: 2,
   roundTimerMs: 0,
   closingWalls: true,
+  dropItems: true,
   // Off here, so the rotation tests below read as before; `champion` turns it on.
   winnerStays: 0,
   bots: 0,

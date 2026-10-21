@@ -58,6 +58,8 @@ export interface RoomRules {
   roundTimerMs: number;
   /** When the clock runs out: walls fall in a spiral until one is left; off, time-up is a draw. */
   closingWalls: boolean;
+  /** Whoever falls leaves what they picked up scattered on the floor; off, it falls with them. */
+  dropItems: boolean;
   /**
    * The winner plays the next round too, with the next in line, until this
    * many wins in a row; then they go to the back like everyone else. `0`: no
@@ -144,6 +146,7 @@ export const RULE_FIELDS: readonly RuleField[] = [
     unit: 'seconds',
   },
   { key: 'closingWalls', kind: 'boolean' },
+  { key: 'dropItems', kind: 'boolean' },
   {
     key: 'winnerStays',
     kind: 'number',
@@ -203,6 +206,7 @@ export const PUBLIC_ROOM_RULES: RoomRules = {
   outsiders: 5,
   roundTimerMs: 180_000,
   closingWalls: true,
+  dropItems: true,
   winnerStays: 5,
   bots: MAX_PLAYERS,
   botsFillTo: 3,

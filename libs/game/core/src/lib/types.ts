@@ -152,6 +152,8 @@ export interface Player {
   wallPass: boolean;
   /** The first bomb of a volley reaches as far as fire goes. */
   powerBomb: boolean;
+  /** Full fire took their fire to the limit; it goes back as itself when they fall. */
+  fullFire?: boolean;
   /** The skull: a curse until its tick, passed on by touching another player. */
   curse: Curse | null;
   /** Stage mode: stepped in a snail's slime — slower until this tick. */
@@ -261,7 +263,7 @@ export type GameEvent =
   | { type: 'player-landed'; playerId: string }
   /** A bomb in the air came down on this player: dizzy, and it bounces on. */
   | { type: 'player-bonked'; playerId: string }
-  /** Knocked loose by a bonk: the item is on the floor at `col, row`. */
+  /** Knocked loose by a bonk, or left behind by a fall: the item is on the floor at `col, row`. */
   | {
       type: 'power-up-dropped';
       playerId: string;
@@ -434,6 +436,8 @@ export interface GameState {
   closedCells: number;
   /** When the clock runs out: walls close in (`true`), or the round is a draw among whoever is left. */
   closingWalls: boolean;
+  /** The scavenger rule: whoever falls leaves their items on the floor; see `scatter.ts`. */
+  dropItems: boolean;
   /** What happened during the last tick — sounds and effects read these. */
   events: GameEvent[];
   /** Stage mode: the creatures and the gate. Absent in a versus round. */
@@ -460,6 +464,8 @@ export interface GameOptions {
   roundTicks?: number | null;
   /** What the end of the clock does; defaults to `true`, walls closing in. `false` ends the round there. */
   closingWalls?: boolean;
+  /** Whoever falls leaves their items on the floor; defaults to `true`. Never in a stage. */
+  dropItems?: boolean;
   /** Who starts on the border, throwing bombs in. */
   outsiders?: PlayerSetup[];
   /**

@@ -36,10 +36,10 @@ export const BASE_SPEED = 3.2;
 export const SPEED_PER_LEVEL = 0.6;
 
 /**
- * Power-ups hidden under the soft blocks of a fresh arena. The campaign's
- * items (wall pass, full fire, power bomb, skull, clock, extra life) are
- * hidden by each stage instead — see `items` in `campaign.ts` — so versus
- * and the online room keep their balance until the bots are tuned for them.
+ * Power-ups hidden under the soft blocks of a fresh arena, in versus and in
+ * the online room. A stage hides its own instead — see `items` in
+ * `campaign.ts` — and only a stage hides the extra life: a versus round has
+ * no lives to give.
  */
 export const POWER_UP_COUNTS = {
   bomb: 8,
@@ -51,6 +51,11 @@ export const POWER_UP_COUNTS = {
   vest: 1,
   glove: 2,
   kick: 2,
+  wallpass: 1,
+  fullfire: 1,
+  powerbomb: 1,
+  skull: 2,
+  clock: 1,
 } as const;
 
 /** How long a skull's curse lasts. */

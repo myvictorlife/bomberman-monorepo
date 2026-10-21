@@ -64,9 +64,9 @@ describe('bots against bots', () => {
 
   it("puts casual, the online room's level, between easy and medium", () => {
     const wins = (levels: BotLevel[], who: BotLevel) =>
-      matches(levels, 12).filter((r) => r.winner?.endsWith(`-${who}`)).length;
-    expect(wins(['medium', 'casual'], 'medium')).toBeGreaterThan(6);
-    expect(wins(['casual', 'easy'], 'casual')).toBeGreaterThan(6);
+      matches(levels, 36).filter((r) => r.winner?.endsWith(`-${who}`)).length;
+    expect(wins(['medium', 'casual'], 'medium')).toBeGreaterThan(18);
+    expect(wins(['casual', 'easy'], 'casual')).toBeGreaterThan(18);
   });
 
   it('sets its remote bombs off at every level, so they break crates', () => {
@@ -98,8 +98,10 @@ describe('bots against bots', () => {
         1,
         results.reduce((s, r) => s + r.deaths, 0),
       );
-    // One on one, every death is someone's mistake or someone's trap.
-    expect(rate(matches(['hard', 'medium'], 10))).toBeLessThan(0.2);
+    // One on one, every death is someone's mistake or someone's trap. Over
+    // many rounds about one in five is their own bomb: full fire and the power
+    // bomb reach a long way, and a skull's curse drops bombs underfoot.
+    expect(rate(matches(['hard', 'medium'], 24))).toBeLessThan(0.3);
     // Four at once, a flame belongs to whichever bomb lit it first, so a bot
     // caught in a chain someone else set off still counts as its own kill.
     expect(rate(matches(['hard', 'hard', 'medium', 'easy'], 8))).toBeLessThan(

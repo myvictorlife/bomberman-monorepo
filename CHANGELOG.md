@@ -54,6 +54,14 @@ config file. Ordinary app-level additions are minor.
   keep drawing in 64 units. The roster, the mounts page and every sprite card
   pass their size, so a big preview on a dense screen is no longer a 64 px
   canvas stretched by CSS.
+- **Fallen players drop their items.** A new room rule, "Fallen players drop
+  items" (`dropItems`, on in the public room and in versus by default):
+  whoever falls leaves everything above the starting kit scattered over free
+  floor — one item per level, full fire as itself, a curse still running as
+  its skull; the vest and the clock are spent, a mount is gone already.
+  Never in a stage, where the kit carries on. The online room and versus now
+  also hide wall pass, full fire, power bomb, skull (two) and clock; the extra
+  life stays stage-only.
 - **A stage plays on a phone like `/play`.** On a touch screen the stage
   opens behind "tap to play", then fills the screen with the on-screen
   controller over it; held upright the whole game turns a quarter to play

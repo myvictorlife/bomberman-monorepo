@@ -13,6 +13,7 @@ export * from './lib/maps';
 export * from './lib/movement';
 export * from './lib/outsiders';
 export * from './lib/rng';
+export * from './lib/scatter';
 export * from './lib/score';
 export * from './lib/stage';
 export * from './lib/throw';
