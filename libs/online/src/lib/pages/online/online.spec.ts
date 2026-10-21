@@ -865,11 +865,14 @@ describe('Online', () => {
     expect(rest[0]).toHaveText('Dan');
 
     // The faces: the last character played, in the colour of the place; a face nobody told us wears the default.
-    // No canvas in this DOM: a context that takes any call and any property.
-    const ctx = new Proxy(
-      {},
-      { get: () => () => undefined, set: () => true },
-    ) as unknown as CanvasRenderingContext2D;
+    // No canvas in this DOM: a context that takes any call and any property,
+    // and whose calls (a gradient, say) take any call in turn.
+    const anything: unknown = new Proxy(() => anything, {
+      get: () => anything,
+      apply: () => anything,
+      set: () => true,
+    });
+    const ctx = anything as CanvasRenderingContext2D;
     expect(() => spectator.component.paintFace(ctx, 'lia', 1)).not.toThrow();
     expect(() =>
       spectator.component.paintFace(ctx, undefined, 2),

@@ -12,17 +12,16 @@ import {
   mountFrame,
   riderFrame,
   roundRect,
-  shadeRight,
   stepOf,
   TAU,
   teamFor,
+  volume,
+  lineOf,
 } from './ink';
 
 const SHELL = '#a88556';
-const SHELL_SH = '#7f6239';
 const BAND = '#6e5231';
 const HIDE = '#d9b98c';
-const HIDE_SH = '#b3925f';
 const CLAW = '#3a2e22';
 
 /** Tatu, an armadillo: banded shell, short snout, clawed feet, team saddle. */
@@ -47,8 +46,8 @@ export function paintTatu(
   const leg = (x: number, y: number, lift: number) => {
     const p: Path = () => roundRect(ctx, x - 3, y - 7 - lift, 6, 8, 2.5);
     p();
-    fillStroke(ctx, HIDE);
-    shadeRight(ctx, p, HIDE_SH, 1.2, 0);
+    fillStroke(ctx, HIDE, 1.7, lineOf(HIDE));
+    volume(ctx, p, HIDE, 0.86, 1.2);
     for (const dx of [-2, 0, 2]) {
       ctx.beginPath();
       ctx.moveTo(x + dx, y - lift);
@@ -73,8 +72,8 @@ export function paintTatu(
       ctx.closePath();
     };
     p();
-    fillStroke(ctx, SHELL);
-    shadeRight(ctx, p, SHELL_SH, 2, 1.6);
+    fillStroke(ctx, SHELL, 1.7, lineOf(SHELL));
+    volume(ctx, p, SHELL, 1.44, 2.0);
     ctx.save();
     p();
     ctx.clip();
@@ -90,8 +89,8 @@ export function paintTatu(
   const saddle = (cx: number, cy: number, rx: number, ry: number) => {
     const p: Path = () => ellipse(ctx, cx, cy, rx, ry);
     p();
-    fillStroke(ctx, c.suit);
-    shadeRight(ctx, p, c.suitDark, 1.4, 1);
+    fillStroke(ctx, c.suit, 1.7, lineOf(c.suit));
+    volume(ctx, p, c.suit, 1.01, 1.4);
     ellipse(ctx, cx, cy, rx * 0.6, ry * 0.55);
     ctx.strokeStyle = c.suitLight;
     ctx.lineWidth = 1;
@@ -119,7 +118,7 @@ export function paintTatu(
     ctx.rotate(rot);
     ellipse(ctx, 0, 0, 1.8, 3);
     ctx.restore();
-    fillStroke(ctx, HIDE, 1.5);
+    fillStroke(ctx, HIDE, 1.5, lineOf(HIDE));
   };
   const headFront = (cx: number, cy: number) => {
     const p: Path = () => {
@@ -133,8 +132,8 @@ export function paintTatu(
     ear(cx - 6, cy - 6, -0.5);
     ear(cx + 6, cy - 6, 0.5);
     p();
-    fillStroke(ctx, HIDE);
-    shadeRight(ctx, p, HIDE_SH, 1.4, 1);
+    fillStroke(ctx, HIDE, 1.7, lineOf(HIDE));
+    volume(ctx, p, HIDE, 1.01, 1.4);
     eye(cx - 3, cy - 2);
     eye(cx + 3, cy - 2);
     ellipse(ctx, cx, cy + 3.5, 2.2, 1.4);
@@ -152,8 +151,8 @@ export function paintTatu(
     };
     ear(cx - 3, cy - 7, 0.3);
     p();
-    fillStroke(ctx, HIDE);
-    shadeRight(ctx, p, HIDE_SH, 1.4, 1);
+    fillStroke(ctx, HIDE, 1.7, lineOf(HIDE));
+    volume(ctx, p, HIDE, 1.01, 1.4);
     eye(cx + 1, cy - 2.5);
     circle(ctx, cx + 9.2, cy + 1.5, 1.2);
     ctx.fillStyle = INK;
@@ -165,7 +164,7 @@ export function paintTatu(
     ctx.lineTo(x + dx, y + dy);
     ctx.lineTo(x, y + 2.5);
     ctx.closePath();
-    fillStroke(ctx, HIDE);
+    fillStroke(ctx, HIDE, 1.7, lineOf(HIDE));
     ctx.strokeStyle = BAND;
     ctx.lineWidth = 1;
     for (const k of [0.3, 0.55, 0.8]) {
@@ -217,7 +216,7 @@ export function paintTatu(
       ear(-7, -2, -0.4);
       ear(7, -2, 0.4);
       ellipse(ctx, 0, 1, 7, 3.5);
-      fillStroke(ctx, HIDE);
+      fillStroke(ctx, HIDE, 1.7, lineOf(HIDE));
     });
     leg(19, 55, step === 1 ? 2 : 0);
     leg(45, 55, step === -1 ? 2 : 0);
@@ -234,7 +233,7 @@ export function paintTatu(
     ctx.lineTo(34.5, 51.5);
     ctx.lineTo(32, 62);
     ctx.closePath();
-    fillStroke(ctx, HIDE);
+    fillStroke(ctx, HIDE, 1.7, lineOf(HIDE));
   } else {
     leg(19, 56, step === 1 ? 2 : 0);
     leg(45, 56, step === -1 ? 2 : 0);

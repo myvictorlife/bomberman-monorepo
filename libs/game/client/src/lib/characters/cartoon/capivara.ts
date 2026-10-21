@@ -12,10 +12,11 @@ import {
   mountFrame,
   riderFrame,
   roundRect,
-  shadeRight,
   stepOf,
   TAU,
   teamFor,
+  volume,
+  lineOf,
 } from './ink';
 
 const CAPY = '#9a7447';
@@ -47,16 +48,16 @@ export function paintCapivara(
   const leg = (x: number, y: number, lift: number) => {
     const p: Path = () => roundRect(ctx, x - 3, y - 7 - lift, 6, 8, 2.5);
     p();
-    fillStroke(ctx, CAPY);
-    shadeRight(ctx, p, CAPY_SH, 1.2, 0);
+    fillStroke(ctx, CAPY, 1.7, lineOf(CAPY));
+    volume(ctx, p, CAPY, 0.86, 1.2);
     ellipse(ctx, x, y - lift + 0.5, 3.6, 1.8);
-    fillStroke(ctx, CAPY_SH, 1.4);
+    fillStroke(ctx, CAPY_SH, 1.4, lineOf(CAPY_SH));
   };
   const body = (cx: number, cy: number, rx: number, ry: number) => {
     const p: Path = () => ellipse(ctx, cx, cy, rx, ry);
     p();
-    fillStroke(ctx, CAPY);
-    shadeRight(ctx, p, CAPY_SH, 2.2, 1.8);
+    fillStroke(ctx, CAPY, 1.7, lineOf(CAPY));
+    volume(ctx, p, CAPY, 1.58, 2.2);
     ctx.save();
     p();
     ctx.clip();
@@ -81,8 +82,8 @@ export function paintCapivara(
   const saddle = (cx: number, cy: number, rx: number, ry: number) => {
     const p: Path = () => ellipse(ctx, cx, cy, rx, ry);
     p();
-    fillStroke(ctx, c.suit);
-    shadeRight(ctx, p, c.suitDark, 1.4, 1);
+    fillStroke(ctx, c.suit, 1.7, lineOf(c.suit));
+    volume(ctx, p, c.suit, 1.01, 1.4);
     ellipse(ctx, cx, cy, rx * 0.6, ry * 0.55);
     ctx.strokeStyle = c.suitLight;
     ctx.lineWidth = 1;
@@ -106,22 +107,22 @@ export function paintCapivara(
   };
   const ear = (x: number, y: number) => {
     circle(ctx, x, y, 2.2);
-    fillStroke(ctx, CAPY, 1.5);
+    fillStroke(ctx, CAPY, 1.5, lineOf(CAPY));
     circle(ctx, x, y, 1);
     ctx.fillStyle = CAPY_SH;
     ctx.fill();
   };
   const bird = (x: number, y: number, dir: number) => {
     ellipse(ctx, x, y, 3, 2.4);
-    fillStroke(ctx, BIRD, 1.5);
+    fillStroke(ctx, BIRD, 1.5, lineOf(BIRD));
     circle(ctx, x + 2 * dir, y - 2, 2);
-    fillStroke(ctx, BIRD, 1.5);
+    fillStroke(ctx, BIRD, 1.5, lineOf(BIRD));
     ctx.beginPath();
     ctx.moveTo(x + 3.6 * dir, y - 2.3);
     ctx.lineTo(x + 5.5 * dir, y - 1.7);
     ctx.lineTo(x + 3.6 * dir, y - 1.1);
     ctx.closePath();
-    fillStroke(ctx, BIRD_BEAK, 1);
+    fillStroke(ctx, BIRD_BEAK, 1, lineOf(BIRD_BEAK));
     circle(ctx, x + 2.4 * dir, y - 2.4, 0.5);
     ctx.fillStyle = INK;
     ctx.fill();
@@ -142,12 +143,12 @@ export function paintCapivara(
       ctx.closePath();
     };
     p();
-    fillStroke(ctx, CAPY);
-    shadeRight(ctx, p, CAPY_SH, 1.6, 1.2);
+    fillStroke(ctx, CAPY, 1.7, lineOf(CAPY));
+    volume(ctx, p, CAPY, 1.15, 1.6);
     eye(cx - 3.5, cy - 2);
     eye(cx + 3.5, cy - 2);
     roundRect(ctx, cx - 4.5, cy + 0.5, 9, 5.5 + chew * 0.6, 2.5);
-    fillStroke(ctx, CAPY_BELLY, 1.4);
+    fillStroke(ctx, CAPY_BELLY, 1.4, lineOf(CAPY_BELLY));
     ctx.fillStyle = INK;
     for (const dx of [-2, 2]) {
       ellipse(ctx, cx + dx, cy + 2.4, 1, 0.7);
@@ -173,8 +174,8 @@ export function paintCapivara(
       ctx.closePath();
     };
     p();
-    fillStroke(ctx, CAPY);
-    shadeRight(ctx, p, CAPY_SH, 1.6, 1.2);
+    fillStroke(ctx, CAPY, 1.7, lineOf(CAPY));
+    volume(ctx, p, CAPY, 1.15, 1.6);
     eye(cx + 1.5, cy - 2);
     ellipse(ctx, cx + 8.5, cy + 0.5, 1, 0.7);
     ctx.fillStyle = INK;
@@ -224,7 +225,7 @@ export function paintCapivara(
       ear(-7, -2);
       ear(7, -2);
       ellipse(ctx, 0, 0, 7, 4);
-      fillStroke(ctx, CAPY);
+      fillStroke(ctx, CAPY, 1.7, lineOf(CAPY));
     });
     leg(21, 58, step === 1 ? 2 : 0);
     leg(43, 58, step === -1 ? 2 : 0);

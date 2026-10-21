@@ -12,16 +12,15 @@ import {
   mountFrame,
   riderFrame,
   roundRect,
-  shadeRight,
   stepOf,
   TAU,
   teamFor,
+  volume,
+  lineOf,
 } from './ink';
 
 const DUCK = '#f7c948';
-const DUCK_SH = '#d9a21e';
 const BEAK = '#f08a2e';
-const BEAK_SH = '#c4661a';
 const FOOT = '#e8792a';
 
 /** Pato, a giant rubber duck: the debugging kind. Waddles. */
@@ -53,7 +52,7 @@ export function paintPato(
     ctx.lineTo(x - 2, y + 0.5 - lift);
     ctx.lineTo(x - 5, y + 1 - lift);
     ctx.closePath();
-    fillStroke(ctx, FOOT, 1.6);
+    fillStroke(ctx, FOOT, 1.6, lineOf(FOOT));
   };
   const gloss = (cx: number, cy: number, rx: number, ry: number) => {
     ellipse(ctx, cx - rx * 0.45, cy - ry * 0.45, rx * 0.22, ry * 0.18, -0.6);
@@ -63,15 +62,15 @@ export function paintPato(
   const body = (cx: number, cy: number, rx: number, ry: number) => {
     const p: Path = () => ellipse(ctx, cx, cy, rx, ry);
     p();
-    fillStroke(ctx, DUCK);
-    shadeRight(ctx, p, DUCK_SH, 2.2, 1.8);
+    fillStroke(ctx, DUCK, 1.7, lineOf(DUCK));
+    volume(ctx, p, DUCK, 1.58, 2.2);
     gloss(cx, cy, rx, ry);
   };
   const saddle = (cx: number, cy: number, rx: number, ry: number) => {
     const p: Path = () => ellipse(ctx, cx, cy, rx, ry);
     p();
-    fillStroke(ctx, c.suit);
-    shadeRight(ctx, p, c.suitDark, 1.4, 1);
+    fillStroke(ctx, c.suit, 1.7, lineOf(c.suit));
+    volume(ctx, p, c.suit, 1.01, 1.4);
     ellipse(ctx, cx, cy, rx * 0.6, ry * 0.55);
     ctx.strokeStyle = c.suitLight;
     ctx.lineWidth = 1;
@@ -96,8 +95,8 @@ export function paintPato(
   const head = (cx: number, cy: number, r: number, dir: -1 | 0 | 1) => {
     const p: Path = () => circle(ctx, cx, cy, r);
     p();
-    fillStroke(ctx, DUCK);
-    shadeRight(ctx, p, DUCK_SH, 1.8, 1.4);
+    fillStroke(ctx, DUCK, 1.7, lineOf(DUCK));
+    volume(ctx, p, DUCK, 1.3, 1.8);
     gloss(cx, cy, r, r);
     if (dir === 0) {
       const b: Path = () => {
@@ -109,8 +108,8 @@ export function paintPato(
         ctx.closePath();
       };
       b();
-      fillStroke(ctx, BEAK, 1.6);
-      shadeRight(ctx, b, BEAK_SH, 1.2, 0.8);
+      fillStroke(ctx, BEAK, 1.6, lineOf(BEAK));
+      volume(ctx, b, BEAK, 0.86, 1.2);
       ctx.beginPath();
       ctx.moveTo(cx - 3.5, cy + 3);
       ctx.quadraticCurveTo(cx, cy + 4, cx + 3.5, cy + 3);
@@ -126,8 +125,8 @@ export function paintPato(
         ctx.closePath();
       };
       b();
-      fillStroke(ctx, BEAK, 1.6);
-      shadeRight(ctx, b, BEAK_SH, 1, 0.8);
+      fillStroke(ctx, BEAK, 1.6, lineOf(BEAK));
+      volume(ctx, b, BEAK, 0.72, 1.0);
       ctx.beginPath();
       ctx.moveTo(cx + r - 2, cy + 0.6);
       ctx.lineTo(cx + r + 4.5, cy + 0.4);
@@ -144,8 +143,8 @@ export function paintPato(
       ctx.closePath();
     };
     p();
-    fillStroke(ctx, DUCK);
-    shadeRight(ctx, p, DUCK_SH, 1.2, 1);
+    fillStroke(ctx, DUCK, 1.7, lineOf(DUCK));
+    volume(ctx, p, DUCK, 0.86, 1.2);
   };
   const riderAt = (hx: number, hy: number) => {
     if (!withRider) return;
@@ -173,8 +172,8 @@ export function paintPato(
     foot(34, 58, step === -1 ? 2 : 0);
     const neck: Path = () => roundRect(ctx, 41, 29, 10, 17, 5);
     neck();
-    fillStroke(ctx, DUCK);
-    shadeRight(ctx, neck, DUCK_SH, 1.6, 1);
+    fillStroke(ctx, DUCK, 1.7, lineOf(DUCK));
+    volume(ctx, neck, DUCK, 1.15, 1.6);
     head(47, 28 + (walking ? step * 0.8 : 0), 9.5, 1);
   } else if (back) {
     head(32, 28, 9.5, -1);
@@ -193,8 +192,8 @@ export function paintPato(
       ctx.closePath();
     };
     tp();
-    fillStroke(ctx, DUCK);
-    shadeRight(ctx, tp, DUCK_SH, 1.2, 1);
+    fillStroke(ctx, DUCK, 1.7, lineOf(DUCK));
+    volume(ctx, tp, DUCK, 0.86, 1.2);
   } else {
     foot(21, 58, step === 1 ? 2 : 0);
     foot(43, 58, step === -1 ? 2 : 0);
@@ -202,7 +201,7 @@ export function paintPato(
     saddle(32, 33, 9, 3.4);
     riderAt(32, 33);
     roundRect(ctx, 27, 44, 10, 9, 4.5);
-    fillStroke(ctx, DUCK);
+    fillStroke(ctx, DUCK, 1.7, lineOf(DUCK));
     head(32, 52, 9.5, 0);
   }
   ctx.restore();

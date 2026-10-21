@@ -12,22 +12,19 @@ import {
   inkOnly,
   Path,
   roundRect,
-  shadeRight,
   stepOf,
   TAU,
   teamFor,
+  volume,
+  lineOf,
 } from './ink';
 
 const SKIN = '#c98a5e';
-const SKIN_SH = '#a66a42';
+const SKIN_LINE = lineOf(SKIN);
 const JACKET = '#23262e';
-const JACKET_SH = '#121419';
 const HELM = '#d8302e';
-const HELM_SH = '#9a1f1e';
 const JEANS = '#2f3b57';
-const JEANS_SH = '#1f2839';
 const SOCK = '#f4f2ea';
-const SOCK_SH = '#cfccbf';
 const SANDAL = '#2a2a2a';
 const BAG = '#2b2f3a';
 const BAG_SH = '#171a22';
@@ -65,8 +62,8 @@ export function paintMotoca(ctx: Ctx, o: CharacterPose): void {
       ctx.restore();
     };
     sock();
-    fillStroke(ctx, SOCK);
-    shadeRight(ctx, sock, SOCK_SH, 1.4, 0.6);
+    fillStroke(ctx, SOCK, 1.7, lineOf(SOCK));
+    volume(ctx, sock, SOCK, 1.01, 1.4);
     ctx.save();
     ctx.translate(x, by);
     ctx.rotate(rot);
@@ -86,8 +83,8 @@ export function paintMotoca(ctx: Ctx, o: CharacterPose): void {
     const p: Path = () =>
       roundRect(ctx, x - 3.2, 42, 6.4, 11 - lift * 0.5, 2.2);
     p();
-    fillStroke(ctx, JEANS);
-    shadeRight(ctx, p, JEANS_SH, 1.4, 0);
+    fillStroke(ctx, JEANS, 1.7, lineOf(JEANS));
+    volume(ctx, p, JEANS, 1.01, 1.4);
     sandalAt(x, 55 - lift, fwd);
   };
   if (seated) {
@@ -100,8 +97,8 @@ export function paintMotoca(ctx: Ctx, o: CharacterPose): void {
         ctx.restore();
       };
       p();
-      fillStroke(ctx, JEANS);
-      shadeRight(ctx, p, JEANS_SH, 1.4, 0);
+      fillStroke(ctx, JEANS, 1.7, lineOf(JEANS));
+      volume(ctx, p, JEANS, 1.01, 1.4);
       sandalAt(hx + dir * 3.5, 51, 0, dir * 0.35);
     };
     if (side) hang(33, 0.4);
@@ -123,8 +120,8 @@ export function paintMotoca(ctx: Ctx, o: CharacterPose): void {
   const bag = (x: number, y: number, w: number, hgt: number) => {
     const p: Path = () => roundRect(ctx, x, y, w, hgt, 2.5);
     p();
-    fillStroke(ctx, BAG);
-    shadeRight(ctx, p, BAG_SH, 1.6, 1.2);
+    fillStroke(ctx, BAG, 1.7, lineOf(BAG));
+    volume(ctx, p, BAG, 1.15, 1.6);
     roundRect(ctx, x + 1.5, y + 2, w - 3, 2.2, 1);
     ctx.fillStyle = c.suit;
     ctx.fill();
@@ -150,7 +147,7 @@ export function paintMotoca(ctx: Ctx, o: CharacterPose): void {
   if (side) bag(13, 24, 11, 15);
   else if (!back) {
     roundRect(ctx, 19, 23, 26, 6, 2);
-    fillStroke(ctx, BAG);
+    fillStroke(ctx, BAG, 1.7, lineOf(BAG));
   }
 
   // ── jacket ──
@@ -173,8 +170,8 @@ export function paintMotoca(ctx: Ctx, o: CharacterPose): void {
     ctx.closePath();
   };
   torsoPath();
-  fillStroke(ctx, JACKET);
-  shadeRight(ctx, torsoPath, JACKET_SH);
+  fillStroke(ctx, JACKET, 1.7, lineOf(JACKET));
+  volume(ctx, torsoPath, JACKET, 1.3, 1.8);
   if (back) {
     bag(22, 25, 20, 17);
     ctx.strokeStyle = BAG_SH;
@@ -233,7 +230,7 @@ export function paintMotoca(ctx: Ctx, o: CharacterPose): void {
     ctx.moveTo(sx, sy);
     ctx.lineTo(ex, ey);
     ctx.lineTo(hx, hy);
-    ctx.strokeStyle = INK;
+    ctx.strokeStyle = lineOf(JACKET);
     ctx.lineWidth = 8;
     ctx.stroke();
     ctx.strokeStyle = JACKET;
@@ -249,12 +246,12 @@ export function paintMotoca(ctx: Ctx, o: CharacterPose): void {
     ctx.stroke();
     if (hand) {
       circle(ctx, hx, hy, 2.9);
-      fillStroke(ctx, SKIN, 1.6);
+      fillStroke(ctx, SKIN, 1.6, lineOf(SKIN));
     }
   };
   const phone = (x: number, y: number) => {
     roundRect(ctx, x - 2.6, y - 4.2, 5.2, 8.4, 1);
-    fillStroke(ctx, '#1a1c22', 1.5);
+    fillStroke(ctx, '#1a1c22', 1.5, lineOf('#1a1c22'));
     roundRect(ctx, x - 1.9, y - 3.4, 3.8, 6.6, 0.6);
     ctx.fillStyle = c.glow;
     ctx.globalAlpha = 0.9;
@@ -281,7 +278,7 @@ export function paintMotoca(ctx: Ctx, o: CharacterPose): void {
   } else {
     sleeve(22, 25, 17, 33, 15.5, 29);
     roundRect(ctx, 14.3, 23.5, 2.4, 4, 1.2);
-    fillStroke(ctx, SKIN, 1.3);
+    fillStroke(ctx, SKIN, 1.3, lineOf(SKIN));
     sleeve(42, 25, 46, 34, 46.5, 29);
     phone(46.5, 27);
   }
@@ -290,8 +287,8 @@ export function paintMotoca(ctx: Ctx, o: CharacterPose): void {
   headFrame(ctx, bob);
   const head: Path = () => headPath(ctx);
   head();
-  fillStroke(ctx, SKIN);
-  shadeRight(ctx, head, SKIN_SH, 1.8, 1.2);
+  fillStroke(ctx, SKIN, 1.7, lineOf(SKIN));
+  volume(ctx, head, SKIN, 1.3, 1.8);
   if (!back) {
     const eye = (x: number, y: number) => {
       const h = 2.4 * (1 - blink);
@@ -302,10 +299,12 @@ export function paintMotoca(ctx: Ctx, o: CharacterPose): void {
         inkOnly(ctx, 1.6);
         return;
       }
-      ellipse(ctx, x, y, 1.6, h);
+      ellipse(ctx, x, y, 2.2, h + 0.4);
+      fillStroke(ctx, '#ffffff', 0.9, SKIN_LINE);
+      ellipse(ctx, x + 0.3, y + 0.4, 1.3, Math.min(2, h * 0.8));
       ctx.fillStyle = INK;
       ctx.fill();
-      circle(ctx, x - 0.5, y - 0.9, 0.55);
+      circle(ctx, x - 0.3, y - 0.7, 0.6);
       ctx.fillStyle = '#fff';
       ctx.fill();
     };
@@ -359,8 +358,8 @@ export function paintMotoca(ctx: Ctx, o: CharacterPose): void {
     ctx.closePath();
   };
   shell();
-  fillStroke(ctx, HELM);
-  shadeRight(ctx, shell, HELM_SH, 1.8, 1.4);
+  fillStroke(ctx, HELM, 1.7, lineOf(HELM));
+  volume(ctx, shell, HELM, 1.3, 1.8);
   ctx.beginPath();
   if (side) {
     ctx.moveTo(23, 8);

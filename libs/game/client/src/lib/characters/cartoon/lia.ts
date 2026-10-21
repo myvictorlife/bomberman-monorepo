@@ -11,19 +11,18 @@ import {
   inkOnly,
   Path,
   roundRect,
-  shadeRight,
   stepOf,
   TAU,
   teamFor,
+  volume,
+  lineOf,
 } from './ink';
 
 const SKIN = '#8d5a3b';
-const SKIN_SH = '#6e4229';
+const SKIN_LINE = lineOf(SKIN);
 const HAIR = '#1f1612';
 const COAT = '#f4f3ee';
-const COAT_SH = '#cfcdc3';
 const CLOG = '#f0efe9';
-const CLOG_SH = '#c9c7bd';
 const STETHO = '#2b2b33';
 
 /**
@@ -42,7 +41,6 @@ export function paintLia(ctx: Ctx, o: CharacterPose): void {
   const seated = !!o.seated;
   const bob = seated ? 0 : walking ? -1.2 : Math.sin((t * TAU) / 2.8) * 0.4;
   const SCRUB = c.suit;
-  const SCRUB_SH = c.suitDark;
   beginFrame(ctx, o.facing);
   bodyFrame(ctx);
 
@@ -61,15 +59,15 @@ export function paintLia(ctx: Ctx, o: CharacterPose): void {
       ctx.restore();
     };
     p();
-    fillStroke(ctx, CLOG);
-    shadeRight(ctx, p, CLOG_SH, 1.6, 0.6);
+    fillStroke(ctx, CLOG, 1.7, lineOf(CLOG));
+    volume(ctx, p, CLOG, 1.15, 1.6);
   };
   const legAt = (x: number, lift: number, fwd: number) => {
     const p: Path = () =>
       roundRect(ctx, x - 3.2, 42, 6.4, 11 - lift * 0.5, 2.2);
     p();
-    fillStroke(ctx, SCRUB);
-    shadeRight(ctx, p, SCRUB_SH, 1.4, 0);
+    fillStroke(ctx, SCRUB, 1.7, lineOf(SCRUB));
+    volume(ctx, p, SCRUB, 1.01, 1.4);
     clogAt(x, 55 - lift, fwd);
   };
   if (seated) {
@@ -82,8 +80,8 @@ export function paintLia(ctx: Ctx, o: CharacterPose): void {
         ctx.restore();
       };
       p();
-      fillStroke(ctx, SCRUB);
-      shadeRight(ctx, p, SCRUB_SH, 1.4, 0);
+      fillStroke(ctx, SCRUB, 1.7, lineOf(SCRUB));
+      volume(ctx, p, SCRUB, 1.01, 1.4);
       clogAt(hx + dir * 3.5, 51, 0, dir * 0.35);
     };
     if (side) hang(33, 0.4);
@@ -121,8 +119,8 @@ export function paintLia(ctx: Ctx, o: CharacterPose): void {
     ctx.closePath();
   };
   coatPath();
-  fillStroke(ctx, COAT);
-  shadeRight(ctx, coatPath, COAT_SH);
+  fillStroke(ctx, COAT, 1.7, lineOf(COAT));
+  volume(ctx, coatPath, COAT, 1.3, 1.8);
   if (back) {
     ctx.beginPath();
     ctx.moveTo(32, 24);
@@ -153,8 +151,8 @@ export function paintLia(ctx: Ctx, o: CharacterPose): void {
       ctx.closePath();
     };
     vPath();
-    fillStroke(ctx, SCRUB);
-    shadeRight(ctx, vPath, SCRUB_SH, 1.2, 1);
+    fillStroke(ctx, SCRUB, 1.7, lineOf(SCRUB));
+    volume(ctx, vPath, SCRUB, 0.86, 1.2);
     ctx.beginPath();
     if (side) {
       ctx.moveTo(33, 22);
@@ -170,7 +168,7 @@ export function paintLia(ctx: Ctx, o: CharacterPose): void {
     inkOnly(ctx, 1.6);
     if (!side) {
       roundRect(ctx, 38, 30, 6, 5, 1);
-      fillStroke(ctx, COAT, 1.3);
+      fillStroke(ctx, COAT, 1.3, lineOf(COAT));
       ctx.strokeStyle = c.suit;
       ctx.lineWidth = 1.2;
       ctx.beginPath();
@@ -183,7 +181,7 @@ export function paintLia(ctx: Ctx, o: CharacterPose): void {
       ctx.lineTo(41.5, 31);
       ctx.stroke();
       roundRect(ctx, 20.5, 30, 5.5, 3.5, 0.8);
-      fillStroke(ctx, c.suitLight, 1.2);
+      fillStroke(ctx, c.suitLight, 1.2, lineOf(c.suitLight));
     }
     ctx.beginPath();
     if (side) {
@@ -199,7 +197,7 @@ export function paintLia(ctx: Ctx, o: CharacterPose): void {
     ctx.lineWidth = 2.2;
     ctx.stroke();
     circle(ctx, side ? 38.5 : 31, side ? 34.5 : 36.5, 2.4);
-    fillStroke(ctx, '#b9bcc8', 1.4);
+    fillStroke(ctx, '#b9bcc8', 1.4, lineOf('#b9bcc8'));
     circle(ctx, side ? 38.5 : 31, side ? 34.5 : 36.5, 1);
     ctx.fillStyle = INK;
     ctx.fill();
@@ -219,7 +217,7 @@ export function paintLia(ctx: Ctx, o: CharacterPose): void {
     ctx.moveTo(sx, sy);
     ctx.lineTo(ex, ey);
     ctx.lineTo(hx, hy);
-    ctx.strokeStyle = INK;
+    ctx.strokeStyle = lineOf(COAT);
     ctx.lineWidth = 8;
     ctx.stroke();
     ctx.strokeStyle = COAT;
@@ -227,17 +225,17 @@ export function paintLia(ctx: Ctx, o: CharacterPose): void {
     ctx.stroke();
     if (hand) {
       circle(ctx, hx, hy, 2.9);
-      fillStroke(ctx, SKIN, 1.6);
+      fillStroke(ctx, SKIN, 1.6, lineOf(SKIN));
     }
   };
   const clipboard = (x: number, y: number) => {
     roundRect(ctx, x - 4, y - 5, 8, 10.5, 1);
-    fillStroke(ctx, '#8a6a46', 1.6);
+    fillStroke(ctx, '#8a6a46', 1.6, lineOf('#8a6a46'));
     roundRect(ctx, x - 3, y - 3.5, 6, 8.5, 0.6);
     ctx.fillStyle = '#fbfaf5';
     ctx.fill();
     roundRect(ctx, x - 1.8, y - 6, 3.6, 2, 0.6);
-    fillStroke(ctx, '#9aa0ad', 1.2);
+    fillStroke(ctx, '#9aa0ad', 1.2, lineOf('#9aa0ad'));
     ctx.strokeStyle = 'rgba(0,0,0,0.35)';
     ctx.lineWidth = 0.8;
     for (const dy of [-1.5, 0.5, 2.5]) {
@@ -279,14 +277,14 @@ export function paintLia(ctx: Ctx, o: CharacterPose): void {
   const head: Path = () => headPath(ctx);
   if (back) {
     circle(ctx, 32, 9, 5);
-    fillStroke(ctx, HAIR);
+    fillStroke(ctx, HAIR, 1.7, lineOf(HAIR));
   } else if (side) {
     circle(ctx, 24, 9, 5);
-    fillStroke(ctx, HAIR);
+    fillStroke(ctx, HAIR, 1.7, lineOf(HAIR));
   }
   head();
-  fillStroke(ctx, SKIN);
-  shadeRight(ctx, head, SKIN_SH, 1.8, 1.2);
+  fillStroke(ctx, SKIN, 1.7, lineOf(SKIN));
+  volume(ctx, head, SKIN, 1.3, 1.8);
   if (side) {
     circle(ctx, 25, 17.5, 0.9);
     ctx.fillStyle = c.suitLight;
@@ -309,14 +307,17 @@ export function paintLia(ctx: Ctx, o: CharacterPose): void {
         return;
       }
       ctx.beginPath();
-      ctx.ellipse(x, y, 1.8, h, 0, 0, TAU);
+      ctx.ellipse(x, y, 2.3, h + 0.3, 0, 0, TAU);
+      fillStroke(ctx, '#ffffff', 0.9, SKIN_LINE);
+      ctx.beginPath();
+      ctx.ellipse(x + 0.3, y + 0.4, 1.4, Math.min(2.1, h * 0.8), 0, 0, TAU);
       ctx.fillStyle = INK;
       ctx.fill();
-      circle(ctx, x - 0.5, y - 1, 0.6);
+      circle(ctx, x - 0.3, y - 0.8, 0.6);
       ctx.fillStyle = '#fff';
       ctx.fill();
       ctx.beginPath();
-      ctx.moveTo(x + 1.6, y - h + 0.4);
+      ctx.moveTo(x + 2, y - h + 0.2);
       ctx.lineTo(x + 2.6, y - h - 0.6);
       inkOnly(ctx, 1.2);
     };
@@ -361,7 +362,7 @@ export function paintLia(ctx: Ctx, o: CharacterPose): void {
   ctx.quadraticCurveTo(32, 7, 28, 9.5);
   ctx.quadraticCurveTo(24, 8.5, 21.5, 12.5);
   ctx.closePath();
-  fillStroke(ctx, HAIR);
+  fillStroke(ctx, HAIR, 1.7, lineOf(HAIR));
   if (back) {
     ctx.beginPath();
     ctx.moveTo(22, 12);
@@ -369,9 +370,9 @@ export function paintLia(ctx: Ctx, o: CharacterPose): void {
     ctx.lineTo(42, 15);
     ctx.quadraticCurveTo(32, 21, 22, 15);
     ctx.closePath();
-    fillStroke(ctx, HAIR);
+    fillStroke(ctx, HAIR, 1.7, lineOf(HAIR));
     circle(ctx, 32, 9, 5);
-    fillStroke(ctx, HAIR);
+    fillStroke(ctx, HAIR, 1.7, lineOf(HAIR));
     ctx.beginPath();
     ctx.arc(32, 9, 5, 0.3, 1.2);
     ctx.strokeStyle = c.suit;

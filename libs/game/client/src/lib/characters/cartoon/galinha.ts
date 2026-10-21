@@ -16,14 +16,14 @@ import {
   stepOf,
   TAU,
   teamFor,
+  volume,
+  lineOf,
 } from './ink';
 
 const FEATHER = '#fbf6ea';
 const FEATHER_SH = '#ddd3bd';
 const COMB = '#e8402f';
-const COMB_SH = '#b52a1d';
 const BEAK = '#f6b82b';
-const BEAK_SH = '#c98a12';
 const LEG = '#f08a2e';
 const SPARK = '#ffe45c';
 const SPARK_GLOW = '#fff3a0';
@@ -57,7 +57,7 @@ export function paintGalinha(
     ctx.beginPath();
     ctx.moveTo(x, y - 9 - lift);
     ctx.lineTo(x, y - lift);
-    ctx.strokeStyle = INK;
+    ctx.strokeStyle = lineOf(LEG);
     ctx.lineWidth = 3.6;
     ctx.stroke();
     ctx.strokeStyle = LEG;
@@ -67,7 +67,7 @@ export function paintGalinha(
       ctx.beginPath();
       ctx.moveTo(x, y - lift);
       ctx.lineTo(x + dx, y + 2 - lift);
-      ctx.strokeStyle = INK;
+      ctx.strokeStyle = lineOf(LEG);
       ctx.lineWidth = 3;
       ctx.stroke();
       ctx.strokeStyle = LEG;
@@ -78,8 +78,8 @@ export function paintGalinha(
   const body = (cx: number, cy: number, rx: number, ry: number) => {
     const p: Path = () => ellipse(ctx, cx, cy, rx, ry);
     p();
-    fillStroke(ctx, FEATHER);
-    shadeRight(ctx, p, FEATHER_SH, 2.2, 1.8);
+    fillStroke(ctx, FEATHER, 1.7, lineOf(FEATHER));
+    volume(ctx, p, FEATHER, 1.58, 2.2);
     // Three soft feather scallops on the breast.
     for (const [dx, dy] of [
       [-6, 5],
@@ -107,7 +107,7 @@ export function paintGalinha(
       ctx.closePath();
     };
     p();
-    fillStroke(ctx, FEATHER, 1.6);
+    fillStroke(ctx, FEATHER, 1.6, lineOf(FEATHER));
     shadeRight(ctx, p, FEATHER_SH, 1.2 * dir, 1);
     ctx.beginPath();
     ctx.moveTo(cx + 9 * dir, cy + 1);
@@ -122,8 +122,8 @@ export function paintGalinha(
   const saddle = (cx: number, cy: number, rx: number, ry: number) => {
     const p: Path = () => ellipse(ctx, cx, cy, rx, ry);
     p();
-    fillStroke(ctx, c.suit);
-    shadeRight(ctx, p, c.suitDark, 1.4, 1);
+    fillStroke(ctx, c.suit, 1.7, lineOf(c.suit));
+    volume(ctx, p, c.suit, 1.01, 1.4);
     ellipse(ctx, cx, cy, rx * 0.6, ry * 0.55);
     ctx.strokeStyle = c.suitLight;
     ctx.lineWidth = 1;
@@ -143,8 +143,8 @@ export function paintGalinha(
       ctx.closePath();
     };
     p();
-    fillStroke(ctx, COMB, 1.5);
-    shadeRight(ctx, p, COMB_SH, 0.8, 0.6);
+    fillStroke(ctx, COMB, 1.5, lineOf(COMB));
+    volume(ctx, p, COMB, 0.58, 0.8);
   };
   const eye = (x: number, y: number) => {
     const h = 1.9 * (1 - blink);
@@ -166,8 +166,8 @@ export function paintGalinha(
     comb(cx - (dir === 1 ? 2.5 : 1.5), cy - r + 2.5, 1.35);
     const p: Path = () => circle(ctx, cx, cy, r);
     p();
-    fillStroke(ctx, FEATHER);
-    shadeRight(ctx, p, FEATHER_SH, 1.6, 1.2);
+    fillStroke(ctx, FEATHER, 1.7, lineOf(FEATHER));
+    volume(ctx, p, FEATHER, 1.15, 1.6);
     if (dir === 0) {
       const b: Path = () => {
         ctx.beginPath();
@@ -177,10 +177,10 @@ export function paintGalinha(
         ctx.closePath();
       };
       b();
-      fillStroke(ctx, BEAK, 1.4);
-      shadeRight(ctx, b, BEAK_SH, 0.8, 0.6);
+      fillStroke(ctx, BEAK, 1.4, lineOf(BEAK));
+      volume(ctx, b, BEAK, 0.58, 0.8);
       ellipse(ctx, cx, cy + 7, 1.8, 2.4);
-      fillStroke(ctx, COMB, 1.2);
+      fillStroke(ctx, COMB, 1.2, lineOf(COMB));
       eye(cx - 3, cy - 1.5);
       eye(cx + 3, cy - 1.5);
     } else if (dir === 1) {
@@ -192,10 +192,10 @@ export function paintGalinha(
         ctx.closePath();
       };
       b();
-      fillStroke(ctx, BEAK, 1.4);
-      shadeRight(ctx, b, BEAK_SH, 0.8, 0.6);
+      fillStroke(ctx, BEAK, 1.4, lineOf(BEAK));
+      volume(ctx, b, BEAK, 0.58, 0.8);
       ellipse(ctx, cx + r - 2.5, cy + 4.5, 1.6, 2.4);
-      fillStroke(ctx, COMB, 1.2);
+      fillStroke(ctx, COMB, 1.2, lineOf(COMB));
       eye(cx + 2, cy - 1.5);
     }
   };
@@ -224,8 +224,8 @@ export function paintGalinha(
         ctx.closePath();
       };
       p();
-      fillStroke(ctx, FEATHER, 1.5);
-      shadeRight(ctx, p, FEATHER_SH, 1, 0.8);
+      fillStroke(ctx, FEATHER, 1.5, lineOf(FEATHER));
+      volume(ctx, p, FEATHER, 0.72, 1.0);
     }
     ctx.beginPath();
     ctx.moveTo(x + 2 * dir, y - 3);
@@ -257,7 +257,7 @@ export function paintGalinha(
     ctx.lineTo(x - 1.8 * s, y);
     ctx.lineTo(x + 0.7 * s, y);
     ctx.lineTo(x - 1.1 * s, y + 3.5 * s);
-    ctx.strokeStyle = INK;
+    ctx.strokeStyle = lineOf(SPARK);
     ctx.lineWidth = 2.6;
     ctx.stroke();
     ctx.strokeStyle = SPARK;

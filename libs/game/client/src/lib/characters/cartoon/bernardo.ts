@@ -16,6 +16,8 @@ import {
   stepOf,
   TAU,
   teamFor,
+  volume,
+  lineOf,
 } from './ink';
 
 const FUR = '#f3e9d6';
@@ -25,7 +27,6 @@ const PATCH_SH = '#7c4b27';
 const NOSE = '#1c1511';
 const TONGUE = '#e8697a';
 const CASK = '#8a5a34';
-const CASK_SH = '#5f3c21';
 
 interface Patch {
   x: number;
@@ -60,7 +61,7 @@ export function paintBernardo(
     fillStroke(ctx, patch ? PATCH : FUR);
     shadeRight(ctx, p, patch ? PATCH_SH : FUR_SH, 1.2, 0);
     ellipse(ctx, x, y - lift, 4, 2.2);
-    fillStroke(ctx, FUR, 1.6);
+    fillStroke(ctx, FUR, 1.6, lineOf(FUR));
     ctx.fillStyle = INK;
     for (const dx of [-2, 0, 2]) {
       circle(ctx, x + dx, y - lift - 0.8, 0.5);
@@ -76,8 +77,8 @@ export function paintBernardo(
   ) => {
     const p: Path = () => ellipse(ctx, cx, cy, rx, ry);
     p();
-    fillStroke(ctx, FUR);
-    shadeRight(ctx, p, FUR_SH, 2.2, 1.8);
+    fillStroke(ctx, FUR, 1.7, lineOf(FUR));
+    volume(ctx, p, FUR, 1.58, 2.2);
     ctx.save();
     p();
     ctx.clip();
@@ -91,8 +92,8 @@ export function paintBernardo(
   const saddle = (cx: number, cy: number, rx: number, ry: number) => {
     const p: Path = () => ellipse(ctx, cx, cy, rx, ry);
     p();
-    fillStroke(ctx, c.suit);
-    shadeRight(ctx, p, c.suitDark, 1.4, 1);
+    fillStroke(ctx, c.suit, 1.7, lineOf(c.suit));
+    volume(ctx, p, c.suit, 1.01, 1.4);
     ellipse(ctx, cx, cy, rx * 0.6, ry * 0.55);
     ctx.strokeStyle = c.suitLight;
     ctx.lineWidth = 1;
@@ -101,8 +102,8 @@ export function paintBernardo(
   const cask = (x: number, y: number, w: number, h: number) => {
     const p: Path = () => roundRect(ctx, x - w / 2, y - h / 2, w, h, 2);
     p();
-    fillStroke(ctx, CASK, 1.6);
-    shadeRight(ctx, p, CASK_SH, 1.2, 0.8);
+    fillStroke(ctx, CASK, 1.6, lineOf(CASK));
+    volume(ctx, p, CASK, 0.86, 1.2);
     ctx.strokeStyle = '#c9b48a';
     ctx.lineWidth = 1;
     for (const k of [-0.3, 0.3]) {
@@ -144,8 +145,8 @@ export function paintBernardo(
       ctx.closePath();
     };
     p();
-    fillStroke(ctx, PATCH);
-    shadeRight(ctx, p, PATCH_SH, 1.2, 1);
+    fillStroke(ctx, PATCH, 1.7, lineOf(PATCH));
+    volume(ctx, p, PATCH, 0.86, 1.2);
   };
   const headFront = (cx: number, cy: number) => {
     ear(cx - 7, cy - 4, -1);
@@ -159,8 +160,8 @@ export function paintBernardo(
       ctx.closePath();
     };
     p();
-    fillStroke(ctx, FUR);
-    shadeRight(ctx, p, FUR_SH, 1.6, 1.2);
+    fillStroke(ctx, FUR, 1.7, lineOf(FUR));
+    volume(ctx, p, FUR, 1.15, 1.6);
     ctx.save();
     p();
     ctx.clip();
@@ -175,7 +176,7 @@ export function paintBernardo(
     eye(cx - 3.2, cy - 2);
     eye(cx + 3.2, cy - 2);
     ellipse(ctx, cx, cy + 3, 4.5, 3.2);
-    fillStroke(ctx, FUR, 1.4);
+    fillStroke(ctx, FUR, 1.4, lineOf(FUR));
     const ty = cy + 8.5 + breath * 0.4;
     ctx.beginPath();
     ctx.moveTo(cx - 1.8, cy + 4.5);
@@ -183,7 +184,7 @@ export function paintBernardo(
     ctx.quadraticCurveTo(cx + 1.8, ty, cx, ty);
     ctx.quadraticCurveTo(cx - 1.8, ty, cx - 1.8, cy + 4.5);
     ctx.closePath();
-    fillStroke(ctx, TONGUE, 1.4);
+    fillStroke(ctx, TONGUE, 1.4, lineOf(TONGUE));
     ellipse(ctx, cx, cy + 1.6, 2.2, 1.5);
     ctx.fillStyle = NOSE;
     ctx.fill();
@@ -203,8 +204,8 @@ export function paintBernardo(
       ctx.closePath();
     };
     p();
-    fillStroke(ctx, FUR);
-    shadeRight(ctx, p, FUR_SH, 1.6, 1.2);
+    fillStroke(ctx, FUR, 1.7, lineOf(FUR));
+    volume(ctx, p, FUR, 1.15, 1.6);
     ctx.save();
     p();
     ctx.clip();
@@ -221,7 +222,7 @@ export function paintBernardo(
     ctx.quadraticCurveTo(cx + 8, ty, cx + 6, ty);
     ctx.quadraticCurveTo(cx + 4.5, cy + 6, cx + 5, cy + 3);
     ctx.closePath();
-    fillStroke(ctx, TONGUE, 1.4);
+    fillStroke(ctx, TONGUE, 1.4, lineOf(TONGUE));
     ellipse(ctx, cx + 9.5, cy + 0.5, 1.8, 1.4);
     ctx.fillStyle = NOSE;
     ctx.fill();
@@ -245,7 +246,7 @@ export function paintBernardo(
       ctx.closePath();
     };
     p();
-    fillStroke(ctx, FUR);
+    fillStroke(ctx, FUR, 1.7, lineOf(FUR));
     ctx.save();
     p();
     ctx.clip();
@@ -292,8 +293,8 @@ export function paintBernardo(
     // Neck, collar and the cask hanging from it.
     const neck: Path = () => roundRect(ctx, 40, 29, 13, 18, 5.5);
     neck();
-    fillStroke(ctx, FUR);
-    shadeRight(ctx, neck, FUR_SH, 1.4, 1);
+    fillStroke(ctx, FUR, 1.7, lineOf(FUR));
+    volume(ctx, neck, FUR, 1.01, 1.4);
     ctx.beginPath();
     ctx.moveTo(41, 44);
     ctx.lineTo(53, 44);
@@ -306,7 +307,7 @@ export function paintBernardo(
     // Only the crown and the ears show past the rider's back.
     scaled(32, 27, 1.3, () => {
       ellipse(ctx, 0, 2, 11, 5);
-      fillStroke(ctx, FUR);
+      fillStroke(ctx, FUR, 1.7, lineOf(FUR));
       ctx.save();
       ellipse(ctx, 0, 2, 11, 5);
       ctx.clip();
@@ -331,7 +332,7 @@ export function paintBernardo(
     ctx.quadraticCurveTo(36 + wag * 3, 59, 32 + wag * 5, 63);
     ctx.quadraticCurveTo(28 + wag * 3, 59, 29, 53);
     ctx.closePath();
-    fillStroke(ctx, FUR);
+    fillStroke(ctx, FUR, 1.7, lineOf(FUR));
   } else {
     leg(19, 58, step === 1 ? 2 : 0, true);
     leg(45, 58, step === -1 ? 2 : 0, false);

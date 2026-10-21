@@ -37,6 +37,9 @@ export const INK = '#1c1511';
 /** The pale rim behind every figure, so a dark outline still reads on a dark floor. */
 export const RIM = 'rgba(255, 255, 255, 0.42)';
 export const RIM_WIDTH = 1.1;
+/** The near-black silhouette line drawn just outside every figure, before the rim. */
+export const SILHOUETTE = 'rgba(28, 21, 17, 0.92)';
+export const SILHOUETTE_WIDTH = 0.8;
 
 /**
  * Team colours: the suit panel and the light. Indexed like `PLAYER_COLOR_IDS`
@@ -322,15 +325,150 @@ export function rimLight(ctx: Ctx, pixelsPerUnit: number): void {
   ctx.save();
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.globalCompositeOperation = 'destination-over';
-  ctx.shadowColor = RIM;
   ctx.shadowBlur = 0;
-  const r = RIM_WIDTH * pixelsPerUnit;
   const far = source.width + source.height + 64;
-  for (let i = 0; i < 8; i++) {
-    const a = (i / 8) * TAU;
-    ctx.shadowOffsetX = far + Math.cos(a) * r;
-    ctx.shadowOffsetY = Math.sin(a) * r;
-    ctx.drawImage(copy, -far, 0);
+  // The dark silhouette first, right behind the figure; the pale rim behind that.
+  for (const [color, width] of [
+    [SILHOUETTE, SILHOUETTE_WIDTH],
+    [RIM, SILHOUETTE_WIDTH + RIM_WIDTH],
+  ] as const) {
+    ctx.shadowColor = color;
+    const r = width * pixelsPerUnit;
+    for (let i = 0; i < 12; i++) {
+      const a = (i / 12) * TAU;
+      ctx.shadowOffsetX = far + Math.cos(a) * r;
+      ctx.shadowOffsetY = Math.sin(a) * r;
+      ctx.drawImage(copy, -far, 0);
+    }
   }
   ctx.restore();
+}
+
+// ── volume: a top-left light, coloured lines, occlusion and gloss ──────────
+
+/** `#rrggbb` → [r, g, b]. */
+function rgb(hex: string): [number, number, number] {
+  const n = parseInt(hex.slice(1, 7), 16);
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+}
+
+/** Mixes `a` toward `b` by `t` (0 = `a`, 1 = `b`), as `#rrggbb`. */
+export function mix(a: string, b: string, t: number): string {
+  const [ar, ag, ab] = rgb(a);
+  const [br, bg, bb] = rgb(b);
+  const ch = (x: number, y: number) =>
+    Math.round(x + (y - x) * t)
+      .toString(16)
+      .padStart(2, '0');
+  return `#${ch(ar, br)}${ch(ag, bg)}${ch(ab, bb)}`;
+}
+
+/**
+ * The line of a material: its colour pulled most of the way to the ink, so
+ * the inside of a figure is drawn in coloured lines and only the silhouette
+ * (see {@link rimLight}) is near-black — what keeps it from reading as a
+ * sticker.
+ */
+export function lineOf(color: string): string {
+  return mix(color, INK, 0.7);
+}
+
+/** A tone lighter than `color`, for the side the light hits. */
+export function lit(color: string, t = 0.28): string {
+  return mix(color, '#ffffff', t);
+}
+
+/** A tone darker than `color`, for the side the light leaves. */
+export function dim(color: string, t = 0.3): string {
+  return mix(color, '#1a1420', t);
+}
+
+/**
+ * Fills, inside `path`, the band that a copy of it shifted by (`dx`, `dy`)
+ * leaves uncovered. Shifted down-right (positive) the band is on the
+ * upper-left, the side the light hits; shifted up-left it is the core
+ * shadow on the lower-right. Clipping only, so any path works.
+ */
+export function band(
+  ctx: Ctx,
+  path: Path,
+  color: string,
+  dx: number,
+  dy: number,
+): void {
+  ctx.save();
+  path();
+  ctx.clip();
+  ctx.translate(dx, dy);
+  path();
+  ctx.rect(-200, -200, 500, 500);
+  ctx.clip('evenodd');
+  ctx.translate(-dx, -dy);
+  ctx.fillStyle = color;
+  ctx.fillRect(-200, -200, 500, 500);
+  ctx.restore();
+}
+
+/** Highlight on the lit side and core shadow on the far side of one shape. */
+export function volume(
+  ctx: Ctx,
+  path: Path,
+  color: string,
+  highlight = 1.3,
+  shadow = 1.9,
+): void {
+  band(ctx, path, dim(color), -shadow, -shadow * 0.75);
+  band(ctx, path, lit(color), highlight, highlight * 0.75);
+}
+
+/**
+ * Contact shadow: a dark gradient inside `path` from `y0` (full) fading out
+ * by `y1`, for the skin under a brim, the chest under a chin, the legs under
+ * a hem.
+ */
+export function occlude(
+  ctx: Ctx,
+  path: Path,
+  y0: number,
+  y1: number,
+  strength = 0.28,
+): void {
+  ctx.save();
+  path();
+  ctx.clip();
+  const g = ctx.createLinearGradient(0, y0, 0, y1);
+  g.addColorStop(0, `rgba(20, 12, 10, ${strength})`);
+  g.addColorStop(1, 'rgba(20, 12, 10, 0)');
+  ctx.fillStyle = g;
+  ctx.fillRect(-200, Math.min(y0, y1) - 1, 500, Math.abs(y1 - y0) + 2);
+  ctx.restore();
+}
+
+/** A soft white gloss, for a cap, a visor, a shoe's toe. */
+export function gloss(
+  ctx: Ctx,
+  x: number,
+  y: number,
+  rx: number,
+  ry: number,
+  rot = -0.5,
+  alpha = 0.45,
+): void {
+  ellipse(ctx, x, y, rx, ry, rot);
+  ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+  ctx.fill();
+}
+
+/** A short stroke in a material's line colour: a fold, a seam, a lace. */
+export function seam(
+  ctx: Ctx,
+  points: readonly (readonly [number, number])[],
+  color: string,
+  width = 1.1,
+): void {
+  ctx.beginPath();
+  points.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)));
+  ctx.strokeStyle = color;
+  ctx.lineWidth = width;
+  ctx.stroke();
 }

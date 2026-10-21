@@ -16,21 +16,21 @@ import {
   stepOf,
   TAU,
   teamFor,
+  volume,
+  lineOf,
 } from './ink';
 
 const SKIN = '#d8a07a';
-const SKIN_SH = '#b27a55';
+const SKIN_LINE = lineOf(SKIN);
 const SHIRT = '#2c4170';
 const SHIRT_SH = '#1b2a4b';
 const PANTS = '#25365c';
-const PANTS_SH = '#18233d';
 const BOOT = '#5b3a22';
 const BOOT_SH = '#3b2414';
 const BELT = '#8a5a2b';
 const BELT_SH = '#5e3c1b';
 const POUCH = '#e0b23a';
 const HAT = '#f2f1ea';
-const HAT_SH = '#c9c7bb';
 const MOUSTACHE = '#6b5a4a';
 const PLIERS = '#d23b33';
 
@@ -68,8 +68,8 @@ export function paintTiao(ctx: Ctx, o: CharacterPose): void {
       ctx.restore();
     };
     boot();
-    fillStroke(ctx, BOOT);
-    shadeRight(ctx, boot, BOOT_SH, 1.4, 0.6);
+    fillStroke(ctx, BOOT, 1.7, lineOf(BOOT));
+    volume(ctx, boot, BOOT, 1.01, 1.4);
     ctx.save();
     ctx.translate(x, by);
     ctx.rotate(rot);
@@ -85,8 +85,8 @@ export function paintTiao(ctx: Ctx, o: CharacterPose): void {
     const p: Path = () =>
       roundRect(ctx, x - 3.4, 42, 6.8, 10.5 - lift * 0.5, 2.2);
     p();
-    fillStroke(ctx, PANTS);
-    shadeRight(ctx, p, PANTS_SH, 1.4, 0);
+    fillStroke(ctx, PANTS, 1.7, lineOf(PANTS));
+    volume(ctx, p, PANTS, 1.01, 1.4);
     bootAt(x, 55 - lift, fwd);
   };
   if (seated) {
@@ -99,8 +99,8 @@ export function paintTiao(ctx: Ctx, o: CharacterPose): void {
         ctx.restore();
       };
       p();
-      fillStroke(ctx, PANTS);
-      shadeRight(ctx, p, PANTS_SH, 1.4, 0);
+      fillStroke(ctx, PANTS, 1.7, lineOf(PANTS));
+      volume(ctx, p, PANTS, 1.01, 1.4);
       bootAt(hx + dir * 3.5, 51, 0, dir * 0.35);
     };
     if (side) hang(33, 0.4);
@@ -138,8 +138,8 @@ export function paintTiao(ctx: Ctx, o: CharacterPose): void {
     ctx.closePath();
   };
   torsoPath();
-  fillStroke(ctx, SHIRT);
-  shadeRight(ctx, torsoPath, SHIRT_SH);
+  fillStroke(ctx, SHIRT, 1.7, lineOf(SHIRT));
+  volume(ctx, torsoPath, SHIRT, 1.3, 1.8);
 
   // Reflective band across the chest, in the team colour.
   roundRect(ctx, side ? 24 : 19.5, 29, side ? 18 : 25, 3.2, 1);
@@ -182,7 +182,7 @@ export function paintTiao(ctx: Ctx, o: CharacterPose): void {
   // ── tool belt ──
   const beltY = hem - 4.5;
   roundRect(ctx, side ? 22.5 : 18.5, beltY, side ? 20.5 : 27, 3.6, 1.2);
-  fillStroke(ctx, BELT, 1.4);
+  fillStroke(ctx, BELT, 1.4, lineOf(BELT));
   ctx.beginPath();
   ctx.moveTo(side ? 23 : 19, beltY + 1);
   ctx.lineTo(side ? 42.5 : 45, beltY + 1);
@@ -198,7 +198,7 @@ export function paintTiao(ctx: Ctx, o: CharacterPose): void {
   const pouch: Path = () =>
     roundRect(ctx, side ? 23 : 19.5, beltY + 2.5, side ? 7 : 7.5, 6.5, 1.8);
   pouch();
-  fillStroke(ctx, POUCH, 1.4);
+  fillStroke(ctx, POUCH, 1.4, lineOf(POUCH));
   shadeRight(ctx, pouch, '#b18a24', 1.2, 0.8);
   // A screwdriver handle sticking out of the pouch.
   roundRect(ctx, side ? 25 : 21.5, beltY - 0.5, 2.2, 4, 0.8);
@@ -222,7 +222,7 @@ export function paintTiao(ctx: Ctx, o: CharacterPose): void {
     ctx.moveTo(sx, sy);
     ctx.lineTo(ex, ey);
     ctx.lineTo(hx, hy);
-    ctx.strokeStyle = INK;
+    ctx.strokeStyle = lineOf(SHIRT);
     ctx.lineWidth = 8;
     ctx.stroke();
     ctx.strokeStyle = SHIRT;
@@ -234,7 +234,7 @@ export function paintTiao(ctx: Ctx, o: CharacterPose): void {
     ctx.beginPath();
     ctx.moveTo(ux, uy);
     ctx.lineTo(hx, hy);
-    ctx.strokeStyle = INK;
+    ctx.strokeStyle = lineOf(SKIN);
     ctx.lineWidth = 6.6;
     ctx.stroke();
     ctx.strokeStyle = SKIN;
@@ -242,7 +242,7 @@ export function paintTiao(ctx: Ctx, o: CharacterPose): void {
     ctx.stroke();
     if (hand) {
       circle(ctx, hx, hy, 2.9);
-      fillStroke(ctx, SKIN, 1.6);
+      fillStroke(ctx, SKIN, 1.6, lineOf(SKIN));
     }
   };
   const pliers = (x: number, y: number) => {
@@ -251,7 +251,7 @@ export function paintTiao(ctx: Ctx, o: CharacterPose): void {
     ctx.lineTo(x - 0.5, y);
     ctx.moveTo(x + 1.6, y + 4.5);
     ctx.lineTo(x + 0.5, y);
-    ctx.strokeStyle = INK;
+    ctx.strokeStyle = lineOf(PLIERS);
     ctx.lineWidth = 3;
     ctx.stroke();
     ctx.strokeStyle = PLIERS;
@@ -294,8 +294,8 @@ export function paintTiao(ctx: Ctx, o: CharacterPose): void {
   headFrame(ctx, bob);
   const head: Path = () => headPath(ctx);
   head();
-  fillStroke(ctx, SKIN);
-  shadeRight(ctx, head, SKIN_SH, 1.8, 1.2);
+  fillStroke(ctx, SKIN, 1.7, lineOf(SKIN));
+  volume(ctx, head, SKIN, 1.3, 1.8);
   if (!back) {
     const eye = (x: number, y: number) => {
       const h = 2.3 * (1 - blink);
@@ -306,10 +306,12 @@ export function paintTiao(ctx: Ctx, o: CharacterPose): void {
         inkOnly(ctx, 1.6);
         return;
       }
-      ellipse(ctx, x, y, 1.6, h);
+      ellipse(ctx, x, y, 2.2, h + 0.4);
+      fillStroke(ctx, '#ffffff', 0.9, SKIN_LINE);
+      ellipse(ctx, x + 0.3, y + 0.4, 1.3, Math.min(2, h * 0.8));
       ctx.fillStyle = INK;
       ctx.fill();
-      circle(ctx, x - 0.5, y - 0.9, 0.55);
+      circle(ctx, x - 0.3, y - 0.7, 0.6);
       ctx.fillStyle = '#fff';
       ctx.fill();
     };
@@ -321,7 +323,7 @@ export function paintTiao(ctx: Ctx, o: CharacterPose): void {
       ctx.quadraticCurveTo(cx + w * 0.5, 20.4, cx, 21);
       ctx.quadraticCurveTo(cx - w * 0.5, 20.4, cx - w, 21.2);
       ctx.closePath();
-      fillStroke(ctx, MOUSTACHE, 1.2);
+      fillStroke(ctx, MOUSTACHE, 1.2, lineOf(MOUSTACHE));
     };
     if (side) {
       eye(37, 16.5);
@@ -364,15 +366,15 @@ export function paintTiao(ctx: Ctx, o: CharacterPose): void {
     ctx.closePath();
   };
   dome();
-  fillStroke(ctx, HAT);
-  shadeRight(ctx, dome, HAT_SH, 1.8, 1.4);
+  fillStroke(ctx, HAT, 1.7, lineOf(HAT));
+  volume(ctx, dome, HAT, 1.3, 1.8);
   const brim: Path = () => {
     if (side) roundRect(ctx, 21, 11, 26, 3.2, 1.6);
     else roundRect(ctx, 18.5, 11, 27, 3.2, 1.6);
   };
   brim();
-  fillStroke(ctx, HAT, 1.6);
-  shadeRight(ctx, brim, HAT_SH, 1.2, 0.6);
+  fillStroke(ctx, HAT, 1.6, lineOf(HAT));
+  volume(ctx, brim, HAT, 0.86, 1.2);
   ctx.beginPath();
   if (side) {
     ctx.moveTo(24, 7);

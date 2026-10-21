@@ -11,21 +11,19 @@ import {
   inkOnly,
   Path,
   roundRect,
-  shadeRight,
   stepOf,
   TAU,
   teamFor,
+  volume,
+  lineOf,
 } from './ink';
 
 const SKIN = '#d9a06b';
-const SKIN_SH = '#b97d4e';
+const SKIN_LINE = lineOf(SKIN);
 const HAIR = '#2b1d16';
 const SHIRT = '#f1e9d2';
-const SHIRT_SH = '#cfc3a4';
 const SHORTS = '#5b5a3c';
-const SHORTS_SH = '#3f3e29';
 const BOOT = '#6b3f23';
-const BOOT_SH = '#4a2a16';
 const BOOT_TOP = '#8d5a33';
 const GLOVE = '#2f2a28';
 
@@ -62,21 +60,21 @@ export function paintFaisca(ctx: Ctx, o: CharacterPose): void {
       ctx.restore();
     };
     bootPath();
-    fillStroke(ctx, BOOT);
-    shadeRight(ctx, bootPath, BOOT_SH, 1.6, 0.6);
+    fillStroke(ctx, BOOT, 1.7, lineOf(BOOT));
+    volume(ctx, bootPath, BOOT, 1.15, 1.6);
     ctx.save();
     ctx.translate(x, by);
     ctx.rotate(rot);
     roundRect(ctx, -5, -5, 10, 2.6, 1.2);
     ctx.restore();
-    fillStroke(ctx, BOOT_TOP, 1.4);
+    fillStroke(ctx, BOOT_TOP, 1.4, lineOf(BOOT_TOP));
   };
   const legBoot = (x: number, lift: number, fwd: number) => {
     const legPath: Path = () =>
       roundRect(ctx, x - 3, 42, 6, 11 - lift * 0.5, 2.5);
     legPath();
-    fillStroke(ctx, SKIN);
-    shadeRight(ctx, legPath, SKIN_SH, 1.4, 0);
+    fillStroke(ctx, SKIN, 1.7, lineOf(SKIN));
+    volume(ctx, legPath, SKIN, 1.01, 1.4);
     bootAt(x, 55 - lift, fwd);
   };
   if (seated) {
@@ -89,8 +87,8 @@ export function paintFaisca(ctx: Ctx, o: CharacterPose): void {
         ctx.restore();
       };
       legPath();
-      fillStroke(ctx, SKIN);
-      shadeRight(ctx, legPath, SKIN_SH, 1.4, 0);
+      fillStroke(ctx, SKIN, 1.7, lineOf(SKIN));
+      volume(ctx, legPath, SKIN, 1.01, 1.4);
       bootAt(hx + dir * 3.5, 51, 0, dir * 0.35);
     };
     if (side) hangLeg(33, 0.4);
@@ -143,8 +141,8 @@ export function paintFaisca(ctx: Ctx, o: CharacterPose): void {
     ctx.closePath();
   };
   shortsPath();
-  fillStroke(ctx, SHORTS);
-  shadeRight(ctx, shortsPath, SHORTS_SH);
+  fillStroke(ctx, SHORTS, 1.7, lineOf(SHORTS));
+  volume(ctx, shortsPath, SHORTS, 1.3, 1.8);
 
   // ── torso: sleeveless shirt ──
   const torsoPath: Path = () => {
@@ -165,8 +163,8 @@ export function paintFaisca(ctx: Ctx, o: CharacterPose): void {
     ctx.closePath();
   };
   torsoPath();
-  fillStroke(ctx, SHIRT);
-  shadeRight(ctx, torsoPath, SHIRT_SH);
+  fillStroke(ctx, SHIRT, 1.7, lineOf(SHIRT));
+  volume(ctx, torsoPath, SHIRT, 1.3, 1.8);
   // Sash in the team colour, with a knot on the hip.
   const sashPath: Path = () => {
     ctx.beginPath();
@@ -184,47 +182,47 @@ export function paintFaisca(ctx: Ctx, o: CharacterPose): void {
     ctx.closePath();
   };
   sashPath();
-  fillStroke(ctx, c.suit);
-  shadeRight(ctx, sashPath, c.suitDark, 1.4, 1);
+  fillStroke(ctx, c.suit, 1.7, lineOf(c.suit));
+  volume(ctx, sashPath, c.suit, 1.01, 1.4);
   if (!back) {
     const kx = side ? 24 : 21.5;
     circle(ctx, kx, 35.5, 2.4);
-    fillStroke(ctx, c.suitLight, 1.5);
+    fillStroke(ctx, c.suitLight, 1.5, lineOf(c.suitLight));
     ctx.beginPath();
     ctx.moveTo(kx - 1, 37);
     ctx.quadraticCurveTo(kx - 4, 42, kx - 2, 46);
     ctx.lineTo(kx + 1.5, 44);
     ctx.quadraticCurveTo(kx, 40, kx + 1, 37.5);
     ctx.closePath();
-    fillStroke(ctx, c.suit, 1.5);
+    fillStroke(ctx, c.suit, 1.5, lineOf(c.suit));
     // Charge pouch on the right hip.
     const px = side ? 38 : 40;
     roundRect(ctx, px - 3, 36, 6.5, 6, 1.5);
-    fillStroke(ctx, GLOVE, 1.5);
+    fillStroke(ctx, GLOVE, 1.5, lineOf(GLOVE));
     roundRect(ctx, px - 3, 36, 6.5, 2, 1);
-    fillStroke(ctx, '#4a423e', 1);
+    fillStroke(ctx, '#4a423e', 1, lineOf('#4a423e'));
   } else {
     ctx.beginPath();
     ctx.moveTo(32, 35);
     ctx.lineTo(26, 31);
     ctx.lineTo(27, 36);
     ctx.closePath();
-    fillStroke(ctx, c.suitLight, 1.5);
+    fillStroke(ctx, c.suitLight, 1.5, lineOf(c.suitLight));
     ctx.beginPath();
     ctx.moveTo(32, 35);
     ctx.lineTo(38, 31);
     ctx.lineTo(37, 36);
     ctx.closePath();
-    fillStroke(ctx, c.suitLight, 1.5);
+    fillStroke(ctx, c.suitLight, 1.5, lineOf(c.suitLight));
     ctx.beginPath();
     ctx.moveTo(30, 36);
     ctx.quadraticCurveTo(27, 42, 29, 47);
     ctx.lineTo(32, 45);
     ctx.lineTo(31, 37);
     ctx.closePath();
-    fillStroke(ctx, c.suit, 1.5);
+    fillStroke(ctx, c.suit, 1.5, lineOf(c.suit));
     circle(ctx, 32, 35.5, 2.4);
-    fillStroke(ctx, c.suitLight, 1.5);
+    fillStroke(ctx, c.suitLight, 1.5, lineOf(c.suitLight));
   }
 
   // ── arms: hands on hips when standing, swinging when walking ──
@@ -240,16 +238,16 @@ export function paintFaisca(ctx: Ctx, o: CharacterPose): void {
     ctx.moveTo(sx, sy);
     ctx.lineTo(ex, ey);
     ctx.lineTo(hx, hy);
-    ctx.strokeStyle = INK;
+    ctx.strokeStyle = lineOf(SKIN);
     ctx.lineWidth = 7.5;
     ctx.stroke();
     ctx.strokeStyle = SKIN;
     ctx.lineWidth = 4;
     ctx.stroke();
     circle(ctx, hx, hy, 3.2);
-    fillStroke(ctx, GLOVE, 1.6);
+    fillStroke(ctx, GLOVE, 1.6, lineOf(GLOVE));
     roundRect(ctx, hx - 2.4, hy - 3.6, 4.8, 2.2, 1);
-    fillStroke(ctx, SKIN, 1.2);
+    fillStroke(ctx, SKIN, 1.2, lineOf(SKIN));
   };
   if (seated) {
     if (side) arm(37, 25, 44, 33, 42, 29);
@@ -272,35 +270,38 @@ export function paintFaisca(ctx: Ctx, o: CharacterPose): void {
   headFrame(ctx, bob);
   const head: Path = () => headPath(ctx);
   head();
-  fillStroke(ctx, SKIN);
-  shadeRight(ctx, head, SKIN_SH, 1.8, 1.2);
+  fillStroke(ctx, SKIN, 1.7, lineOf(SKIN));
+  volume(ctx, head, SKIN, 1.3, 1.8);
   if (side) {
     ctx.beginPath();
     ctx.ellipse(26, 15, 2.2, 3, 0, 0, TAU);
-    fillStroke(ctx, SKIN, 1.4);
+    fillStroke(ctx, SKIN, 1.4, lineOf(SKIN));
   } else if (!back) {
     for (const x of [21.5, 42.5]) {
       ctx.beginPath();
       ctx.ellipse(x, 15, 1.8, 2.8, 0, 0, TAU);
-      fillStroke(ctx, SKIN, 1.4);
+      fillStroke(ctx, SKIN, 1.4, lineOf(SKIN));
     }
   }
 
   if (!back) {
     const eye = (x: number, y: number) => {
-      const h = 2.6 * (1 - blink);
-      if (h < 0.3) {
+      const h = 3 * (1 - blink);
+      if (h < 0.4) {
         ctx.beginPath();
-        ctx.moveTo(x - 1.8, y);
-        ctx.lineTo(x + 1.8, y);
-        inkOnly(ctx, 1.6);
+        ctx.moveTo(x - 2, y);
+        ctx.lineTo(x + 2, y);
+        inkOnly(ctx, 1.5);
         return;
       }
       ctx.beginPath();
-      ctx.ellipse(x, y, 1.7, h, 0, 0, TAU);
+      ctx.ellipse(x, y, 2.3, h, 0, 0, TAU);
+      fillStroke(ctx, '#ffffff', 0.9, SKIN_LINE);
+      ctx.beginPath();
+      ctx.ellipse(x + 0.3, y + 0.4, 1.35, Math.min(2.1, h * 0.75), 0, 0, TAU);
       ctx.fillStyle = INK;
       ctx.fill();
-      circle(ctx, x - 0.5, y - 0.9, 0.55);
+      circle(ctx, x - 0.3, y - 0.7, 0.6);
       ctx.fillStyle = '#fff';
       ctx.fill();
     };
@@ -332,7 +333,7 @@ export function paintFaisca(ctx: Ctx, o: CharacterPose): void {
       ctx.quadraticCurveTo(33, 23, 36.5, 20.5);
       inkOnly(ctx, 1.4);
       roundRect(ctx, 37.5, 18, 4, 1.6, 0.6);
-      fillStroke(ctx, '#e8d9c0', 1);
+      fillStroke(ctx, '#e8d9c0', 1, lineOf('#e8d9c0'));
     }
   }
 
@@ -350,7 +351,7 @@ export function paintFaisca(ctx: Ctx, o: CharacterPose): void {
   ctx.lineTo(42.5, 11);
   ctx.quadraticCurveTo(32, 8, 21.5, 11);
   ctx.closePath();
-  fillStroke(ctx, HAIR);
+  fillStroke(ctx, HAIR, 1.7, lineOf(HAIR));
   if (back) {
     ctx.beginPath();
     ctx.moveTo(22, 11);
@@ -358,12 +359,12 @@ export function paintFaisca(ctx: Ctx, o: CharacterPose): void {
     ctx.lineTo(42, 14);
     ctx.quadraticCurveTo(32, 23, 22, 14);
     ctx.closePath();
-    fillStroke(ctx, HAIR);
+    fillStroke(ctx, HAIR, 1.7, lineOf(HAIR));
   }
   const bandPath: Path = () => roundRect(ctx, 21, 9.5, 22, 4.2, 1.5);
   bandPath();
-  fillStroke(ctx, c.suit);
-  shadeRight(ctx, bandPath, c.suitDark, 1.2, 1);
+  fillStroke(ctx, c.suit, 1.7, lineOf(c.suit));
+  volume(ctx, bandPath, c.suit, 0.86, 1.2);
   const tail = (x: number, y: number, dir: number) => {
     ctx.beginPath();
     ctx.moveTo(x, y);
@@ -371,7 +372,7 @@ export function paintFaisca(ctx: Ctx, o: CharacterPose): void {
     ctx.lineTo(x + 4 * dir, y + 5);
     ctx.quadraticCurveTo(x + 3 * dir, y + 3, x, y + 3);
     ctx.closePath();
-    fillStroke(ctx, c.suit, 1.5);
+    fillStroke(ctx, c.suit, 1.5, lineOf(c.suit));
   };
   if (back) {
     tail(32, 10, -1);
@@ -386,7 +387,7 @@ export function paintFaisca(ctx: Ctx, o: CharacterPose): void {
     inkOnly(ctx, 2.2);
     for (const x of gx) {
       circle(ctx, x, 8.3, 3.2);
-      fillStroke(ctx, '#3a3330', 1.6);
+      fillStroke(ctx, '#3a3330', 1.6, lineOf('#3a3330'));
       circle(ctx, x, 8.3, 1.9);
       ctx.fillStyle = c.glow;
       ctx.globalAlpha = 0.85;
@@ -398,7 +399,7 @@ export function paintFaisca(ctx: Ctx, o: CharacterPose): void {
     }
   } else {
     roundRect(ctx, 24, 6.5, 16, 3, 1.5);
-    fillStroke(ctx, '#3a3330', 1.6);
+    fillStroke(ctx, '#3a3330', 1.6, lineOf('#3a3330'));
   }
   ctx.restore();
   ctx.restore();

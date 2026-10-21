@@ -4,34 +4,49 @@ import {
   CharacterPose,
   circle,
   Ctx,
+  dim,
   ellipse,
   fillStroke,
+  gloss,
   headFrame,
   headPath,
   INK,
-  inkOnly,
+  lineOf,
+  lit,
+  occlude,
   Path,
   roundRect,
-  shadeRight,
+  seam,
   stepOf,
   TAU,
   teamFor,
+  volume,
 } from './ink';
 
 const SKIN = '#e8b48a';
-const SKIN_SH = '#c58f63';
+const SKIN_LINE = lineOf(SKIN);
 const HAIR = '#4a2e1c';
+const HAIR_LINE = lineOf(HAIR);
 const SHORTS = '#3e4656';
-const SHORTS_SH = '#2a303c';
+const SHORTS_LINE = lineOf(SHORTS);
+const SOCK = '#f4f2ea';
 const SNEAKER = '#f0efe9';
-const SNEAKER_SH = '#c9c7bd';
+const SNEAKER_LINE = lineOf(SNEAKER);
+const SOLE = '#b9b7ad';
+const MOUTH = '#5a2a2a';
+const TONGUE = '#e98a9a';
+const BLUSH = 'rgba(232, 110, 110, 0.32)';
 
 /**
  * Novato, the default player: no job, no props. A plain tee and a cap in the
- * team colour, shorts, sneakers, a wide grin. The figure everyone starts as.
+ * team colour, shorts, socks and sneakers, a wide grin. The figure everyone
+ * starts as — and the pilot of the cast's volume: a top-left light, a
+ * highlight and a core shadow on every shape, lines in each material's own
+ * colour, contact shadows where parts meet.
  */
 export function paintNovato(ctx: Ctx, o: CharacterPose): void {
   const c = teamFor(o.slot);
+  const suitLine = lineOf(c.suit);
   const t = o.t ?? 0;
   const blink = o.blink ?? 0;
   const side = o.facing === 'left' || o.facing === 'right';
@@ -43,29 +58,63 @@ export function paintNovato(ctx: Ctx, o: CharacterPose): void {
   beginFrame(ctx, o.facing);
   bodyFrame(ctx);
 
-  // ── legs: bare shins and sneakers ──
+  // ── legs: bare shins, socks and sneakers ──
   const sneakerAt = (x: number, by: number, fwd: number, rot = 0) => {
-    const p: Path = () => {
-      ctx.save();
-      ctx.translate(x, by);
-      ctx.rotate(rot);
+    ctx.save();
+    ctx.translate(x, by);
+    ctx.rotate(rot);
+    const sole: Path = () => roundRect(ctx, -5.2, 0.4, 11 + fwd, 4, 1.6);
+    sole();
+    fillStroke(ctx, SOLE, 1.5, lineOf(SOLE));
+    const upper: Path = () => {
       ctx.beginPath();
-      ctx.moveTo(-4.5, -3.5);
-      ctx.lineTo(4.5, -3.5);
-      ctx.lineTo(5.5 + fwd, 2.5);
-      ctx.quadraticCurveTo(0, 4.5, -5 + fwd * 0.3, 2.5);
+      ctx.moveTo(-4.5, -4);
+      ctx.lineTo(4.5, -4);
+      ctx.quadraticCurveTo(6.8 + fwd, -1.5, 5.6 + fwd, 2);
+      ctx.lineTo(-4.8, 2);
       ctx.closePath();
-      ctx.restore();
     };
-    p();
-    fillStroke(ctx, SNEAKER);
-    shadeRight(ctx, p, SNEAKER_SH, 1.6, 0.6);
+    upper();
+    fillStroke(ctx, SNEAKER, 1.5, SNEAKER_LINE);
+    volume(ctx, upper, SNEAKER, 0.9, 1.3);
+    // Laces.
+    seam(
+      ctx,
+      [
+        [-2.6, -2.3],
+        [1.6, -2.3],
+      ],
+      SNEAKER_LINE,
+      0.9,
+    );
+    seam(
+      ctx,
+      [
+        [-2, -0.7],
+        [2.2, -0.7],
+      ],
+      SNEAKER_LINE,
+      0.9,
+    );
+    gloss(ctx, 3.2 + fwd * 0.5, -0.2, 1.5, 0.7, -0.3, 0.5);
+    ctx.restore();
   };
   const legAt = (x: number, lift: number, fwd: number) => {
-    const p: Path = () => roundRect(ctx, x - 3, 42, 6, 11 - lift * 0.5, 2.5);
-    p();
-    fillStroke(ctx, SKIN);
-    shadeRight(ctx, p, SKIN_SH, 1.4, 0);
+    const shin: Path = () =>
+      roundRect(ctx, x - 3.2, 41, 6.4, 11 - lift * 0.5, 2.6);
+    shin();
+    fillStroke(ctx, SKIN, 1.5, SKIN_LINE);
+    volume(ctx, shin, SKIN, 0.9, 1.3);
+    // The knee: a soft arc.
+    ctx.beginPath();
+    ctx.arc(x, 45.2 - lift * 0.2, 1.8, 0.35, Math.PI - 0.35);
+    ctx.strokeStyle = dim(SKIN, 0.22);
+    ctx.lineWidth = 0.9;
+    ctx.stroke();
+    const sock: Path = () =>
+      roundRect(ctx, x - 3.4, 49.4 - lift * 0.5, 6.8, 3.4, 1.2);
+    sock();
+    fillStroke(ctx, SOCK, 1.3, lineOf(SOCK));
     sneakerAt(x, 55 - lift, fwd);
   };
   if (seated) {
@@ -74,12 +123,12 @@ export function paintNovato(ctx: Ctx, o: CharacterPose): void {
         ctx.save();
         ctx.translate(hx, 40);
         ctx.rotate(dir * 0.35);
-        roundRect(ctx, -3, 0, 6, 9, 2.5);
+        roundRect(ctx, -3.2, 0, 6.4, 9, 2.6);
         ctx.restore();
       };
       p();
-      fillStroke(ctx, SKIN);
-      shadeRight(ctx, p, SKIN_SH, 1.4, 0);
+      fillStroke(ctx, SKIN, 1.5, SKIN_LINE);
+      volume(ctx, p, SKIN, 0.9, 1.3);
       sneakerAt(hx + dir * 3.5, 51, 0, dir * 0.35);
     };
     if (side) hang(33, 0.4);
@@ -114,8 +163,50 @@ export function paintNovato(ctx: Ctx, o: CharacterPose): void {
     ctx.closePath();
   };
   shortsPath();
-  fillStroke(ctx, SHORTS);
-  shadeRight(ctx, shortsPath, SHORTS_SH);
+  fillStroke(ctx, SHORTS, 1.7, SHORTS_LINE);
+  volume(ctx, shortsPath, SHORTS, 1.1, 1.5);
+  occlude(ctx, shortsPath, 37, 41, 0.3);
+  // A stripe down each side in the team's light, and the fly.
+  if (side) {
+    seam(
+      ctx,
+      [
+        [25.6, 37.5],
+        [25, 44.3],
+      ],
+      c.suitLight,
+      1.3,
+    );
+  } else {
+    seam(
+      ctx,
+      [
+        [22.6, 37.5],
+        [21.8, 44.3],
+      ],
+      c.suitLight,
+      1.3,
+    );
+    seam(
+      ctx,
+      [
+        [41.4, 37.5],
+        [42.2, 44.3],
+      ],
+      c.suitLight,
+      1.3,
+    );
+    if (!back)
+      seam(
+        ctx,
+        [
+          [32, 38.5],
+          [32, 44],
+        ],
+        SHORTS_LINE,
+        0.9,
+      );
+  }
 
   // ── plain tee in the team colour ──
   const teePath: Path = () => {
@@ -136,19 +227,55 @@ export function paintNovato(ctx: Ctx, o: CharacterPose): void {
     ctx.closePath();
   };
   teePath();
-  fillStroke(ctx, c.suit);
-  shadeRight(ctx, teePath, c.suitDark);
-  if (!back) {
-    // Collar.
+  fillStroke(ctx, c.suit, 1.7, suitLine);
+  volume(ctx, teePath, c.suit, 1.3, 1.9);
+  occlude(ctx, teePath, 22, 29, 0.3);
+  // Folds at the waist, on the shade side and under the lit sleeve.
+  seam(
+    ctx,
+    [
+      [side ? 36 : 38.5, 33.5],
+      [side ? 39 : 42, 36.5],
+    ],
+    dim(c.suit, 0.22),
+    0.9,
+  );
+  seam(
+    ctx,
+    [
+      [side ? 27 : 24, 35.5],
+      [side ? 29 : 27, 37.2],
+    ],
+    dim(c.suit, 0.22),
+    0.9,
+  );
+  if (back) {
+    seam(
+      ctx,
+      [
+        [27.5, 22.3],
+        [36.5, 22.3],
+      ],
+      suitLine,
+      1.3,
+    );
+  } else {
+    // Ribbed collar: the line and a lighter rib inside it.
     ctx.beginPath();
     ctx.moveTo(side ? 31 : 27, 22.5);
-    ctx.quadraticCurveTo(side ? 35 : 32, 26, side ? 39 : 37, 22.5);
-    ctx.strokeStyle = INK;
+    ctx.quadraticCurveTo(side ? 35 : 32, 26.5, side ? 39 : 37, 22.5);
+    ctx.strokeStyle = suitLine;
     ctx.lineWidth = 1.5;
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(side ? 32 : 28, 22);
+    ctx.quadraticCurveTo(side ? 35 : 32, 25, side ? 38 : 36, 22);
+    ctx.strokeStyle = c.suitLight;
+    ctx.lineWidth = 0.9;
     ctx.stroke();
   }
 
-  // ── arms: short sleeves, bare forearms ──
+  // ── arms: short sleeves, bare forearms, hands with a thumb ──
   const arm = (
     sx: number,
     sy: number,
@@ -161,24 +288,45 @@ export function paintNovato(ctx: Ctx, o: CharacterPose): void {
     ctx.moveTo(sx, sy);
     ctx.lineTo(ex, ey);
     ctx.lineTo(hx, hy);
-    ctx.strokeStyle = INK;
-    ctx.lineWidth = 7.5;
+    ctx.strokeStyle = SKIN_LINE;
+    ctx.lineWidth = 7.4;
     ctx.stroke();
     ctx.strokeStyle = SKIN;
-    ctx.lineWidth = 4;
+    ctx.lineWidth = 4.2;
+    ctx.stroke();
+    // The lit edge of the forearm.
+    ctx.beginPath();
+    ctx.moveTo(ex - 0.8, ey - 0.6);
+    ctx.lineTo(hx - 0.8, hy - 0.6);
+    ctx.strokeStyle = lit(SKIN, 0.4);
+    ctx.lineWidth = 1.1;
     ctx.stroke();
     // Sleeve over the shoulder.
+    const mx = sx + (ex - sx) * 0.45;
+    const my = sy + (ey - sy) * 0.45;
     ctx.beginPath();
     ctx.moveTo(sx, sy);
-    ctx.lineTo(sx + (ex - sx) * 0.45, sy + (ey - sy) * 0.45);
-    ctx.strokeStyle = INK;
-    ctx.lineWidth = 8.5;
+    ctx.lineTo(mx, my);
+    ctx.strokeStyle = suitLine;
+    ctx.lineWidth = 8.6;
     ctx.stroke();
     ctx.strokeStyle = c.suit;
-    ctx.lineWidth = 5;
+    ctx.lineWidth = 5.2;
     ctx.stroke();
-    circle(ctx, hx, hy, 3);
-    fillStroke(ctx, SKIN, 1.6);
+    ctx.beginPath();
+    ctx.moveTo(sx - 0.9, sy - 0.7);
+    ctx.lineTo(mx - 0.9, my - 0.7);
+    ctx.strokeStyle = lit(c.suit, 0.35);
+    ctx.lineWidth = 1.3;
+    ctx.stroke();
+    // Thumb toward the body, then the palm over it.
+    const toward = hx < 32 ? 1 : -1;
+    circle(ctx, hx + toward * 2.3, hy - 1.3, 1.4);
+    fillStroke(ctx, SKIN, 1.2, SKIN_LINE);
+    const palm: Path = () => circle(ctx, hx, hy, 3.1);
+    palm();
+    fillStroke(ctx, SKIN, 1.4, SKIN_LINE);
+    volume(ctx, palm, SKIN, 0.7, 0.9);
   };
   if (seated) {
     if (side) arm(37, 25, 42, 29, 44, 33);
@@ -202,53 +350,134 @@ export function paintNovato(ctx: Ctx, o: CharacterPose): void {
   headFrame(ctx, bob);
   const head: Path = () => headPath(ctx);
   head();
-  fillStroke(ctx, SKIN);
-  shadeRight(ctx, head, SKIN_SH, 1.8, 1.2);
-  if (side) {
-    ellipse(ctx, 26, 15, 2.2, 3);
-    fillStroke(ctx, SKIN, 1.4);
-  } else if (!back) {
-    for (const x of [21.5, 42.5]) {
-      ellipse(ctx, x, 15, 1.8, 2.8);
-      fillStroke(ctx, SKIN, 1.4);
-    }
+  fillStroke(ctx, SKIN, 1.6, SKIN_LINE);
+  volume(ctx, head, SKIN, 1.2, 1.6);
+  // Hair at the nape, under the cap.
+  if (back) {
+    ctx.beginPath();
+    ctx.moveTo(22.3, 9);
+    ctx.lineTo(41.7, 9);
+    ctx.lineTo(41.7, 13);
+    ctx.quadraticCurveTo(38.5, 16.5, 35.5, 14.5);
+    ctx.quadraticCurveTo(32, 17.5, 28.5, 14.5);
+    ctx.quadraticCurveTo(25.5, 16.5, 22.3, 13);
+    ctx.closePath();
+    fillStroke(ctx, HAIR, 1.3, HAIR_LINE);
+  }
+  const ear = (x: number, y: number) => {
+    const p: Path = () => ellipse(ctx, x, y, 2, 2.9);
+    p();
+    fillStroke(ctx, SKIN, 1.3, SKIN_LINE);
+    ctx.beginPath();
+    ctx.arc(x, y, 1.1, -1.2, 1.2);
+    ctx.strokeStyle = SKIN_LINE;
+    ctx.lineWidth = 0.8;
+    ctx.stroke();
+  };
+  if (side) ear(26, 15.5);
+  else if (!back) {
+    ear(21.5, 15.5);
+    ear(42.5, 15.5);
   }
   if (!back) {
+    // Brows.
+    if (side) {
+      seam(
+        ctx,
+        [
+          [34.5, 12.6],
+          [39.6, 13.2],
+        ],
+        HAIR,
+        1.4,
+      );
+    } else {
+      seam(
+        ctx,
+        [
+          [25.4, 13.1],
+          [30.2, 12.4],
+        ],
+        HAIR,
+        1.4,
+      );
+      seam(
+        ctx,
+        [
+          [33.8, 12.4],
+          [38.6, 13.1],
+        ],
+        HAIR,
+        1.4,
+      );
+    }
     const eye = (x: number, y: number) => {
-      const h = 2.6 * (1 - blink);
-      if (h < 0.3) {
+      const h = 3 * (1 - blink);
+      if (h < 0.4) {
         ctx.beginPath();
-        ctx.moveTo(x - 1.8, y);
-        ctx.lineTo(x + 1.8, y);
-        inkOnly(ctx, 1.6);
+        ctx.moveTo(x - 2, y);
+        ctx.lineTo(x + 2, y);
+        ctx.strokeStyle = INK;
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
         return;
       }
-      ellipse(ctx, x, y, 1.7, h);
+      ellipse(ctx, x, y, 2.3, h);
+      fillStroke(ctx, '#ffffff', 0.9, SKIN_LINE);
+      ellipse(ctx, x + 0.3, y + 0.4, 1.35, Math.min(2.1, h * 0.75));
       ctx.fillStyle = INK;
       ctx.fill();
-      circle(ctx, x - 0.5, y - 0.9, 0.55);
-      ctx.fillStyle = '#fff';
+      circle(ctx, x - 0.3, y - 0.7, 0.6);
+      ctx.fillStyle = '#ffffff';
       ctx.fill();
     };
     if (side) {
       eye(37, 16);
+      // Nose and the grin, in profile.
       ctx.beginPath();
       ctx.moveTo(41.5, 15.5);
       ctx.quadraticCurveTo(44, 17.5, 41.5, 19);
-      inkOnly(ctx, 1.5);
+      ctx.strokeStyle = SKIN_LINE;
+      ctx.lineWidth = 1.4;
+      ctx.stroke();
+      ellipse(ctx, 35.2, 19.2, 1.7, 1.1);
+      ctx.fillStyle = BLUSH;
+      ctx.fill();
       ctx.beginPath();
-      ctx.moveTo(36, 20.5);
-      ctx.quadraticCurveTo(39, 23, 41, 20.5);
-      inkOnly(ctx, 1.4);
+      ctx.moveTo(36.5, 20.6);
+      ctx.quadraticCurveTo(39, 23.4, 41.2, 20.6);
+      ctx.closePath();
+      fillStroke(ctx, '#ffffff', 1.3, MOUTH);
     } else {
       eye(28, 16);
       eye(36, 16);
-      // A wide, open grin: happy to be here.
       ctx.beginPath();
-      ctx.moveTo(27.5, 20);
-      ctx.quadraticCurveTo(32, 25, 36.5, 20);
-      ctx.closePath();
-      fillStroke(ctx, '#ffffff', 1.4);
+      ctx.moveTo(31, 18.4);
+      ctx.quadraticCurveTo(32, 19.7, 33.2, 18.4);
+      ctx.strokeStyle = SKIN_LINE;
+      ctx.lineWidth = 1.1;
+      ctx.stroke();
+      // A wide, open grin, with the tongue behind the teeth: happy to be here.
+      const grin: Path = () => {
+        ctx.beginPath();
+        ctx.moveTo(27, 19.8);
+        ctx.quadraticCurveTo(32, 25.8, 37, 19.8);
+        ctx.closePath();
+      };
+      for (const x of [25.3, 38.7]) {
+        ellipse(ctx, x, 19.4, 2, 1.3);
+        ctx.fillStyle = BLUSH;
+        ctx.fill();
+      }
+      grin();
+      fillStroke(ctx, '#ffffff', 1.4, MOUTH);
+      ctx.save();
+      grin();
+      ctx.clip();
+      ellipse(ctx, 32, 24.2, 2.8, 1.9);
+      ctx.fillStyle = TONGUE;
+      ctx.fill();
+      ctx.restore();
     }
   }
   // Hair peeking out under the cap.
@@ -257,13 +486,16 @@ export function paintNovato(ctx: Ctx, o: CharacterPose): void {
   ctx.quadraticCurveTo(22, 15, 23.5, 15.5);
   ctx.lineTo(24.5, 11.5);
   ctx.closePath();
-  fillStroke(ctx, HAIR, 1.4);
+  fillStroke(ctx, HAIR, 1.3, HAIR_LINE);
   ctx.beginPath();
   ctx.moveTo(42, 12);
   ctx.quadraticCurveTo(42, 15, 40.5, 15.5);
   ctx.lineTo(39.5, 11.5);
   ctx.closePath();
-  fillStroke(ctx, HAIR, 1.4);
+  fillStroke(ctx, HAIR, 1.3, HAIR_LINE);
+  // The brim's shadow on the forehead.
+  if (!back) occlude(ctx, head, 11.5, 16.5, 0.26);
+
   // ── cap in the team colour ──
   const crown: Path = () => {
     ctx.beginPath();
@@ -273,29 +505,61 @@ export function paintNovato(ctx: Ctx, o: CharacterPose): void {
     ctx.closePath();
   };
   crown();
-  fillStroke(ctx, c.suit);
-  shadeRight(ctx, crown, c.suitDark, 1.4, 1);
-  circle(ctx, 32, 3, 1.2);
-  ctx.fillStyle = c.suitLight;
-  ctx.fill();
+  fillStroke(ctx, c.suit, 1.7, suitLine);
+  volume(ctx, crown, c.suit, 1.3, 1.7);
+  // Panel seams down from the button.
+  seam(
+    ctx,
+    [
+      [32, 3.2],
+      [27.2, 11.6],
+    ],
+    suitLine,
+    0.9,
+  );
+  seam(
+    ctx,
+    [
+      [32, 3.2],
+      [36.8, 11.6],
+    ],
+    suitLine,
+    0.9,
+  );
+  gloss(ctx, 27, 6.2, 3.2, 1.5, -0.6, 0.35);
+  circle(ctx, 32, 3, 1.4);
+  fillStroke(ctx, c.suitLight, 1, suitLine);
   // Brim: forward from the front, to the side in profile, a strap at the back.
-  ctx.beginPath();
   if (back) {
     roundRect(ctx, 28, 9, 8, 2.4, 1);
-    ctx.fillStyle = c.suitDark;
+    fillStroke(ctx, c.suitDark, 1.1, suitLine);
+    circle(ctx, 32, 10.2, 0.7);
+    ctx.fillStyle = c.suitLight;
     ctx.fill();
-    ctx.strokeStyle = INK;
-    ctx.lineWidth = 1.2;
-    ctx.stroke();
   } else if (side) {
-    ctx.moveTo(38, 11);
-    ctx.quadraticCurveTo(46, 10.5, 48, 13);
-    ctx.lineTo(38, 13);
-    ctx.closePath();
-    fillStroke(ctx, c.suitDark, 1.6);
+    const brim: Path = () => {
+      ctx.beginPath();
+      ctx.moveTo(38, 11);
+      ctx.quadraticCurveTo(46, 10.5, 48, 13);
+      ctx.lineTo(38, 13.4);
+      ctx.closePath();
+    };
+    brim();
+    fillStroke(ctx, c.suitDark, 1.5, suitLine);
+    seam(
+      ctx,
+      [
+        [38.6, 13.1],
+        [47.4, 12.9],
+      ],
+      dim(c.suitDark, 0.35),
+      0.9,
+    );
   } else {
-    ctx.ellipse(32, 12, 12, 2.6, 0, 0, TAU);
-    fillStroke(ctx, c.suitDark, 1.6);
+    const brim: Path = () => ellipse(ctx, 32, 12, 12, 2.6);
+    brim();
+    fillStroke(ctx, c.suitDark, 1.5, suitLine);
+    volume(ctx, brim, c.suitDark, 0.8, 1);
   }
   ctx.restore();
   ctx.restore();

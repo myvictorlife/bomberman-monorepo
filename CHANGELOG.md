@@ -13,6 +13,28 @@ config file. Ordinary app-level additions are minor.
 
 ### Changed
 
+- **The cast has volume.** Every character and mount, and the egg, are
+  drawn with new helpers in `ink.ts`: a top-left light with a highlight and
+  a core shadow on every shape (`volume`, `band`), lines in each material's
+  own colour (`lineOf`) with the near-black line kept for the silhouette
+  only (`rimLight` now draws it before the pale rim), contact shadows under
+  a brim, a chin or a hem (`occlude`), gloss (`gloss`) and seams (`seam`).
+  Novato, the pilot, also got socks, soles, laces, brows, a tongue, blush,
+  a thumb on each hand and hair at the nape; everyone but Byte got eyes with
+  a sclera and a glint. The egg is big in its cell, with green-teal
+  continents outlined in their own line, pink speckles and chips that lift
+  as it cracks.
+
+### Added
+
+- **A sound switch on the online page.** A speaker button at the right of
+  the round's strip, above the arena, turns the effects off and on
+  mid-round, for the arena on screen and for every round after it. It is
+  the same choice the settings page keeps, so it survives a reload and
+  applies to the offline pages too.
+
+### Changed
+
 - **The cast reads like an arena cartoon.** Every character is drawn with
   the same proportions, applied by two shared frames in `ink.ts` instead of
   redrawn per painter: a body a quarter wider than before, a head a third

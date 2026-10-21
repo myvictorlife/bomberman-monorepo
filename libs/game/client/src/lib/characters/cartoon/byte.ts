@@ -11,22 +11,20 @@ import {
   inkOnly,
   Path,
   roundRect,
-  shadeRight,
   stepOf,
   TAU,
   teamFor,
+  volume,
+  lineOf,
 } from './ink';
 
 const SKIN = '#f1c8a2';
-const SKIN_SH = '#d1a179';
 const HAIR = '#7a3f22';
 const HOOD = '#3a3f4a';
 const HOOD_SH = '#262a33';
 const HOOD_POCKET = '#474d5a';
 const JEANS = '#3a4a6b';
-const JEANS_SH = '#283551';
 const SNEAKER = '#f0efe9';
-const SNEAKER_SH = '#c9c7bd';
 const MUG = '#f6f3ea';
 
 /**
@@ -62,8 +60,8 @@ export function paintByte(ctx: Ctx, o: CharacterPose): void {
       ctx.restore();
     };
     p();
-    fillStroke(ctx, SNEAKER);
-    shadeRight(ctx, p, SNEAKER_SH, 1.6, 0.6);
+    fillStroke(ctx, SNEAKER, 1.7, lineOf(SNEAKER));
+    volume(ctx, p, SNEAKER, 1.15, 1.6);
     ctx.save();
     ctx.translate(x, by);
     ctx.rotate(rot);
@@ -79,8 +77,8 @@ export function paintByte(ctx: Ctx, o: CharacterPose): void {
     const p: Path = () =>
       roundRect(ctx, x - 3.2, 42, 6.4, 11 - lift * 0.5, 2.2);
     p();
-    fillStroke(ctx, JEANS);
-    shadeRight(ctx, p, JEANS_SH, 1.4, 0);
+    fillStroke(ctx, JEANS, 1.7, lineOf(JEANS));
+    volume(ctx, p, JEANS, 1.01, 1.4);
     sneakerAt(x, 55 - lift, fwd);
   };
   if (seated) {
@@ -93,8 +91,8 @@ export function paintByte(ctx: Ctx, o: CharacterPose): void {
         ctx.restore();
       };
       p();
-      fillStroke(ctx, JEANS);
-      shadeRight(ctx, p, JEANS_SH, 1.4, 0);
+      fillStroke(ctx, JEANS, 1.7, lineOf(JEANS));
+      volume(ctx, p, JEANS, 1.01, 1.4);
       sneakerAt(hx + dir * 3.5, 51, 0, dir * 0.35);
     };
     if (side) hang(33, 0.4);
@@ -132,8 +130,8 @@ export function paintByte(ctx: Ctx, o: CharacterPose): void {
     ctx.closePath();
   };
   torsoPath();
-  fillStroke(ctx, HOOD);
-  shadeRight(ctx, torsoPath, HOOD_SH);
+  fillStroke(ctx, HOOD, 1.7, lineOf(HOOD));
+  volume(ctx, torsoPath, HOOD, 1.3, 1.8);
   if (back) {
     const hoodPath: Path = () => {
       ctx.beginPath();
@@ -144,8 +142,8 @@ export function paintByte(ctx: Ctx, o: CharacterPose): void {
       ctx.closePath();
     };
     hoodPath();
-    fillStroke(ctx, HOOD_POCKET);
-    shadeRight(ctx, hoodPath, HOOD_SH, 1.4, 1);
+    fillStroke(ctx, HOOD_POCKET, 1.7, lineOf(HOOD_POCKET));
+    volume(ctx, hoodPath, HOOD, 1.01, 1.4);
   } else {
     const pocketPath: Path = () =>
       roundRect(
@@ -157,8 +155,8 @@ export function paintByte(ctx: Ctx, o: CharacterPose): void {
         2,
       );
     pocketPath();
-    fillStroke(ctx, HOOD_POCKET, 1.6);
-    shadeRight(ctx, pocketPath, HOOD_SH, 1.2, 0.8);
+    fillStroke(ctx, HOOD_POCKET, 1.6, lineOf(HOOD_POCKET));
+    volume(ctx, pocketPath, HOOD, 0.86, 1.2);
     ctx.strokeStyle = c.suit;
     ctx.lineWidth = 1.4;
     ctx.beginPath();
@@ -200,7 +198,7 @@ export function paintByte(ctx: Ctx, o: CharacterPose): void {
     ctx.moveTo(sx, sy);
     ctx.lineTo(ex, ey);
     ctx.lineTo(hx, hy);
-    ctx.strokeStyle = INK;
+    ctx.strokeStyle = lineOf(HOOD);
     ctx.lineWidth = 8;
     ctx.stroke();
     ctx.strokeStyle = HOOD;
@@ -208,12 +206,12 @@ export function paintByte(ctx: Ctx, o: CharacterPose): void {
     ctx.stroke();
     if (hand) {
       circle(ctx, hx, hy, 2.9);
-      fillStroke(ctx, SKIN, 1.6);
+      fillStroke(ctx, SKIN, 1.6, lineOf(SKIN));
     }
   };
   const mug = (x: number, y: number) => {
     roundRect(ctx, x - 3, y - 3.5, 6, 7, 1.2);
-    fillStroke(ctx, MUG, 1.6);
+    fillStroke(ctx, MUG, 1.6, lineOf(MUG));
     ctx.fillStyle = c.suit;
     ctx.fillRect(x - 3, y - 1, 6, 2.2);
     ctx.beginPath();
@@ -261,8 +259,8 @@ export function paintByte(ctx: Ctx, o: CharacterPose): void {
   headFrame(ctx, bob);
   const head: Path = () => headPath(ctx);
   head();
-  fillStroke(ctx, SKIN);
-  shadeRight(ctx, head, SKIN_SH, 1.8, 1.2);
+  fillStroke(ctx, SKIN, 1.7, lineOf(SKIN));
+  volume(ctx, head, SKIN, 1.3, 1.8);
   if (!back) {
     ctx.fillStyle = 'rgba(0,0,0,0.18)';
     const dots: [number, number][] = side
@@ -373,7 +371,7 @@ export function paintByte(ctx: Ctx, o: CharacterPose): void {
   ctx.quadraticCurveTo(39, 8.5, 32, 8.5);
   ctx.quadraticCurveTo(25, 8.5, 21.5, 12);
   ctx.closePath();
-  fillStroke(ctx, HAIR);
+  fillStroke(ctx, HAIR, 1.7, lineOf(HAIR));
   if (back) {
     ctx.beginPath();
     ctx.moveTo(22, 12);
@@ -381,11 +379,11 @@ export function paintByte(ctx: Ctx, o: CharacterPose): void {
     ctx.lineTo(42, 15);
     ctx.quadraticCurveTo(32, 22, 22, 15);
     ctx.closePath();
-    fillStroke(ctx, HAIR);
+    fillStroke(ctx, HAIR, 1.7, lineOf(HAIR));
   }
   ctx.beginPath();
   ctx.arc(32, 13, 11.5, Math.PI * 1.08, Math.PI * 1.92);
-  ctx.strokeStyle = INK;
+  ctx.strokeStyle = lineOf(HOOD);
   ctx.lineWidth = 3.4;
   ctx.stroke();
   ctx.strokeStyle = HOOD;
@@ -393,7 +391,7 @@ export function paintByte(ctx: Ctx, o: CharacterPose): void {
   ctx.stroke();
   const cup = (x: number) => {
     roundRect(ctx, x - 2.6, 12, 5.2, 7, 2);
-    fillStroke(ctx, HOOD_SH, 1.6);
+    fillStroke(ctx, HOOD_SH, 1.6, lineOf(HOOD_SH));
     roundRect(ctx, x - 1.4, 13.5, 2.8, 4, 1);
     ctx.fillStyle = c.suit;
     ctx.fill();
