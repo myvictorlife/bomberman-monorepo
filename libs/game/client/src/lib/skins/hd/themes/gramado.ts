@@ -139,7 +139,12 @@ function planter(ctx: Ctx): void {
   const rng = createRng(41);
   for (let i = 0; i < 22; i++) {
     ctx.fillStyle = rng() < 0.5 ? 'rgba(0,0,0,0.07)' : 'rgba(255,255,255,0.09)';
-    ctx.fillRect(8 + rng() * (S - 16), lip + 2 + rng() * (S - lip - 8), 1.2, 1.2);
+    ctx.fillRect(
+      8 + rng() * (S - 16),
+      lip + 2 + rng() * (S - lip - 8),
+      1.2,
+      1.2,
+    );
   }
   // Soil, then the shrub: a dome of dark green, leaves speckled, lit top-left.
   ellipse(ctx, S / 2, lip - 3, S / 2 - 8, 3);
@@ -171,7 +176,8 @@ function planter(ctx: Ctx): void {
     const x = cx - 22 + rng() * 44;
     const y = cy - 15 + rng() * 30;
     ellipse(ctx, x, y, 1.6, 1.1);
-    ctx.fillStyle = rng() < 0.4 ? 'rgba(140, 200, 110, 0.35)' : 'rgba(0, 25, 0, 0.3)';
+    ctx.fillStyle =
+      rng() < 0.4 ? 'rgba(140, 200, 110, 0.35)' : 'rgba(0, 25, 0, 0.3)';
     ctx.fill();
   }
   ctx.restore();
@@ -214,7 +220,10 @@ function parkEdge(ctx: Ctx, seed: number, top: boolean): void {
     ctx.fill();
   }
   // Light from above on the clipped top of the hedge.
-  ctx.fillStyle = linear(ctx, 0, 0, 0, 10, ['rgba(255,255,255,0.14)', 'rgba(255,255,255,0)']);
+  ctx.fillStyle = linear(ctx, 0, 0, 0, 10, [
+    'rgba(255,255,255,0.14)',
+    'rgba(255,255,255,0)',
+  ]);
   ctx.fillRect(0, 0, S, 10);
   // The railing: a rail and thin balusters, dark steel with a cold highlight.
   const railY = top ? 26 : 18;
@@ -264,17 +273,25 @@ function brickBlock(ctx: Ctx): void {
     const y = y0 + r * bh;
     for (let x = x0 - (r % 2 ? bw / 2 : 0); x < x0 + w; x += bw) {
       const base = BRICKS[Math.floor(rng() * BRICKS.length)] as string;
-      ctx.fillStyle = linear(ctx, x, y, x + bw, y + bh, [shade(base, 1.04), base, shade(base, 0.9)]);
+      ctx.fillStyle = linear(ctx, x, y, x + bw, y + bh, [
+        shade(base, 1.04),
+        base,
+        shade(base, 0.9),
+      ]);
       ctx.fillRect(x + 0.7, y + 0.7, bw - 1.4, bh - 1.4);
       // A faint grain across each brick.
       ctx.fillStyle = 'rgba(0,0,0,0.05)';
-      for (let i = 0; i < 4; i++) ctx.fillRect(x + 2 + rng() * (bw - 6), y + 2 + rng() * (bh - 4), 3, 1);
+      for (let i = 0; i < 4; i++)
+        ctx.fillRect(x + 2 + rng() * (bw - 6), y + 2 + rng() * (bh - 4), 3, 1);
     }
   }
   ctx.restore();
   // Ambient shade down the block, a quiet edge, light on the top-left.
   roundRect(ctx, x0, y0, w, h, 3);
-  ctx.fillStyle = linear(ctx, 0, y0, 0, y0 + h, ['rgba(255,255,255,0.06)', 'rgba(0,0,0,0.2)']);
+  ctx.fillStyle = linear(ctx, 0, y0, 0, y0 + h, [
+    'rgba(255,255,255,0.06)',
+    'rgba(0,0,0,0.2)',
+  ]);
   ctx.fill();
   roundRect(ctx, x0, y0, w, h, 3);
   ctx.strokeStyle = INK;

@@ -754,6 +754,7 @@
     "MOMENT_POWER_KICK": "Chute",
     "EFFECT_ALARM": "Fim do tempo",
     "EFFECT_WALL": "Parede caindo",
+    "EFFECT_TICK": "Tique do pavio",
     "MOMENT_HURRY": "Arena fechando",
     "MOMENT_GRAB": "Jogador agarrado"
   },

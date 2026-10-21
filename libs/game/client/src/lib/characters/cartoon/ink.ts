@@ -226,6 +226,8 @@ export function glowFill(ctx: Ctx, color: string, blur: number): void {
 export const FRAME_PLACE = 3;
 /** Frame 4: arms up, one knee up — the winner's cheer. */
 export const FRAME_CHEER = 4;
+/** Frame 5: eyes wide, mouth open, hands up — a bomb is about to go off next door. Also the fall, turned on its back. */
+export const FRAME_SCARED = 5;
 
 /** Standing, step, standing, other step — the arena's walk cycle. */
 export const CARTOON_WALK_CYCLE: readonly number[] = [1, 0, 2, 0];
@@ -476,4 +478,26 @@ export function seam(
   ctx.strokeStyle = color;
   ctx.lineWidth = width;
   ctx.stroke();
+}
+
+/**
+ * The scared face, over whatever face the painter drew: wide white eyes
+ * with small pupils, and an open mouth. `eyes` are the painter's eye
+ * positions for this facing, `mouth` where the mouth sits.
+ */
+export function scaredFace(
+  ctx: Ctx,
+  eyes: readonly (readonly [number, number])[],
+  mouth: readonly [number, number],
+  skinLine: string,
+): void {
+  for (const [x, y] of eyes) {
+    ellipse(ctx, x, y, 3, 3.4);
+    fillStroke(ctx, '#ffffff', 1.1, skinLine);
+    circle(ctx, x + 0.2, y + 0.3, 1.1);
+    ctx.fillStyle = INK;
+    ctx.fill();
+  }
+  ellipse(ctx, mouth[0], mouth[1], 2.2, 2.8);
+  fillStroke(ctx, '#5a2a2a', 1.2, INK);
 }

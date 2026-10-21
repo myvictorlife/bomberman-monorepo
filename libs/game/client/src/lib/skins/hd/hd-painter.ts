@@ -2,6 +2,7 @@ import {
   CharacterId,
   createRng,
   DEFAULT_CHARACTER_ID,
+  MountId,
   Direction,
   FlameShape,
   PowerUpKind,
@@ -11,6 +12,8 @@ import { paintCartoonCharacter } from '../../characters/cartoon/cartoon';
 import {
   CHARACTER_HEADROOM,
   colorSlot,
+  FRAME_CHEER,
+  FRAME_SCARED,
   MOUNTED_HEADROOM,
   rimLight,
 } from '../../characters/cartoon/ink';
@@ -19,13 +22,13 @@ import {
   FACINGS,
   FLAME_FRAMES,
   FLAME_SHAPES,
-  MOUNT_IDS,
   PLAYER_FRAMES,
   PLAYER_SLOTS,
   POWER_UP_KINDS,
   TEXTURE,
 } from '../texture-keys';
 import { EGG_STAGES, paintEgg } from './egg';
+import { relief, SOLID_TILES } from './themes/theme';
 import {
   HD,
   HD_PLAYER_COLORS,
@@ -147,22 +150,54 @@ export function paintCharacterTextures(
         },
         CHARACTER_HEADROOM,
       );
-      for (const mountId of MOUNT_IDS) {
-        paint(
-          TEXTURE.playerMounted(slot, mountId, facing, f),
-          (ctx) => {
-            paintCartoonCharacter(ctx, {
-              characterId: characterId ?? DEFAULT_CHARACTER_ID,
-              facing,
-              frame: f,
-              slot: team,
-              mountId,
-            });
-            rimLight(ctx, resolution);
-          },
-          MOUNTED_HEADROOM,
+    }
+  }
+  return textures;
+}
+
+/**
+ * One slot's frames on one mount, painted on demand — the first time a
+ * player of that slot climbs on — rather than for every slot and every
+ * mount at load, which was most of the arena's start-up. The scared frame
+ * is a mount's idle frame too, so it shares the cheer frame's canvas.
+ */
+export function paintMountTextures(
+  doc: Document,
+  characterId: CharacterId | null,
+  slot: number,
+  mountId: MountId,
+  textures = new Map<string, HTMLCanvasElement>(),
+  color?: PlayerColorId,
+  resolution = 1,
+): Map<string, HTMLCanvasElement> {
+  const paint = painter(doc, textures, resolution);
+  const team = color ? colorSlot(color) : slot;
+  for (const facing of FACINGS) {
+    for (let f = 0; f < PLAYER_FRAMES; f++) {
+      const key = TEXTURE.playerMounted(slot, mountId, facing, f);
+      if (f === FRAME_SCARED) {
+        const twin = textures.get(
+          TEXTURE.playerMounted(slot, mountId, facing, FRAME_CHEER),
         );
+        if (twin) {
+          textures.set(key, twin);
+          continue;
+        }
       }
+      paint(
+        key,
+        (ctx) => {
+          paintCartoonCharacter(ctx, {
+            characterId: characterId ?? DEFAULT_CHARACTER_ID,
+            facing,
+            frame: f,
+            slot: team,
+            mountId,
+          });
+          rimLight(ctx, resolution);
+        },
+        MOUNTED_HEADROOM,
+      );
     }
   }
   return textures;
@@ -191,6 +226,7 @@ function painter(
     ctx.scale(resolution, resolution);
     ctx.translate(0, extra);
     draw(ctx);
+    if (SOLID_TILES.has(key)) relief(ctx, resolution);
     textures.set(key, canvas);
   };
 }
@@ -553,7 +589,7 @@ function paintBomb(ctx: Ctx, frame: number): void {
 // ── flames ─────────────────────────────────────────────────────────────────
 
 /** Half-width of the blast per frame, as a share of the tile. */
-const FLAME_WIDTH = [0.4, 0.34, 0.24, 0.12];
+const FLAME_WIDTH = [0.4, 0.34, 0.24, 0.12, 0.46];
 
 /** The outline of `shape` at half-width `hw`, drawn pointing right/along x. */
 function flamePath(ctx: Ctx, shape: FlameShape, hw: number): void {
@@ -595,13 +631,22 @@ function paintFlame(ctx: Ctx, shape: FlameShape, frame: number): void {
 
   // Drawn additively in the scene: the outer layers are the glow, the core is
   // near-white — like energy rather than cartoon fire.
-  const layers: [number, string][] = [
-    [1.35, 'rgba(255, 90, 20, 0.22)'],
-    [1, 'rgba(255, 120, 30, 0.6)'],
-    [0.72, '#ff8a2c'],
-    [0.48, '#ffc45a'],
-    [0.24, '#fff3d2'],
-  ];
+  const layers: [number, string][] =
+    frame === 4
+      ? // The flash: near-white through and through, with a wide warm halo.
+        [
+          [1.4, 'rgba(255, 200, 120, 0.35)'],
+          [1, 'rgba(255, 240, 210, 0.85)'],
+          [0.7, '#fff6e0'],
+          [0.4, '#ffffff'],
+        ]
+      : [
+          [1.35, 'rgba(255, 90, 20, 0.22)'],
+          [1, 'rgba(255, 120, 30, 0.6)'],
+          [0.72, '#ff8a2c'],
+          [0.48, '#ffc45a'],
+          [0.24, '#fff3d2'],
+        ];
   for (const [scale, color] of layers) {
     ctx.shadowBlur = scale > 1 ? 12 : 0;
     ctx.shadowColor = 'rgba(255, 110, 20, 0.8)';

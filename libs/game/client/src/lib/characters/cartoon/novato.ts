@@ -20,6 +20,8 @@ import {
   stepOf,
   TAU,
   teamFor,
+  scaredFace,
+  FRAME_SCARED,
   FRAME_CHEER,
   FRAME_PLACE,
   volume,
@@ -56,6 +58,7 @@ export function paintNovato(ctx: Ctx, o: CharacterPose): void {
   const walking = o.frame === 1 || o.frame === 2;
   const placing = o.frame === FRAME_PLACE;
   const cheering = o.frame === FRAME_CHEER;
+  const scared = o.frame === FRAME_SCARED;
   const step = stepOf(o.frame);
   const seated = !!o.seated;
   const bob = seated
@@ -64,9 +67,11 @@ export function paintNovato(ctx: Ctx, o: CharacterPose): void {
       ? 2.4
       : cheering
         ? -3
-        : walking
-          ? -1.2
-          : Math.sin((t * TAU) / 2.4) * 0.4;
+        : scared
+          ? -2
+          : walking
+            ? -1.2
+            : Math.sin((t * TAU) / 2.4) * 0.4;
   beginFrame(ctx, o.facing);
   bodyFrame(ctx);
 
@@ -363,6 +368,12 @@ export function paintNovato(ctx: Ctx, o: CharacterPose): void {
       arm(22, 25, 20, 33, 25, 41);
       arm(42, 25, 44, 33, 39, 41);
     }
+  } else if (scared) {
+    if (side) arm(37, 25, 42, 20, 40, 14);
+    else {
+      arm(22, 25, 17, 19, 21, 13);
+      arm(42, 25, 47, 19, 43, 13);
+    }
   } else if (cheering) {
     if (side) arm(37, 25, 42, 17, 44, 9);
     else {
@@ -531,6 +542,19 @@ export function paintNovato(ctx: Ctx, o: CharacterPose): void {
   // The brim's shadow on the forehead.
   if (!back) occlude(ctx, head, 11.5, 16.5, 0.26);
 
+  if (scared && !back) {
+    scaredFace(
+      ctx,
+      side
+        ? [[37, 16]]
+        : [
+            [28, 16],
+            [36, 16],
+          ],
+      side ? [39.5, 21.5] : [32, 22],
+      SKIN_LINE,
+    );
+  }
   // ── cap in the team colour ──
   const crown: Path = () => {
     ctx.beginPath();

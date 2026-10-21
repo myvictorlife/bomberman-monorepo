@@ -1,8 +1,13 @@
 import type * as Phaser from 'phaser';
+import { MOUNT_IDS, TEXTURE } from '../texture-keys';
 import { TEAM_COLORS } from '../../characters/cartoon/ink';
 import { ArenaSkin } from '../skin';
 import { HD_TILE } from './hd-palette';
-import { paintCharacterTextures, paintHdTextures } from './hd-painter';
+import {
+  paintCharacterTextures,
+  paintHdTextures,
+  paintMountTextures,
+} from './hd-painter';
 
 /**
  * How finely the art is painted on this screen: the device's pixels per CSS
@@ -29,37 +34,85 @@ export const hdSkin: ArenaSkin = {
   pixelArt: false,
   playerColors: TEAM_COLORS.map((c) => c.suit),
   load(scene, characters, colors) {
-    for (const [key, canvas] of paintHdTextures(
+    // Timed, so a slow first paint shows up in the performance timeline.
+    performance.mark?.('hd-skin:paint:start');
+    const textures = paintHdTextures(
       document,
       characters,
       colors,
       HD_RESOLUTION,
-    )) {
+    );
+    performance.measure?.('hd-skin:paint', 'hd-skin:paint:start');
+    for (const [key, canvas] of textures) {
       if (!scene.textures.exists(key)) scene.textures.addCanvas(key, canvas);
     }
   },
   loadCharacter(scene, characterId, slot, color) {
-    for (const [key, canvas] of paintCharacterTextures(
-      document,
-      characterId,
-      slot,
-      undefined,
-      color,
-      HD_RESOLUTION,
-    )) {
-      if (!scene.textures.exists(key)) {
-        scene.textures.addCanvas(key, canvas);
+    addOrRepaint(
+      scene,
+      paintCharacterTextures(
+        document,
+        characterId,
+        slot,
+        undefined,
+        color,
+        HD_RESOLUTION,
+      ),
+    );
+    // The slot's mounts already painted change look with it.
+    if (slot === 'outsider') return;
+    for (const mountId of MOUNT_IDS) {
+      if (
+        !scene.textures.exists(TEXTURE.playerMounted(slot, mountId, 'down', 0))
+      )
         continue;
-      }
-      // A slot already drawn is repainted in place, so every sprite using it changes look.
-      // (Phaser stays a type here: this file is imported by pages that never load it.)
-      const existing = scene.textures.get(
-        key,
-      ) as Partial<Phaser.Textures.CanvasTexture>;
-      if (!existing.context || !existing.refresh) continue;
-      existing.context.clearRect(0, 0, canvas.width, canvas.height);
-      existing.context.drawImage(canvas, 0, 0);
-      existing.refresh();
+      addOrRepaint(
+        scene,
+        paintMountTextures(
+          document,
+          characterId,
+          slot,
+          mountId,
+          undefined,
+          color,
+          HD_RESOLUTION,
+        ),
+      );
     }
   },
+  loadMount(scene, characterId, slot, mountId, color) {
+    addOrRepaint(
+      scene,
+      paintMountTextures(
+        document,
+        characterId,
+        slot,
+        mountId,
+        undefined,
+        color,
+        HD_RESOLUTION,
+      ),
+    );
+  },
 };
+
+/** Registers each canvas, or repaints a texture already drawn in place, so every sprite using it changes look. */
+function addOrRepaint(
+  scene: Phaser.Scene,
+  textures: Map<string, HTMLCanvasElement>,
+): void {
+  for (const [key, canvas] of textures) {
+    if (!scene.textures.exists(key)) {
+      scene.textures.addCanvas(key, canvas);
+      continue;
+    }
+    // (Phaser stays a type here: this file is imported by pages that never load it.)
+    const existing = scene.textures.get(
+      key,
+    ) as Partial<Phaser.Textures.CanvasTexture>;
+    if (!existing.context || !existing.refresh) continue;
+    existing.context.clearRect(0, 0, canvas.width, canvas.height);
+    existing.context.drawImage(canvas, 0, 0);
+    existing.refresh();
+  }
+}

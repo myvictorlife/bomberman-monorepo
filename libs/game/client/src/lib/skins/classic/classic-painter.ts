@@ -88,7 +88,9 @@ export function paintClassicTextures(
     paint(TEXTURE.bomb(f), (ctx) => paintBomb(ctx, f));
   for (const shape of FLAME_SHAPES) {
     for (let f = 0; f < FLAME_FRAMES; f++) {
-      paint(TEXTURE.flame(shape, f), (ctx) => paintFlame(ctx, shape, f));
+      paint(TEXTURE.flame(shape, f), (ctx) =>
+        paintFlame(ctx, shape, Math.min(f, 3)),
+      );
     }
   }
   for (const kind of POWER_UP_KINDS)

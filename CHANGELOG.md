@@ -13,6 +13,41 @@ config file. Ordinary app-level additions are minor.
 
 ### Added
 
+- **Game feel.** A blast holds the arena for two frames and flashes white
+  for its first instant (a fifth flame frame); a crate's chips fly out,
+  drop and bounce on the floor; a bomb pulses harder and faster as the fuse
+  burns, sheds sparks, and ticks through its last second; whoever is hit
+  flashes white and falls onto their back with sparks circling, instead of
+  spinning away; standing next to a bomb about to go, a player is scared
+  (eyes wide, mouth open, hands up — a sixth pose, drawn by every
+  character), and trembles. Standing still for two seconds, a player
+  starts to fidget: weight from one foot to the other, a sway, every two
+  and a half seconds. Sound effects drift a little in pitch, so no two
+  bombs sound the same; the sounds page lists the fuse tick.
+- **The scenery is lit like the cast.** Every solid tile of every arena —
+  walls, border, features, crates — gets a top-left highlight, a
+  bottom-right core shadow following its shape and a near-black silhouette
+  (`relief` in `themes/theme.ts`, applied by the tile painters). Power-ups
+  glow softly and pulse. A mount waiting with its rider is alive: its two
+  idle moments (a chew, a blink, a wag) cycle slowly.
+
+### Changed
+
+- **A quicker start.** The HD skin paints a slot's riding frames the first
+  time that slot climbs on a mount (`ArenaSkin.loadMount`), instead of
+  every slot on every mount before the first frame: the skin's start-up
+  paint dropped from about 590 ms to under 40 ms. The renderer shows the
+  rider on foot for the one frame before the mount's look is ready.
+
+### Fixed
+
+- **A new round no longer starts with a giant player.** The bomb-setting
+  pose kept the tick of the last bomb from the previous round; with the
+  clock back at zero the squash went huge. The arena now forgets what it
+  remembered of a round when the clock goes back.
+
+### Added
+
 - **Room for the arena on a phone.** In game mode a 📊 button beside 🎮
   hides the strip with the clock and the players, on `/play`, `/online`
   and a stage alike, and the choice is remembered on the browser

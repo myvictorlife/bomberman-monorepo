@@ -754,6 +754,7 @@
     "MOMENT_POWER_KICK": "Kick",
     "EFFECT_ALARM": "Time’s up",
     "EFFECT_WALL": "Wall drops",
+    "EFFECT_TICK": "Fuse tick",
     "MOMENT_HURRY": "Arena closing",
     "MOMENT_GRAB": "Player grabbed"
   },

@@ -1,4 +1,5 @@
 import { createRng, MapId } from '@libs/game-core';
+import { TEXTURE } from '../../texture-keys';
 import { HD_TILE as S } from '../hd-palette';
 import { ArenaMoment } from './moments';
 
@@ -44,9 +45,61 @@ export function tilePainter(
     ctx.lineCap = 'round';
     ctx.scale(resolution, resolution);
     draw(ctx);
+    if (SOLID_TILES.has(key)) relief(ctx, resolution);
     textures.set(key, canvas);
   };
   return { paint, textures };
+}
+
+/** The tiles that stand up from the floor: lit like the cast. */
+export const SOLID_TILES: ReadonlySet<string> = new Set([
+  TEXTURE.wall,
+  TEXTURE.wallBorder,
+  TEXTURE.wallTop,
+  TEXTURE.feature,
+  TEXTURE.block,
+]);
+
+/**
+ * The cast's light on a tile: a top-left highlight and a bottom-right core
+ * shadow over whatever was painted, following its shape, and a near-black
+ * silhouette behind it — so a crate and the player beside it read as one
+ * drawing. `resolution` is the canvas's pixels per art unit.
+ */
+export function relief(ctx: Ctx, resolution: number): void {
+  const canvas = ctx.canvas;
+  // A test's stand-in context has no canvas to copy.
+  if (typeof canvas?.width !== 'number') return;
+  ctx.save();
+  ctx.setTransform(resolution, 0, 0, resolution, 0, 0);
+  ctx.globalCompositeOperation = 'source-atop';
+  const light = ctx.createLinearGradient(0, 0, S, S);
+  light.addColorStop(0, 'rgba(255, 255, 255, 0.17)');
+  light.addColorStop(0.45, 'rgba(255, 255, 255, 0)');
+  light.addColorStop(0.6, 'rgba(0, 0, 0, 0)');
+  light.addColorStop(1, 'rgba(10, 6, 14, 0.34)');
+  ctx.fillStyle = light;
+  ctx.fillRect(0, 0, S, S);
+  ctx.restore();
+
+  const copy = canvas.ownerDocument.createElement('canvas');
+  copy.width = canvas.width;
+  copy.height = canvas.height;
+  copy.getContext('2d')?.drawImage(canvas, 0, 0);
+  ctx.save();
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.globalCompositeOperation = 'destination-over';
+  ctx.shadowColor = 'rgba(8, 10, 16, 0.9)';
+  ctx.shadowBlur = 0;
+  const r = 0.9 * resolution;
+  const far = canvas.width + canvas.height + 64;
+  for (let i = 0; i < 8; i++) {
+    const a = (i / 8) * TAU;
+    ctx.shadowOffsetX = far + Math.cos(a) * r;
+    ctx.shadowOffsetY = Math.sin(a) * r;
+    ctx.drawImage(copy, -far, 0);
+  }
+  ctx.restore();
 }
 
 export function linear(

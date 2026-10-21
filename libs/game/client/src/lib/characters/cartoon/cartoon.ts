@@ -73,9 +73,19 @@ export interface CartoonPose {
 export function paintCartoonCharacter(ctx: Ctx, pose: CartoonPose): void {
   const paintCharacter = CHARACTER_PAINTERS[findCharacter(pose.characterId).id];
   if (pose.mountId) {
+    // A mount has no bomb-setting or cheering pose: those frames are its
+    // idle — the same standing frame at two later moments of its own motion
+    // (a chew, a blink, a tail wag), so a rider waiting on it sees it live.
+    const idle = pose.frame >= 3;
     MOUNT_PAINTERS[pose.mountId](
       ctx,
-      { ...pose, rider: true, riderBlink: pose.blink },
+      {
+        ...pose,
+        frame: idle ? 0 : pose.frame,
+        t: idle ? (pose.t ?? 0) + (pose.frame === 3 ? 0.45 : 1.35) : pose.t,
+        rider: true,
+        riderBlink: pose.blink,
+      },
       paintCharacter,
     );
   } else {

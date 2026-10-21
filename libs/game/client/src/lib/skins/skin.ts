@@ -1,9 +1,10 @@
 import type * as Phaser from 'phaser';
-import type { CharacterId, PlayerColorId } from '@libs/game-core';
+import type { CharacterId, MountId, PlayerColorId } from '@libs/game-core';
 
 /**
  * A complete set of art for the arena. `load` runs in the scene's `preload` and
- * must register a texture for every key in `allTextureKeys()` — painted on a
+ * must register a texture for every key in `allTextureKeys()` (mounted
+ * frames may wait for `loadMount`) — painted on a
  * canvas (see the classic skin) or loaded from a sprite sheet with
  * `scene.load.image` / `scene.load.spritesheet`.
  */
@@ -45,6 +46,18 @@ export interface ArenaSkin {
     scene: Phaser.Scene,
     characterId: CharacterId,
     slot: number | 'outsider',
+    color?: PlayerColorId,
+  ): void;
+  /**
+   * Paints one slot riding one mount (`TEXTURE.playerMounted`), the first
+   * time that slot climbs on. Optional: a skin may paint every mount in
+   * `load` instead; without either the renderer shows the rider on foot.
+   */
+  loadMount?(
+    scene: Phaser.Scene,
+    characterId: CharacterId,
+    slot: number,
+    mountId: MountId,
     color?: PlayerColorId,
   ): void;
 }

@@ -45,10 +45,10 @@ export const POWER_UP_KINDS: readonly PowerUpKind[] = [
 export const MOUNT_IDS: readonly MountId[] = MOUNTS.map((m) => m.id);
 export const FACINGS: readonly Direction[] = ['down', 'up', 'left', 'right'];
 
-/** 0 = the biggest flame, 3 = almost gone. */
-export const FLAME_FRAMES = 4;
-/** 0 = standing, 1 and 2 = the two steps of the walk cycle, 3 = placing a bomb, 4 = cheering. */
-export const PLAYER_FRAMES = 5;
+/** 0 = the biggest flame, 3 = almost gone, 4 = the first tick's white flash. */
+export const FLAME_FRAMES = 5;
+/** 0 = standing, 1 and 2 = the two steps of the walk cycle, 3 = placing a bomb, 4 = cheering, 5 = scared (and fallen, on its back). */
+export const PLAYER_FRAMES = 6;
 export const BOMB_FRAMES = 2;
 /** One set of player textures per slot the rules allow. */
 export const PLAYER_SLOTS = MAX_PLAYERS;
@@ -80,7 +80,7 @@ export const TEXTURE = {
   egg: (stage: number) => `egg-${stage}`,
   player: (slot: number, facing: Direction, frame: number) =>
     `player-${slot}-${facing}-${frame}`,
-  /** The same player riding a mount. */
+  /** The same player riding a mount; see `ArenaSkin.loadMount`. */
   playerMounted: (
     slot: number,
     mountId: MountId,
@@ -117,14 +117,15 @@ export function allTextureKeys(): string[] {
         range(PLAYER_FRAMES).map((f) => TEXTURE.player(slot, facing, f)),
       ),
     ),
-    ...range(PLAYER_SLOTS).flatMap((slot) =>
-      MOUNT_IDS.flatMap((mountId) =>
-        FACINGS.flatMap((facing) =>
-          range(PLAYER_FRAMES).map((f) =>
-            TEXTURE.playerMounted(slot, mountId, facing, f),
-          ),
-        ),
-      ),
-    ),
   ];
+}
+
+/** The keys of one slot riding one mount — painted on demand by `ArenaSkin.loadMount`. */
+export function mountedTextureKeys(slot: number, mountId: MountId): string[] {
+  const range = (n: number) => Array.from({ length: n }, (_, i) => i);
+  return FACINGS.flatMap((facing) =>
+    range(PLAYER_FRAMES).map((f) =>
+      TEXTURE.playerMounted(slot, mountId, facing, f),
+    ),
+  );
 }

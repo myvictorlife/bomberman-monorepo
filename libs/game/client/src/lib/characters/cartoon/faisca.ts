@@ -14,6 +14,8 @@ import {
   stepOf,
   TAU,
   teamFor,
+  scaredFace,
+  FRAME_SCARED,
   FRAME_CHEER,
   FRAME_PLACE,
   volume,
@@ -43,6 +45,7 @@ export function paintFaisca(ctx: Ctx, o: CharacterPose): void {
   const walking = o.frame === 1 || o.frame === 2;
   const placing = o.frame === FRAME_PLACE;
   const cheering = o.frame === FRAME_CHEER;
+  const scared = o.frame === FRAME_SCARED;
   const step = stepOf(o.frame);
   const seated = !!o.seated;
   const bob = seated
@@ -51,9 +54,11 @@ export function paintFaisca(ctx: Ctx, o: CharacterPose): void {
       ? 2.4
       : cheering
         ? -3
-        : walking
-          ? -1.2
-          : Math.sin((t * TAU) / 2.6) * 0.4;
+        : scared
+          ? -2
+          : walking
+            ? -1.2
+            : Math.sin((t * TAU) / 2.6) * 0.4;
   beginFrame(ctx, o.facing);
   bodyFrame(ctx);
 
@@ -284,6 +289,12 @@ export function paintFaisca(ctx: Ctx, o: CharacterPose): void {
       arm(22, 25, 25, 41, 20, 33);
       arm(42, 25, 39, 41, 44, 33);
     }
+  } else if (scared) {
+    if (side) arm(37, 25, 40, 14, 42, 20);
+    else {
+      arm(22, 25, 21, 13, 17, 19);
+      arm(42, 25, 43, 13, 47, 19);
+    }
   } else if (cheering) {
     if (side) arm(37, 25, 44, 9, 42, 17);
     else {
@@ -372,6 +383,19 @@ export function paintFaisca(ctx: Ctx, o: CharacterPose): void {
     }
   }
 
+  if (scared && !back) {
+    scaredFace(
+      ctx,
+      side
+        ? [[37, 16]]
+        : [
+            [28, 16],
+            [36, 16],
+          ],
+      side ? [39.5, 21.5] : [32, 22],
+      SKIN_LINE,
+    );
+  }
   // ── hair, bandana, goggles ──
   ctx.beginPath();
   ctx.moveTo(21.5, 11);

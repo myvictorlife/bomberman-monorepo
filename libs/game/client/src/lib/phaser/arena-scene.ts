@@ -1,5 +1,6 @@
 import {
   isDecided,
+  MountId,
   BLOCK_BURN_TICKS,
   BOMB_FUSE_TICKS,
   BossBody,
@@ -28,7 +29,11 @@ import { flameFrame } from '../skins/flame-frame';
 import { ARENA_THEMES } from '../skins/hd/themes';
 import { ArenaMoment, blackoutAt } from '../skins/hd/themes/moments';
 import { ArenaSession } from '../session/arena-session';
-import { FRAME_CHEER, FRAME_PLACE } from '../characters/cartoon/ink';
+import {
+  FRAME_CHEER,
+  FRAME_PLACE,
+  FRAME_SCARED,
+} from '../characters/cartoon/ink';
 import { EGG_STAGES } from '../skins/hd/egg';
 import { loadArenaTheme, tileTextureKey } from '../skins/hd/themes';
 import { ArenaSkin } from '../skins/skin';
@@ -67,8 +72,18 @@ const OUTSIDER_GLOW = 0xf2f5ff;
 const CHECKER_TINT = 0xe6e6e6;
 /** Standing, step, standing, other step — four ticks-of-8 per cycle. */
 const WALK_CYCLE = [1, 0, 2, 0];
+/** Standing, then the two idle moments, for a mount: the frames are the pose slots. */
+const MOUNT_IDLE = [0, 3, 4, 3];
+/** After this long standing still, in ticks, a player starts to fidget. */
+const FIDGET_AFTER = 120;
+/** One fidget, a frame every 10 ticks: weight onto one foot, back, onto the other, back. */
+const FIDGET = [1, 1, 0, 0, 0, 0, 0, 2, 2, 0, 0, 0, 0, 0, 0];
 /** How long a player holds the bomb-setting pose after placing one, in ticks. */
 const PLACE_TICKS = 14;
+/** The hit-stop: how long the arena freezes on an explosion, in ms (two frames). */
+const FREEZE_MS = 34;
+/** A bomb this close, with this much fuse left, is worth a scare. */
+const SCARE_FUSE = Math.round(BOMB_FUSE_TICKS * 0.55);
 
 type Image = Phaser.GameObjects.Image;
 
@@ -81,11 +96,21 @@ export class ArenaScene extends Phaser.Scene {
   private tileKeys: string[] = [];
   private readonly burning = new Map<string, Image>();
   private readonly powerUps = new Map<string, Image>();
+  /** A soft pulsing glow under each power-up: pick me. */
+  private readonly itemGlows = new Map<string, Image>();
   private readonly bombs = new Map<number, Image>();
   private readonly flames = new Map<string, Image>();
   private readonly players = new Map<string, Image>();
   /** When each player last set a bomb down: the crouch and the squash follow. */
   private readonly placedAt = new Map<string, number>();
+  /** Until when the arena holds still after an explosion. */
+  private freezeUntil = 0;
+  /** The tick last rendered, to notice a restart. */
+  private lastTick = -1;
+  /** When each player last moved, for the fidget. */
+  private readonly movedAt = new Map<string, number>();
+  /** The fuse value at which each bomb last ticked, so a tick plays once. */
+  private readonly ticked = new Map<number, number>();
   private readonly outsiders = new Map<string, Image>();
   private readonly thrown = new Map<number, Image>();
   /** Stage mode: the creatures, by id, and the gate once it is in the open. */
@@ -102,6 +127,8 @@ export class ArenaScene extends Phaser.Scene {
   private readonly held = new Map<string, Image>();
   /** Characters whose border textures the skin has painted so far. */
   private readonly outsiderLooks = new Set<string>();
+  /** Slot and mount pairs whose riding textures the skin has painted so far. */
+  private readonly mountLooks = new Set<string>();
   /** What the crates hide, shown while a Bernardo rider sniffs. */
   private readonly shadows = new Map<string, Image>();
   private readonly trackers = new Map<string, DirectionTracker>();
@@ -146,7 +173,9 @@ export class ArenaScene extends Phaser.Scene {
     this.render();
   }
 
-  override update(_time: number, delta: number): void {
+  override update(time: number, delta: number): void {
+    // The hit-stop: a blast holds everything for two frames.
+    if (time < this.freezeUntil) return;
     const directions: Record<string, Direction | null> = {};
     for (const [id, tracker] of this.trackers) directions[id] = tracker.current;
     const events = this.config.session.advance(delta, directions);
@@ -487,6 +516,24 @@ export class ArenaScene extends Phaser.Scene {
   }
 
   private renderPowerUps(state: GameState): void {
+    if (!this.config.skin.pixelArt) {
+      this.sync(
+        this.itemGlows,
+        state.powerUps,
+        (p) => `${p.col},${p.row}`,
+        (p) =>
+          this.add
+            .image(...this.cellToPixel(p.col, p.row), TEXTURE.spark)
+            .setDepth(DEPTH.powerUp - 0.5)
+            .setBlendMode(Phaser.BlendModes.ADD),
+        (image, p) => {
+          const phase = state.tick / 10 + p.col * 0.7 + p.row * 1.3;
+          image
+            .setScale(1.15 + Math.sin(phase) * 0.12)
+            .setAlpha(0.22 + (Math.sin(phase) + 1) * 0.12);
+        },
+      );
+    }
     this.sync(
       this.powerUps,
       state.powerUps,
@@ -528,11 +575,32 @@ export class ArenaScene extends Phaser.Scene {
           .setDepth(DEPTH.bomb),
       (image, b) => {
         const elapsed = BOMB_FUSE_TICKS - b.fuse;
-        // Pulses, faster as the fuse burns down.
-        const rate = b.fuse < BOMB_FUSE_TICKS / 3 ? 0.5 : 0.25;
-        const pulse = 0.08 * Math.sin(elapsed * rate);
+        const burnt = elapsed / BOMB_FUSE_TICKS;
+        // Pulses harder and faster as the fuse burns down.
+        const rate = 0.2 + burnt * burnt * 0.9;
+        const pulse = (0.06 + burnt * 0.08) * Math.sin(elapsed * rate);
         image.setScale(1 + pulse, 1 - pulse); // squash and stretch
         image.setTexture(TEXTURE.bomb(Math.floor(elapsed / 6) % 2));
+        // Sparks off the fuse, more often near the end.
+        if (
+          elapsed % (burnt > 0.6 ? 4 : 9) === 0 &&
+          this.ticked.get(b.id) !== b.fuse
+        ) {
+          this.fuseSpark(
+            image.x + this.tile * 0.28,
+            image.y - this.tile * 0.42,
+          );
+        }
+        // The last second ticks, quickening.
+        const interval = b.fuse < 30 ? 6 : b.fuse < 60 ? 12 : 0;
+        if (
+          interval &&
+          b.fuse % interval === 0 &&
+          this.ticked.get(b.id) !== b.fuse
+        ) {
+          this.config.sfx.play('tick');
+        }
+        this.ticked.set(b.id, b.fuse);
       },
     );
   }
@@ -557,6 +625,7 @@ export class ArenaScene extends Phaser.Scene {
   }
 
   private renderPlayers(state: GameState): void {
+    this.forgetRound(state.tick);
     const visible = state.players.filter(
       (p) =>
         p.alive ||
@@ -975,6 +1044,31 @@ export class ArenaScene extends Phaser.Scene {
     );
   }
 
+  /** The rider on its mount: painted by the skin the first time this slot climbs on; on foot until then. */
+  private mountedTexture(player: Player, frame: number): string {
+    const mountId = player.mountId as MountId;
+    const look = `${player.slot}:${mountId}`;
+    if (!this.mountLooks.has(look)) {
+      this.mountLooks.add(look);
+      this.config.skin.loadMount?.(
+        this,
+        player.characterId,
+        player.slot,
+        mountId,
+        playerColor(player),
+      );
+    }
+    const key = TEXTURE.playerMounted(
+      player.slot,
+      mountId,
+      player.facing,
+      frame,
+    );
+    return this.textures.exists(key)
+      ? key
+      : TEXTURE.player(player.slot, player.facing, Math.min(frame, 2));
+  }
+
   /** The character's own border look when the skin paints one, else the first slot's player. */
   private outsiderTexture(outsider: Outsider, frame: number): string {
     const own = TEXTURE.outsider(outsider.characterId, outsider.facing, frame);
@@ -1038,6 +1132,7 @@ export class ArenaScene extends Phaser.Scene {
     const { sfx, voice } = this.config;
     const explosions = events.filter((e) => e.type === 'explosion').length;
     if (explosions > 0) {
+      this.freezeUntil = this.time.now + FREEZE_MS;
       sfx.play('explode', 1 + (explosions - 1) * 0.3);
       this.cameras.main.shake(
         140 + explosions * 40,
@@ -1051,7 +1146,7 @@ export class ArenaScene extends Phaser.Scene {
           this.placedAt.set(event.playerId, this.config.session.state.tick);
           break;
         case 'block-destroyed':
-          this.burst(event.col, event.row, TEXTURE.debris, 7, false);
+          this.burst(event.col, event.row, TEXTURE.debris, 10, false);
           voice.say('block');
           break;
         case 'power-up-burned':
@@ -1101,6 +1196,12 @@ export class ArenaScene extends Phaser.Scene {
         case 'player-died':
           sfx.play('die');
           voice.say('died');
+          {
+            const fallen = this.config.session.state.players.find(
+              (p) => p.id === event.playerId,
+            );
+            if (fallen) this.dizzy(fallen.x, fallen.y);
+          }
           break;
         case 'bomb-thrown':
           sfx.play('throw');
@@ -1256,18 +1357,95 @@ export class ArenaScene extends Phaser.Scene {
         .setAngle(Math.random() * 360);
       if (glow && !this.config.skin.pixelArt)
         particle.setBlendMode(Phaser.BlendModes.ADD);
+      if (glow) {
+        this.tweens.add({
+          targets: particle,
+          x: x + Math.cos(angle) * distance,
+          y: y + Math.sin(angle) * distance,
+          angle: particle.angle + (Math.random() - 0.5) * 540,
+          alpha: 0,
+          scale: 0.1,
+          duration: 450 + Math.random() * 250,
+          ease: 'Quad.easeOut',
+          onComplete: () => particle.destroy(),
+        });
+        continue;
+      }
+      // Debris: thrown out, then it drops and bounces on the floor.
+      const duration = 550 + Math.random() * 300;
       this.tweens.add({
         targets: particle,
-        x: x + Math.cos(angle) * distance,
-        y: y + Math.sin(angle) * distance + (glow ? 0 : this.tile * 0.3),
-        angle: particle.angle + (Math.random() - 0.5) * 540,
-        alpha: 0,
-        scale: glow ? 0.1 : 0.3,
-        duration: 450 + Math.random() * 250,
-        ease: 'Quad.easeOut',
+        x: { value: x + Math.cos(angle) * distance, ease: 'Quad.easeOut' },
+        y: {
+          value:
+            y + Math.abs(Math.sin(angle)) * distance * 0.4 + this.tile * 0.35,
+          ease: 'Bounce.easeOut',
+        },
+        angle: particle.angle + (Math.random() - 0.5) * 720,
+        scale: { value: 0.3, ease: 'Quad.easeIn' },
+        duration,
         onComplete: () => particle.destroy(),
       });
+      this.tweens.add({
+        targets: particle,
+        alpha: 0,
+        delay: duration * 0.6,
+        duration: duration * 0.4,
+      });
     }
+  }
+
+  /** One spark leaving a fuse: up a little, gone fast. */
+  private fuseSpark(x: number, y: number): void {
+    const spark = this.add
+      .image(x, y, TEXTURE.spark)
+      .setDepth(DEPTH.fx)
+      .setScale(0.12 + Math.random() * 0.1);
+    if (!this.config.skin.pixelArt) spark.setBlendMode(Phaser.BlendModes.ADD);
+    this.tweens.add({
+      targets: spark,
+      x: x + (Math.random() - 0.5) * this.tile * 0.3,
+      y: y - this.tile * (0.15 + Math.random() * 0.2),
+      alpha: 0,
+      duration: 220 + Math.random() * 120,
+      ease: 'Quad.easeOut',
+      onComplete: () => spark.destroy(),
+    });
+  }
+
+  /** Three sparks circling a fallen player's head while the fall lasts. */
+  private dizzy(col: number, row: number): void {
+    const [x, y] = this.cellToPixel(col, row);
+    const stars = [0, 1, 2].map((i) =>
+      this.add
+        .image(x, y, TEXTURE.spark)
+        .setDepth(DEPTH.fx)
+        .setScale(0.3)
+        .setBlendMode(
+          this.config.skin.pixelArt
+            ? Phaser.BlendModes.NORMAL
+            : Phaser.BlendModes.ADD,
+        )
+        .setData('phase', (i / 3) * Math.PI * 2),
+    );
+    const orbit = { t: 0 };
+    this.tweens.add({
+      targets: orbit,
+      t: 1,
+      duration: (DEATH_TICKS / 60) * 1000,
+      onUpdate: () => {
+        for (const star of stars) {
+          const a = (star.getData('phase') as number) + orbit.t * Math.PI * 5;
+          star
+            .setPosition(
+              x + Math.cos(a) * this.tile * 0.42,
+              y - this.tile * 0.25 + Math.sin(a) * this.tile * 0.12,
+            )
+            .setAlpha(orbit.t < 0.8 ? 1 : 1 - (orbit.t - 0.8) / 0.2);
+        }
+      },
+      onComplete: () => stars.forEach((star) => star.destroy()),
+    });
   }
 
   /** Remote bombs read blue, piercing ones red, so what is coming is visible. */
@@ -1279,6 +1457,16 @@ export class ArenaScene extends Phaser.Scene {
       else if (bomb.pierce) image.setTint(0xff8a7a);
       else image.clearTint();
     }
+  }
+
+  /** The round restarted (the clock went back): what the last one remembered is stale. */
+  private forgetRound(tick: number): void {
+    if (tick < this.lastTick) {
+      this.placedAt.clear();
+      this.ticked.clear();
+      this.movedAt.clear();
+    }
+    this.lastTick = tick;
   }
 
   private updatePlayer(image: Image, player: Player, tick: number): void {
@@ -1347,29 +1535,49 @@ export class ArenaScene extends Phaser.Scene {
 
     if (player.alive) {
       const state = this.config.session.state;
+      // A new round starts the clock over: a bomb set in the last one is no pose.
       const sincePlaced = tick - (this.placedAt.get(player.id) ?? -PLACE_TICKS);
-      const placing = !player.mountId && sincePlaced < PLACE_TICKS;
+      const placing =
+        !player.mountId && sincePlaced >= 0 && sincePlaced < PLACE_TICKS;
       // The round is decided and this is the last one standing: the cheer starts
       // before the round is declared over, as soon as the arena knows.
       const cheering =
         !player.mountId &&
         isDecided(state) &&
         state.players.filter((p) => p.alive).length === 1;
+      // Standing next to a bomb about to go: the scare.
+      const scared =
+        !player.mountId &&
+        !player.moving &&
+        !placing &&
+        !cheering &&
+        state.bombs.some(
+          (b) =>
+            b.fuse < SCARE_FUSE &&
+            Math.abs(b.col - Math.round(player.x)) <= 1 &&
+            Math.abs(b.row - Math.round(player.y)) <= 1,
+        );
+      if (player.moving) this.movedAt.set(player.id, tick);
+      const idleFor = tick - (this.movedAt.get(player.id) ?? tick);
+      const fidgeting = !player.mountId && idleFor > FIDGET_AFTER;
+      const fidget = fidgeting
+        ? (FIDGET[Math.floor(((idleFor - FIDGET_AFTER) % 150) / 10)] ?? 0)
+        : 0;
       const frame = cheering
         ? FRAME_CHEER
         : placing
           ? FRAME_PLACE
-          : player.moving
-            ? (WALK_CYCLE[Math.floor(tick / 8) % 4] ?? 0)
-            : 0;
+          : scared
+            ? FRAME_SCARED
+            : player.moving
+              ? (WALK_CYCLE[Math.floor(tick / 8) % 4] ?? 0)
+              : player.mountId
+                ? // A mount waiting: its idle frames, slowly.
+                  (MOUNT_IDLE[Math.floor(tick / 20) % 4] ?? 0)
+                : fidget;
       image.setTexture(
         player.mountId
-          ? TEXTURE.playerMounted(
-              player.slot,
-              player.mountId,
-              player.facing,
-              frame,
-            )
+          ? this.mountedTexture(player, frame)
           : TEXTURE.player(player.slot, player.facing, frame),
       );
       // In the air: an arc up and a little bigger at the top.
@@ -1409,10 +1617,14 @@ export class ArenaScene extends Phaser.Scene {
         const t = sincePlaced / PLACE_TICKS;
         const squash = (1 - t) * 0.14;
         image.setRotation(0).setScale(1 + squash, 1 - squash);
+      } else if (scared) {
+        // Trembling.
+        image.setRotation(Math.sin(tick * 1.6) * 0.05).setScale(1.03, 0.98);
       } else if (!player.moving) {
-        // Standing: breathing.
+        // Standing: breathing; and, after a while, a sway from foot to foot.
         const breath = Math.sin(tick * 0.16) * 0.012;
-        image.setRotation(0).setScale(1 - breath, 1 + breath);
+        const sway = fidgeting ? Math.sin(idleFor * 0.1) * 0.035 : 0;
+        image.setRotation(sway).setScale(1 - breath, 1 + breath);
       } else image.setRotation(0).setScale(1);
       // The vest: a cool flicker while it lasts.
       if (tick < player.vestUntilTick)
@@ -1421,15 +1633,21 @@ export class ArenaScene extends Phaser.Scene {
       else image.clearTint();
       return;
     }
-    // Death: flash, spin and fade out.
+    // Death: a white flash, then the fall onto the back, then gone.
     const elapsed = tick - (player.diedAtTick ?? tick);
     const t = elapsed / DEATH_TICKS;
+    const fall = Math.min(1, t * 2.2);
+    const ease = 1 - (1 - fall) * (1 - fall);
     image
-      .setTexture(TEXTURE.player(player.slot, 'down', 0))
-      .setTint(Math.floor(elapsed / 4) % 2 === 0 ? 0xffffff : 0xff6060)
-      .setAlpha(1 - t)
-      .setAngle(t * 360)
-      .setScale(1 + t * 0.5);
+      .setTexture(TEXTURE.player(player.slot, 'down', FRAME_SCARED))
+      .setAngle(-88 * ease)
+      .setY(y - this.tile * 0.12 + ease * this.tile * 0.18)
+      .setScale(1 - ease * 0.08, 1)
+      .setAlpha(t < 0.7 ? 1 : Math.max(0, 1 - (t - 0.7) / 0.3));
+    if (elapsed < 5) {
+      image.setTint(0xffffff);
+      image.setTintFill();
+    } else image.clearTint();
   }
 }
 

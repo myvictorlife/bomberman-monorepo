@@ -1,5 +1,9 @@
 import { TEXTURE } from '../texture-keys';
-import { paintCharacterTextures, paintHdTextures } from './hd-painter';
+import {
+  paintCharacterTextures,
+  paintHdTextures,
+  paintMountTextures,
+} from './hd-painter';
 import { HD_RESOLUTION, hdSkin } from './hd-skin';
 import { themeTextures } from './themes';
 
@@ -54,10 +58,23 @@ describe('HD skin resolution', () => {
       width: 128,
       height: 128,
     });
-    // A mounted rider's headroom grows with the rest.
-    const mounted = textures.get(TEXTURE.playerMounted(0, 'tatu', 'down', 0));
+    // A mounted rider is painted on demand, with headroom that grows with the rest.
+    const riding = paintMountTextures(
+      doc,
+      'novato',
+      0,
+      'tatu',
+      undefined,
+      undefined,
+      2,
+    );
+    const mounted = riding.get(TEXTURE.playerMounted(0, 'tatu', 'down', 0));
     expect(mounted?.width).toBe(128);
     expect(mounted?.height).toBeGreaterThan(128);
+    // The scared frame is the mount's idle too: it shares the cheer frame's canvas.
+    expect(riding.get(TEXTURE.playerMounted(0, 'tatu', 'down', 5))).toBe(
+      riding.get(TEXTURE.playerMounted(0, 'tatu', 'down', 4)),
+    );
     expect(canvases.every((c) => c.scale[0] === 2 && c.scale[1] === 2)).toBe(
       true,
     );

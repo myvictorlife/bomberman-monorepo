@@ -15,7 +15,8 @@ export type SoundEffect =
   | 'throw'
   | 'kick'
   | 'alarm'
-  | 'wall';
+  | 'wall'
+  | 'tick';
 
 /**
  * Sound effects synthesised with Web Audio — no files to download or license.
@@ -43,6 +44,7 @@ export const SOUND_EFFECTS: readonly SoundEffect[] = [
   'kick',
   'alarm',
   'wall',
+  'tick',
 ];
 
 export class Sfx {
@@ -55,12 +57,26 @@ export class Sfx {
     const ctx = this.context();
     if (!ctx) return;
     const t = ctx.currentTime;
+    // A little drift in pitch, so the same sound twice is never quite the same.
+    const drift = 1 + (Math.random() - 0.5) * 0.14;
     switch (effect) {
       case 'place':
-        this.tone(ctx, 'sine', 220, 90, t, 0.09, 0.25 * volume);
+        this.tone(ctx, 'sine', 220 * drift, 90 * drift, t, 0.09, 0.25 * volume);
         break;
       case 'explode':
-        this.boom(ctx, t, Math.min(1, 0.55 * volume));
+        this.boom(ctx, t, Math.min(1, 0.55 * volume), drift);
+        break;
+      case 'tick':
+        // The fuse: a short, dry click.
+        this.tone(
+          ctx,
+          'square',
+          1500 * drift,
+          900 * drift,
+          t,
+          0.025,
+          0.05 * volume,
+        );
         break;
       case 'throw':
         // A rising whoosh: the bomb leaves the hand.
@@ -79,7 +95,15 @@ export class Sfx {
         break;
       case 'kick':
         // A thud, then a short hop up.
-        this.tone(ctx, 'square', 140, 70, t, 0.06, 0.16 * volume);
+        this.tone(
+          ctx,
+          'square',
+          140 * drift,
+          70 * drift,
+          t,
+          0.06,
+          0.16 * volume,
+        );
         this.tone(ctx, 'sine', 420, 640, t + 0.05, 0.08, 0.08 * volume);
         break;
       case 'power-up':
@@ -131,7 +155,7 @@ export class Sfx {
         );
         break;
       case 'die':
-        this.tone(ctx, 'sawtooth', 520, 90, t, 0.55, 0.12);
+        this.tone(ctx, 'sawtooth', 520 * drift, 90 * drift, t, 0.55, 0.12);
         break;
       case 'round-over':
         [523, 659, 784, 1046].forEach((f, i) =>
@@ -178,7 +202,12 @@ export class Sfx {
   }
 
   /** Filtered noise for the blast plus a low sine for the thump. */
-  private boom(ctx: AudioContext, start: number, volume: number): void {
+  private boom(
+    ctx: AudioContext,
+    start: number,
+    volume: number,
+    drift = 1,
+  ): void {
     if (!this.noise) {
       const length = Math.floor(ctx.sampleRate * 0.8);
       this.noise = ctx.createBuffer(1, length, ctx.sampleRate);
@@ -189,8 +218,8 @@ export class Sfx {
     source.buffer = this.noise;
     const filter = ctx.createBiquadFilter();
     filter.type = 'lowpass';
-    filter.frequency.setValueAtTime(1800, start);
-    filter.frequency.exponentialRampToValueAtTime(120, start + 0.7);
+    filter.frequency.setValueAtTime(1800 * drift, start);
+    filter.frequency.exponentialRampToValueAtTime(120 * drift, start + 0.7);
     const gain = ctx.createGain();
     gain.gain.setValueAtTime(volume, start);
     gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.75);

@@ -16,6 +16,8 @@ import {
   stepOf,
   TAU,
   teamFor,
+  scaredFace,
+  FRAME_SCARED,
   FRAME_CHEER,
   FRAME_PLACE,
   volume,
@@ -50,6 +52,7 @@ export function paintTiao(ctx: Ctx, o: CharacterPose): void {
   const walking = o.frame === 1 || o.frame === 2;
   const placing = o.frame === FRAME_PLACE;
   const cheering = o.frame === FRAME_CHEER;
+  const scared = o.frame === FRAME_SCARED;
   const step = stepOf(o.frame);
   const seated = !!o.seated;
   const bob = seated
@@ -58,9 +61,11 @@ export function paintTiao(ctx: Ctx, o: CharacterPose): void {
       ? 2.4
       : cheering
         ? -3
-        : walking
-          ? -1.2
-          : Math.sin((t * TAU) / 2.4) * 0.4;
+        : scared
+          ? -2
+          : walking
+            ? -1.2
+            : Math.sin((t * TAU) / 2.4) * 0.4;
   beginFrame(ctx, o.facing);
   bodyFrame(ctx);
 
@@ -307,6 +312,12 @@ export function paintTiao(ctx: Ctx, o: CharacterPose): void {
       sleeve(42, 25, 44, 33, 39, 41);
       pliers(41, 40);
     }
+  } else if (scared) {
+    if (side) sleeve(37, 25, 42, 20, 40, 14);
+    else {
+      sleeve(22, 25, 17, 19, 21, 13);
+      sleeve(42, 25, 47, 19, 43, 13);
+    }
   } else if (cheering) {
     if (side) {
       sleeve(37, 25, 42, 17, 44, 9);
@@ -398,6 +409,19 @@ export function paintTiao(ctx: Ctx, o: CharacterPose): void {
     }
   }
 
+  if (scared && !back) {
+    scaredFace(
+      ctx,
+      side
+        ? [[37, 16.5]]
+        : [
+            [28, 16.5],
+            [36, 16.5],
+          ],
+      side ? [39.5, 21.5] : [32, 22],
+      SKIN_LINE,
+    );
+  }
   // ── hard hat: dome, brim, team stripe ──
   const dome: Path = () => {
     ctx.beginPath();
