@@ -37,6 +37,8 @@ import {
   VirtualGamepadComponent,
   watchPortrait,
   writeUpright,
+  readStripHidden,
+  writeStripHidden,
 } from '@libs/ui';
 import { TranslatePipe } from '@ngx-translate/core';
 import { map } from 'rxjs';
@@ -180,6 +182,8 @@ export class Stage {
   readonly portrait = signal(false);
   /** The player asked to play upright; shared with `/play`. */
   readonly upright = signal(readUpright());
+  /** The strip over the arena is hidden, for the room; remembered, shared by every game page. */
+  readonly stripHidden = signal(readStripHidden());
   /** A phone held upright plays the game turned a quarter, unless the player chose upright. */
   readonly sideways = computed(
     () => this.game() && this.touch() && this.portrait() && !this.upright(),
@@ -279,6 +283,12 @@ export class Stage {
   /** The browser left full screen on its own (Escape, a tab switch): follow it. */
   onFullscreenChange(): void {
     if (!document.fullscreenElement) this.leaveGame();
+  }
+
+  /** Shows or hides the strip with the clock and the players; the choice sticks. */
+  toggleStrip(): void {
+    this.stripHidden.set(!this.stripHidden());
+    writeStripHidden(this.stripHidden());
   }
 
   /** Upright or sideways on a phone held upright; the choice sticks. */

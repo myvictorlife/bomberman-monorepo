@@ -13,6 +13,12 @@ config file. Ordinary app-level additions are minor.
 
 ### Added
 
+- **Room for the arena on a phone.** In game mode a 📊 button beside 🎮
+  hides the strip with the clock and the players, on `/play`, `/online`
+  and a stage alike, and the choice is remembered on the browser
+  (`play.strip-hidden`, shared by the three pages). On a phone held
+  upright the strip is the column beside the arena, so hiding it gives
+  the arena the width back.
 - **The cast acts.** Two poses join the standing frame and the two steps:
   setting a bomb down (crouched, hands low, held for a quarter second with
   a squash that springs back) and the winner's cheer (arms up, a knee up,

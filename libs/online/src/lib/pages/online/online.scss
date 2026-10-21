@@ -420,6 +420,15 @@
   right: calc(var(--space-2) + 2.75rem);
 }
 
+// Third from the corner; second where 🔄 is away (a phone already sideways).
+.online__expand--strip {
+  right: calc(var(--space-2) + 5.5rem);
+
+  @media (orientation: landscape) {
+    right: calc(var(--space-2) + 2.75rem);
+  }
+}
+
 /*
  * Full screen on a touch screen: the room alone, the chat out of the way,
  * the on-screen controller over the slack beside or below the arena. Held

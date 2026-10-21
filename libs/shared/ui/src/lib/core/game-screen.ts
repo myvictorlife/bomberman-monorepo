@@ -26,6 +26,29 @@ export function writeUpright(upright: boolean): void {
 }
 
 /**
+ * Where the "hide the strip" choice is kept — one choice for every game page.
+ * In game mode the clock and the players sit on a strip over the arena; a
+ * phone has little room, and some would rather have it all for the arena.
+ */
+export const STRIP_KEY = 'play.strip-hidden';
+
+export function readStripHidden(): boolean {
+  try {
+    return localStorage.getItem(STRIP_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
+export function writeStripHidden(hidden: boolean): void {
+  try {
+    localStorage.setItem(STRIP_KEY, hidden ? '1' : '0');
+  } catch {
+    // Private mode, or storage blocked: the choice lasts the visit.
+  }
+}
+
+/**
  * The element's screen rectangle with width and height swapped: its own
  * size, a quarter turn later. Phaser measures its host with
  * `getBoundingClientRect`, which a turned ancestor reports in screen terms.

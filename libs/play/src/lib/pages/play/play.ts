@@ -34,6 +34,8 @@ import {
   SegmentedControlOption,
   SpinnerComponent,
   VirtualGamepadComponent,
+  readStripHidden,
+  writeStripHidden,
 } from '@libs/ui';
 import { TranslatePipe } from '@ngx-translate/core';
 import { PlayStore } from '../../+state/play.store';
@@ -228,6 +230,8 @@ export class Play {
   readonly portrait = signal(false);
   /** The player asked to play upright; remembered on this browser. */
   readonly upright = signal(readUpright());
+  /** The strip over the arena is hidden, for the room; remembered, shared by every game page. */
+  readonly stripHidden = signal(readStripHidden());
   /**
    * A touch screen held upright turns the whole game a quarter clockwise,
    * so the arena sits between the thumbs as if the phone were sideways —
@@ -328,6 +332,12 @@ export class Play {
     unlockOrientation();
     if (document.fullscreenElement)
       document.exitFullscreen?.()?.catch(() => undefined);
+  }
+
+  /** Shows or hides the strip with the clock and the players; the choice sticks. */
+  toggleStrip(): void {
+    this.stripHidden.set(!this.stripHidden());
+    writeStripHidden(this.stripHidden());
   }
 
   /** Upright or sideways on a phone held upright; the choice sticks. */

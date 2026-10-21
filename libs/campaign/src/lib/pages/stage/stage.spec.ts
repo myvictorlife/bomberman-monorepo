@@ -387,6 +387,21 @@ describe('Stage', () => {
     expect(spectator.query('[data-testid="stage-gamepad"]')).toExist();
   });
 
+  it('hides the strip over the arena when asked, and remembers it', () => {
+    localStorage.removeItem('play.strip-hidden');
+    spectator.component.enterGame();
+    spectator.detectChanges();
+    expect(spectator.query('[data-testid="stage-strip"]')).toExist();
+
+    spectator.click('[data-testid="stage-strip-toggle"]');
+    expect(spectator.query('[data-testid="stage-strip"]')).not.toExist();
+    expect(localStorage.getItem('play.strip-hidden')).toBe('1');
+
+    spectator.click('[data-testid="stage-strip-toggle"]');
+    expect(spectator.query('[data-testid="stage-strip"]')).toExist();
+    expect(localStorage.getItem('play.strip-hidden')).toBe('0');
+  });
+
   it('waits behind "tap to play" on a phone, then starts fresh in game mode', async () => {
     spectator.component.tapToPlay.set(true);
     spectator.detectChanges();

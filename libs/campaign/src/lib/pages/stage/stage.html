@@ -200,6 +200,17 @@
       >
         <span aria-hidden="true">🎮</span>
       </button>
+      <button
+        type="button"
+        class="stage__button"
+        [attr.aria-label]="(stripHidden() ? 'PLAY.STRIP_ON' : 'PLAY.STRIP_OFF') | translate"
+        [title]="(stripHidden() ? 'PLAY.STRIP_ON' : 'PLAY.STRIP_OFF') | translate"
+        [attr.aria-pressed]="!stripHidden()"
+        (click)="toggleStrip()"
+        data-testid="stage-strip-toggle"
+      >
+        <span aria-hidden="true">📊</span>
+      </button>
       }
       <button
         type="button"
@@ -216,7 +227,7 @@
   </div>
 
   <!-- In game mode the page's header is hidden: a strip over the arena says what matters -->
-  @if (game()) {
+  @if (game() && !stripHidden()) {
   <div class="stage__strip" data-testid="stage-strip">
     <span class="stage__chip">
       {{ 'CAMPAIGN.STAGE' | translate: { code: code() } }}

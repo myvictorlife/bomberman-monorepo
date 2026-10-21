@@ -93,6 +93,7 @@
       <div class="online__screen">
         <!-- The round's clock and players, on a strip of their own above the
              arena: over it, a full round wrapped onto the board's top row. -->
+        @if (!(pad() && stripHidden())) {
         <div class="online__hud" data-testid="online-hud-bar">
           @if (hudPlayers().length) { @if (roundClosing()) {
           <p
@@ -134,6 +135,7 @@
             <span aria-hidden="true">{{ muted() ? '🔇' : '🔊' }}</span>
           </button>
         </div>
+        }
         <div class="online__stage" data-testid="online-stage">
           <div #arena class="online__arena" data-testid="online-arena"></div>
 
@@ -212,6 +214,18 @@
             data-testid="online-turn"
           >
             <span aria-hidden="true">🔄</span>
+          </button>
+          } @if (pad()) {
+          <button
+            type="button"
+            class="online__expand online__expand--strip"
+            [attr.aria-label]="(stripHidden() ? 'PLAY.STRIP_ON' : 'PLAY.STRIP_OFF') | translate"
+            [title]="(stripHidden() ? 'PLAY.STRIP_ON' : 'PLAY.STRIP_OFF') | translate"
+            [attr.aria-pressed]="!stripHidden()"
+            (click)="toggleStrip()"
+            data-testid="online-strip-toggle"
+          >
+            <span aria-hidden="true">📊</span>
           </button>
           }
           <button

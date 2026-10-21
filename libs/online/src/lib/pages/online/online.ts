@@ -50,6 +50,8 @@ import {
   PodiumPainter,
   SpinnerComponent,
   VirtualGamepadComponent,
+  readStripHidden,
+  writeStripHidden,
 } from '@libs/ui';
 import { TranslatePipe } from '@ngx-translate/core';
 import { OnlineStore } from '../../+state/online.store';
@@ -259,6 +261,8 @@ export class Online {
   readonly portrait = signal(false);
   /** The player asked to play upright; the same choice as on `/play`. */
   readonly upright = signal(readUpright());
+  /** The strip over the arena is hidden, for the room; remembered, shared by every game page. */
+  readonly stripHidden = signal(readStripHidden());
   /** Expanded on a touch screen held upright: the whole room turns a quarter clockwise, like `/play`. */
   readonly sideways = computed(
     () => this.expanded() && this.touch() && this.portrait() && !this.upright(),
@@ -448,6 +452,12 @@ export class Online {
   /** A finger on the page, anywhere: this is a touch screen after all. */
   onPointerDown(event: PointerEvent): void {
     if (event.pointerType === 'touch' && !this.touch()) this.touch.set(true);
+  }
+
+  /** Shows or hides the strip with the clock and the players; the choice sticks. */
+  toggleStrip(): void {
+    this.stripHidden.set(!this.stripHidden());
+    writeStripHidden(this.stripHidden());
   }
 
   /** Upright or sideways on a phone held upright; the choice sticks, shared with `/play`. */

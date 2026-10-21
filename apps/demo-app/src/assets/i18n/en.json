@@ -272,6 +272,8 @@
     "COLLAPSE": "Leave full screen",
     "PAD_ON": "Show the on-screen controller",
     "PAD_OFF": "Hide the on-screen controller",
+    "STRIP_ON": "Show the clock and the players",
+    "STRIP_OFF": "Hide the clock and the players",
     "TAP_TO_PLAY": "Tap to play",
     "TAP_HINT": "Left thumb walks, right thumb drops bombs. Turn the phone sideways for the best view.",
     "TOUCH_CONTROLS": "On-screen controller: slide on the pad to walk · 💣 drops a bomb · ⚡ uses the mount · 🎯 detonates",

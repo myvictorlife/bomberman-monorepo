@@ -549,6 +549,37 @@ describe('Online', () => {
     expect(spectator.component.watching()).toBe(true);
   });
 
+  it('hides the clock and the players in full screen on a touch screen when asked, and remembers it', async () => {
+    localStorage.removeItem('play.strip-hidden');
+    await render();
+    connection.push(SERVER_MESSAGE.frame, frame(['a', 'b']));
+    await flush();
+    spectator.detectChanges();
+    // Not in full screen, nor on a mouse: the bar stays and there is no button.
+    expect(spectator.query('[data-testid="online-hud-bar"]')).toExist();
+    expect(spectator.query('[data-testid="online-strip-toggle"]')).toBeNull();
+
+    spectator.component.touch.set(true);
+    spectator.component.expanded.set(true);
+    spectator.detectChanges();
+    expect(spectator.query('[data-testid="online-strip-toggle"]')).toExist();
+
+    spectator.click('[data-testid="online-strip-toggle"]');
+    expect(spectator.query('[data-testid="online-hud-bar"]')).toBeNull();
+    expect(localStorage.getItem('play.strip-hidden')).toBe('1');
+
+    // Out of full screen the bar is back whatever the choice.
+    spectator.component.expanded.set(false);
+    spectator.detectChanges();
+    expect(spectator.query('[data-testid="online-hud-bar"]')).toExist();
+
+    spectator.component.expanded.set(true);
+    spectator.detectChanges();
+    spectator.click('[data-testid="online-strip-toggle"]');
+    expect(spectator.query('[data-testid="online-hud-bar"]')).toExist();
+    expect(localStorage.getItem('play.strip-hidden')).toBe('0');
+  });
+
   it('switches the sound off and on, for the arena on screen and for the next round', async () => {
     localStorage.removeItem('detona-audio');
     await render();

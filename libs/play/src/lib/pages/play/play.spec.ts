@@ -818,6 +818,30 @@ describe('Play on a phone', () => {
     expect(localStorage.getItem('play.upright')).toBe('0');
   });
 
+  it('hides the strip over the arena in game mode when asked, and remembers it', async () => {
+    localStorage.removeItem('play.strip-hidden');
+    open();
+    await settle();
+    await launcher.succeed();
+    launcher.hud();
+    spectator.component.enterGame();
+    await settle();
+    expect(spectator.query('[data-testid="play-strip"]')).toExist();
+    expect(
+      spectator.query('[data-testid="play-strip-toggle"]'),
+    ).toHaveAttribute('aria-pressed', 'true');
+
+    spectator.click('[data-testid="play-strip-toggle"]');
+    await settle();
+    expect(spectator.query('[data-testid="play-strip"]')).toBeNull();
+    expect(localStorage.getItem('play.strip-hidden')).toBe('1');
+
+    spectator.click('[data-testid="play-strip-toggle"]');
+    await settle();
+    expect(spectator.query('[data-testid="play-strip"]')).toExist();
+    expect(localStorage.getItem('play.strip-hidden')).toBe('0');
+  });
+
   it('remembers the choice to play upright', async () => {
     localStorage.setItem('play.upright', '1');
     portrait = true;

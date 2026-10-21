@@ -272,6 +272,8 @@
     "COLLAPSE": "Sair da tela cheia",
     "PAD_ON": "Mostrar o controle na tela",
     "PAD_OFF": "Esconder o controle na tela",
+    "STRIP_ON": "Mostrar o relógio e os jogadores",
+    "STRIP_OFF": "Esconder o relógio e os jogadores",
     "TAP_TO_PLAY": "Toque para jogar",
     "TAP_HINT": "O polegar esquerdo anda, o direito solta bomba. Vire o celular de lado para ver melhor.",
     "TOUCH_CONTROLS": "Controle na tela: deslize no direcional para andar · 💣 solta bomba · ⚡ usa a montaria · 🎯 detona",
