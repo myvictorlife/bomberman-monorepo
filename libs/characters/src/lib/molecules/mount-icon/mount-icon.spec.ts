@@ -5,15 +5,20 @@ import { MountIcon } from './mount-icon';
 
 describe('MountIcon', () => {
   let spectator: Spectator<MountIcon>;
-  const painted: [MountId, number | undefined][] = [];
+  const painted: [MountId, number | undefined, number | undefined][] = [];
 
   const createComponent = createComponentFactory({
     component: MountIcon,
     providers: [
       {
         provide: MOUNT_ICON_PAINTER,
-        useValue: (doc: Document, mountId: MountId, slot?: number) => {
-          painted.push([mountId, slot]);
+        useValue: (
+          doc: Document,
+          mountId: MountId,
+          slot?: number,
+          size?: number,
+        ) => {
+          painted.push([mountId, slot, size]);
           return doc.createElement('canvas');
         },
       },
@@ -26,12 +31,12 @@ describe('MountIcon', () => {
   });
 
   it('paints the mount portrait and repaints for another mount', () => {
-    expect(painted).toEqual([['tatu', 0]]);
+    expect(painted).toEqual([['tatu', 0, 40]]);
     expect(spectator.query('canvas')).toHaveAttribute('data-mount', 'tatu');
 
     spectator.setInput({ mountId: 'pato', slot: 1 });
 
-    expect(painted.at(-1)).toEqual(['pato', 1]);
+    expect(painted.at(-1)).toEqual(['pato', 1, 40]);
     expect(spectator.queryAll('canvas')).toHaveLength(1);
   });
 });

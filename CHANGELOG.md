@@ -11,8 +11,27 @@ config file. Ordinary app-level additions are minor.
 
 ## [Unreleased]
 
+### Changed
+
+- **The cast reads like an arena cartoon.** Every character is drawn with
+  the same proportions, applied by two shared frames in `ink.ts` instead of
+  redrawn per painter: a body a quarter wider than before, a head a third
+  bigger about the neck, and a thicker default ink. On-foot frames now have
+  headroom above the cell, like mounted ones, so the head overlaps the row
+  above as in a 3/4 view; outsiders on the border stand on their cell the
+  same way. Mounts are drawn as a block — wider from the front and the back,
+  taller about their feet — and carry a rider nearly the size it is on foot.
+  Every figure, in the arena and on the pages, gets a pale rim behind its
+  dark outline so it stands out on a dark floor.
+
 ### Added
 
+- **Sharp character previews.** `paintCharacterFrame` and `paintMountIcon`
+  take the side they are shown at (`size`, in CSS pixels) and paint that many
+  pixels times the screen's pixel ratio, scaling the context so the painters
+  keep drawing in 64 units. The roster, the mounts page and every sprite card
+  pass their size, so a big preview on a dense screen is no longer a 64 px
+  canvas stretched by CSS.
 - **A stage plays on a phone like `/play`.** On a touch screen the stage
   opens behind "tap to play", then fills the screen with the on-screen
   controller over it; held upright the whole game turns a quarter to play

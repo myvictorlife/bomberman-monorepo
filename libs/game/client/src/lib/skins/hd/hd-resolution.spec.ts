@@ -70,10 +70,9 @@ describe('HD skin resolution', () => {
       undefined,
       2,
     );
-    expect(one.get(TEXTURE.outsider('byte', 'left', 1))).toMatchObject({
-      width: 128,
-      height: 128,
-    });
+    const outsider = one.get(TEXTURE.outsider('byte', 'left', 1));
+    expect(outsider?.width).toBe(128);
+    expect(outsider?.height).toBeGreaterThan(128);
   });
 
   it('keeps a theme per resolution', () => {

@@ -1,9 +1,11 @@
 import {
   beginFrame,
+  bodyFrame,
   CharacterPose,
   circle,
   Ctx,
   fillStroke,
+  headFrame,
   headPath,
   INK,
   inkOnly,
@@ -42,6 +44,7 @@ export function paintLia(ctx: Ctx, o: CharacterPose): void {
   const SCRUB = c.suit;
   const SCRUB_SH = c.suitDark;
   beginFrame(ctx, o.facing);
+  bodyFrame(ctx);
 
   // ── legs ──
   const clogAt = (x: number, by: number, fwd: number, rot = 0) => {
@@ -272,6 +275,7 @@ export function paintLia(ctx: Ctx, o: CharacterPose): void {
   }
 
   // ── head ──
+  headFrame(ctx, bob);
   const head: Path = () => headPath(ctx);
   if (back) {
     circle(ctx, 32, 9, 5);
@@ -387,5 +391,6 @@ export function paintLia(ctx: Ctx, o: CharacterPose): void {
     ctx.lineWidth = 1;
     ctx.stroke();
   }
+  ctx.restore();
   ctx.restore();
 }

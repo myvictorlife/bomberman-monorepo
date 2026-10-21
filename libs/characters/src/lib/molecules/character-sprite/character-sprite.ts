@@ -50,6 +50,7 @@ export class CharacterSprite {
         frame: this.frame(),
         mountId: this.mountId(),
         slot: this.slot(),
+        size: this.size(),
       });
       canvas.setAttribute('aria-hidden', 'true');
       canvas.dataset['character'] = this.characterId();

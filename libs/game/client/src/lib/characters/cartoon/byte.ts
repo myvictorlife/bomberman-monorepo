@@ -1,9 +1,11 @@
 import {
   beginFrame,
+  bodyFrame,
   CharacterPose,
   circle,
   Ctx,
   fillStroke,
+  headFrame,
   headPath,
   INK,
   inkOnly,
@@ -43,6 +45,7 @@ export function paintByte(ctx: Ctx, o: CharacterPose): void {
   const seated = !!o.seated;
   const bob = seated ? 0 : walking ? -1.2 : Math.sin((t * TAU) / 3.1) * 0.4;
   beginFrame(ctx, o.facing);
+  bodyFrame(ctx);
 
   // ── legs: jeans and sneakers ──
   const sneakerAt = (x: number, by: number, fwd: number, rot = 0) => {
@@ -255,6 +258,7 @@ export function paintByte(ctx: Ctx, o: CharacterPose): void {
   }
 
   // ── head ──
+  headFrame(ctx, bob);
   const head: Path = () => headPath(ctx);
   head();
   fillStroke(ctx, SKIN);
@@ -399,5 +403,6 @@ export function paintByte(ctx: Ctx, o: CharacterPose): void {
     cup(21.5);
     cup(42.5);
   }
+  ctx.restore();
   ctx.restore();
 }

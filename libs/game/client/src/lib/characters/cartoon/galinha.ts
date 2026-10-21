@@ -10,7 +10,8 @@ import {
   inkOnly,
   MountPose,
   Path,
-  RIDER_SCALE,
+  mountFrame,
+  riderFrame,
   shadeRight,
   stepOf,
   TAU,
@@ -50,6 +51,7 @@ export function paintGalinha(
   // A hen's head goes forward on one step and back on the other.
   const peck = walking ? step * 1.6 : 0;
   beginFrame(ctx, o.facing);
+  mountFrame(ctx, o.facing);
 
   const leg = (x: number, y: number, lift: number) => {
     ctx.beginPath();
@@ -236,10 +238,7 @@ export function paintGalinha(
   };
   const riderAt = (hx: number, hy: number) => {
     if (!withRider) return;
-    const k = RIDER_SCALE;
-    ctx.save();
-    ctx.translate(hx - 32 * k, hy - 38 * k);
-    ctx.scale(k, k);
+    riderFrame(ctx, o.facing, hx, hy);
     // The context is already mirrored for `left`; the rider must not mirror twice.
     rider(ctx, {
       facing: o.facing === 'left' ? 'right' : o.facing,
@@ -312,5 +311,6 @@ export function paintGalinha(
   if (phase === 0) zap(side ? 12 : 13, 36, 1);
   if (phase === 1) zap(side ? 50 : 51, 40, 0.9);
   if (phase === 2 || walking) zap(side ? 40 : 48, 56, 0.8);
+  ctx.restore();
   ctx.restore();
 }

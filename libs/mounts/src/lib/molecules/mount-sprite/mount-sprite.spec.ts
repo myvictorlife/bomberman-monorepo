@@ -51,6 +51,7 @@ describe('MountSprite', () => {
       frame: 2,
       mountId: 'pato',
       slot: 0,
+      size: 56,
     });
   });
 });

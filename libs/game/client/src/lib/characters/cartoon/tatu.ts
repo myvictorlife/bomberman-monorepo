@@ -9,7 +9,8 @@ import {
   inkOnly,
   MountPose,
   Path,
-  RIDER_SCALE,
+  mountFrame,
+  riderFrame,
   roundRect,
   shadeRight,
   stepOf,
@@ -41,6 +42,7 @@ export function paintTatu(
   const breath = walking ? 0 : Math.sin((t * TAU) / 2.2) * 0.5;
   const bob = walking ? -1 : 0;
   beginFrame(ctx, o.facing);
+  mountFrame(ctx, o.facing);
 
   const leg = (x: number, y: number, lift: number) => {
     const p: Path = () => roundRect(ctx, x - 3, y - 7 - lift, 6, 8, 2.5);
@@ -182,10 +184,7 @@ export function paintTatu(
   };
   const riderAt = (hx: number, hy: number) => {
     if (!withRider) return;
-    const k = RIDER_SCALE;
-    ctx.save();
-    ctx.translate(hx - 32 * k, hy - 38 * k);
-    ctx.scale(k, k);
+    riderFrame(ctx, o.facing, hx, hy);
     // The context is already mirrored for `left`; the rider must not mirror twice.
     rider(ctx, {
       facing: o.facing === 'left' ? 'right' : o.facing,
@@ -248,5 +247,6 @@ export function paintTatu(
     riderAt(32, 33);
     scaled(32, 54, 1.3, () => headFront(0, 0));
   }
+  ctx.restore();
   ctx.restore();
 }

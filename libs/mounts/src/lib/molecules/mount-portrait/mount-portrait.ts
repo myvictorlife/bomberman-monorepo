@@ -34,7 +34,7 @@ export class MountPortrait {
 
   constructor() {
     afterRenderEffect(() => {
-      const canvas = this.paint(this.document, this.mountId());
+      const canvas = this.paint(this.document, this.mountId(), 0, this.size());
       canvas.setAttribute('aria-hidden', 'true');
       canvas.dataset['mount'] = this.mountId();
       // Inserted at runtime, so the component's scoped styles never reach it.

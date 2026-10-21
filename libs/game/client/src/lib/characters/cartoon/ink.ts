@@ -10,18 +10,33 @@ export type Ctx = CanvasRenderingContext2D;
 export const TAU = Math.PI * 2;
 
 /**
- * How big a rider is on a mount, against the same character on foot. Below
- * about 0.8 the rider reads as a child on a toy; above it the head leaves the
- * frame, which is why mounted frames get {@link MOUNTED_HEADROOM} on top.
+ * The cast's proportions, shared so every character reads the same way in a
+ * 64 px cell: a stocky body — as tall as drawn, but wider — and a head scaled
+ * up about the neck, the first thing the eye finds in an arena cartoon. Each
+ * painter draws its body between {@link bodyFrame} and {@link headFrame} and
+ * its head after.
  */
-export const RIDER_SCALE = 0.92;
+export const BODY_STRETCH = 1.28;
+export const HEAD_SCALE = 1.35;
+/** Where the head meets the body, in art units: the head grows about it. */
+export const NECK_Y = 26;
 /**
- * Extra room above a mounted frame, in the 64-unit space: the mount stands
- * in the usual 64 × 64 cell and the rider's head rises into this strip, the
- * way a tall sprite overlaps the row above in a 3/4 view.
+ * Extra room above an on-foot frame, in the 64-unit space, for the bigger
+ * head and any hat: the figure stands in the usual 64 × 64 cell and overlaps
+ * the row above, the way a tall sprite does in a 3/4 view.
  */
-export const MOUNTED_HEADROOM = 18;
+export const CHARACTER_HEADROOM = 14;
+/** A rider is nearly the size it is on foot: the mount is drawn big enough to carry it. */
+export const RIDER_SCALE = 0.94;
+/**
+ * Extra room above a mounted frame: the mount stands in the 64 × 64 cell and
+ * the rider's head rises into this strip.
+ */
+export const MOUNTED_HEADROOM = 26;
 export const INK = '#1c1511';
+/** The pale rim behind every figure, so a dark outline still reads on a dark floor. */
+export const RIM = 'rgba(255, 255, 255, 0.42)';
+export const RIM_WIDTH = 1.1;
 
 /**
  * Team colours: the suit panel and the light. Indexed like `PLAYER_COLOR_IDS`
@@ -154,7 +169,7 @@ export function ellipse(
 export function fillStroke(
   ctx: Ctx,
   fill: string,
-  width = 1.8,
+  width = 2.1,
   stroke = INK,
 ): void {
   ctx.fillStyle = fill;
@@ -164,7 +179,7 @@ export function fillStroke(
   ctx.stroke();
 }
 
-export function inkOnly(ctx: Ctx, width = 1.8): void {
+export function inkOnly(ctx: Ctx, width = 2.1): void {
   ctx.strokeStyle = INK;
   ctx.lineWidth = width;
   ctx.stroke();
@@ -232,4 +247,90 @@ export function beginFrame(ctx: Ctx, facing: Direction): void {
 
 export function stepOf(frame: number): -1 | 0 | 1 {
   return frame === 1 ? 1 : frame === 2 ? -1 : 0;
+}
+
+/** Starts the body: everything until {@link headFrame} is drawn {@link BODY_STRETCH} wider. */
+export function bodyFrame(ctx: Ctx): void {
+  ctx.save();
+  ctx.translate(32, 0);
+  ctx.scale(BODY_STRETCH, 1);
+  ctx.translate(-32, 0);
+}
+
+/**
+ * Ends the body and starts the head, scaled {@link HEAD_SCALE} about the neck
+ * and lifted by the body's `bob`. The painter's closing `restore` pairs with it.
+ */
+export function headFrame(ctx: Ctx, bob: number): void {
+  ctx.restore();
+  ctx.save();
+  ctx.translate(32, NECK_Y + bob);
+  ctx.scale(HEAD_SCALE, HEAD_SCALE);
+  ctx.translate(-32, -NECK_Y);
+}
+
+/**
+ * How much wider a mount is drawn than its painter's coordinates: seen from
+ * the front or the back it is a block as wide as from the side.
+ */
+export function mountStretch(facing: Direction): number {
+  return facing === 'left' || facing === 'right' ? 1 : 1.4;
+}
+/** How much taller a mount is drawn, about its feet: a body to carry a rider's big head. */
+export const MOUNT_RISE = 1.18;
+/** The line the mount's feet stand on, in art units; it grows upward from here. */
+const MOUNT_FEET_Y = 60;
+
+/** Starts a mount: its body is drawn {@link mountStretch} wider and {@link MOUNT_RISE} taller. Pairs with a closing `restore`. */
+export function mountFrame(ctx: Ctx, facing: Direction): void {
+  ctx.save();
+  ctx.translate(32, MOUNT_FEET_Y);
+  ctx.scale(mountStretch(facing), MOUNT_RISE);
+  ctx.translate(-32, -MOUNT_FEET_Y);
+}
+
+/**
+ * Inside a {@link mountFrame}: puts the rider's hips (32, 38) at `hx`, `hy`
+ * of the mount, undoing the mount's stretch so the rider keeps its shape.
+ * Pairs with a closing `restore`.
+ */
+export function riderFrame(
+  ctx: Ctx,
+  facing: Direction,
+  hx: number,
+  hy: number,
+): void {
+  ctx.save();
+  ctx.translate(hx, hy);
+  ctx.scale(RIDER_SCALE / mountStretch(facing), RIDER_SCALE / MOUNT_RISE);
+  ctx.translate(-32, -38);
+}
+
+/**
+ * A pale rim behind whatever the canvas holds: the figure's own shape, offset
+ * in eight directions, under it. `pixelsPerUnit` is the canvas's scale.
+ * Drawn off-canvas so only the shadow lands, behind the figure.
+ */
+export function rimLight(ctx: Ctx, pixelsPerUnit: number): void {
+  const source = ctx.canvas;
+  // A test's stand-in context has no canvas to copy.
+  if (typeof source?.width !== 'number') return;
+  const copy = source.ownerDocument.createElement('canvas');
+  copy.width = source.width;
+  copy.height = source.height;
+  copy.getContext('2d')?.drawImage(source, 0, 0);
+  ctx.save();
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.globalCompositeOperation = 'destination-over';
+  ctx.shadowColor = RIM;
+  ctx.shadowBlur = 0;
+  const r = RIM_WIDTH * pixelsPerUnit;
+  const far = source.width + source.height + 64;
+  for (let i = 0; i < 8; i++) {
+    const a = (i / 8) * TAU;
+    ctx.shadowOffsetX = far + Math.cos(a) * r;
+    ctx.shadowOffsetY = Math.sin(a) * r;
+    ctx.drawImage(copy, -far, 0);
+  }
+  ctx.restore();
 }

@@ -1,10 +1,12 @@
 import {
   beginFrame,
+  bodyFrame,
   CharacterPose,
   circle,
   Ctx,
   ellipse,
   fillStroke,
+  headFrame,
   headPath,
   INK,
   inkOnly,
@@ -46,6 +48,7 @@ export function paintMotoca(ctx: Ctx, o: CharacterPose): void {
   const seated = !!o.seated;
   const bob = seated ? 0 : walking ? -1.2 : Math.sin((t * TAU) / 2.2) * 0.4;
   beginFrame(ctx, o.facing);
+  bodyFrame(ctx);
 
   // ── legs: jeans, socks and sandals ──
   const sandalAt = (x: number, by: number, fwd: number, rot = 0) => {
@@ -284,6 +287,7 @@ export function paintMotoca(ctx: Ctx, o: CharacterPose): void {
   }
 
   // ── head ──
+  headFrame(ctx, bob);
   const head: Path = () => headPath(ctx);
   head();
   fillStroke(ctx, SKIN);
@@ -402,5 +406,6 @@ export function paintMotoca(ctx: Ctx, o: CharacterPose): void {
   ellipse(ctx, 26, 6, 4, 1.8, -0.5);
   ctx.fillStyle = 'rgba(255,255,255,0.45)';
   ctx.fill();
+  ctx.restore();
   ctx.restore();
 }

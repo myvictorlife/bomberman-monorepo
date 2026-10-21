@@ -9,7 +9,8 @@ import {
   inkOnly,
   MountPose,
   Path,
-  RIDER_SCALE,
+  mountFrame,
+  riderFrame,
   roundRect,
   shadeRight,
   stepOf,
@@ -41,6 +42,7 @@ export function paintCapivara(
   const chew = walking ? 0 : (Math.sin((t * TAU) / 0.9) + 1) * 0.5;
   const hop = Math.abs(Math.sin((t * TAU) / 1.4)) * (walking ? 0.6 : 0);
   beginFrame(ctx, o.facing);
+  mountFrame(ctx, o.facing);
 
   const leg = (x: number, y: number, lift: number) => {
     const p: Path = () => roundRect(ctx, x - 3, y - 7 - lift, 6, 8, 2.5);
@@ -194,10 +196,7 @@ export function paintCapivara(
   };
   const riderAt = (hx: number, hy: number) => {
     if (!withRider) return;
-    const k = RIDER_SCALE;
-    ctx.save();
-    ctx.translate(hx - 32 * k, hy - 38 * k);
-    ctx.scale(k, k);
+    riderFrame(ctx, o.facing, hx, hy);
     rider(ctx, {
       facing: o.facing === 'left' ? 'right' : o.facing,
       frame: 0,
@@ -245,5 +244,6 @@ export function paintCapivara(
     scaled(32, 51, 1.3, () => headFront(0, 0));
     if (!withRider) bird(20, 36, 1);
   }
+  ctx.restore();
   ctx.restore();
 }

@@ -1,10 +1,12 @@
 import {
   beginFrame,
+  bodyFrame,
   CharacterPose,
   circle,
   Ctx,
   ellipse,
   fillStroke,
+  headFrame,
   headPath,
   INK,
   inkOnly,
@@ -39,6 +41,7 @@ export function paintNovato(ctx: Ctx, o: CharacterPose): void {
   const seated = !!o.seated;
   const bob = seated ? 0 : walking ? -1.2 : Math.sin((t * TAU) / 2.4) * 0.4;
   beginFrame(ctx, o.facing);
+  bodyFrame(ctx);
 
   // ── legs: bare shins and sneakers ──
   const sneakerAt = (x: number, by: number, fwd: number, rot = 0) => {
@@ -196,6 +199,7 @@ export function paintNovato(ctx: Ctx, o: CharacterPose): void {
   }
 
   // ── head ──
+  headFrame(ctx, bob);
   const head: Path = () => headPath(ctx);
   head();
   fillStroke(ctx, SKIN);
@@ -293,5 +297,6 @@ export function paintNovato(ctx: Ctx, o: CharacterPose): void {
     ctx.ellipse(32, 12, 12, 2.6, 0, 0, TAU);
     fillStroke(ctx, c.suitDark, 1.6);
   }
+  ctx.restore();
   ctx.restore();
 }

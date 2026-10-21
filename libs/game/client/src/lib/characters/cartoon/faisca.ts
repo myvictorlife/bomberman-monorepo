@@ -1,9 +1,11 @@
 import {
   beginFrame,
+  bodyFrame,
   CharacterPose,
   circle,
   Ctx,
   fillStroke,
+  headFrame,
   headPath,
   INK,
   inkOnly,
@@ -43,6 +45,7 @@ export function paintFaisca(ctx: Ctx, o: CharacterPose): void {
   const seated = !!o.seated;
   const bob = seated ? 0 : walking ? -1.2 : Math.sin((t * TAU) / 2.6) * 0.4;
   beginFrame(ctx, o.facing);
+  bodyFrame(ctx);
 
   // ── legs and boots ──
   const bootAt = (x: number, by: number, fwd: number, rot = 0) => {
@@ -266,6 +269,7 @@ export function paintFaisca(ctx: Ctx, o: CharacterPose): void {
   }
 
   // ── head ──
+  headFrame(ctx, bob);
   const head: Path = () => headPath(ctx);
   head();
   fillStroke(ctx, SKIN);
@@ -396,5 +400,6 @@ export function paintFaisca(ctx: Ctx, o: CharacterPose): void {
     roundRect(ctx, 24, 6.5, 16, 3, 1.5);
     fillStroke(ctx, '#3a3330', 1.6);
   }
+  ctx.restore();
   ctx.restore();
 }

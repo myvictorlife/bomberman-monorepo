@@ -9,7 +9,8 @@ import {
   inkOnly,
   MountPose,
   Path,
-  RIDER_SCALE,
+  mountFrame,
+  riderFrame,
   roundRect,
   shadeRight,
   stepOf,
@@ -51,6 +52,7 @@ export function paintBernardo(
   const breath = walking ? 0 : Math.sin((t * TAU) / 2.6) * 0.5;
   const wag = Math.sin((t * TAU) / 0.6) * (walking ? 0.5 : 0.35);
   beginFrame(ctx, o.facing);
+  mountFrame(ctx, o.facing);
 
   const leg = (x: number, y: number, lift: number, patch: boolean) => {
     const p: Path = () => roundRect(ctx, x - 3.2, y - 9 - lift, 6.4, 9.5, 2.6);
@@ -254,11 +256,7 @@ export function paintBernardo(
   };
   const riderAt = (hx: number, hy: number) => {
     if (!withRider) return;
-    // Smaller than on foot, so the dog is the hero and the rider sits in the saddle.
-    const k = RIDER_SCALE;
-    ctx.save();
-    ctx.translate(hx - 32 * k, hy - 38 * k);
-    ctx.scale(k, k);
+    riderFrame(ctx, o.facing, hx, hy);
     rider(ctx, {
       facing: o.facing === 'left' ? 'right' : o.facing,
       frame: 0,
@@ -348,5 +346,6 @@ export function paintBernardo(
     scaled(32, 50, 1.3, () => headFront(0, 0));
     cask(32, 59.5, 8, 5);
   }
+  ctx.restore();
   ctx.restore();
 }

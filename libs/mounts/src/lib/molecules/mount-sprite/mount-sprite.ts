@@ -47,6 +47,7 @@ export class MountSprite {
         frame: this.frame(),
         mountId: this.mountId(),
         slot: 0,
+        size: this.size(),
       });
       canvas.setAttribute('aria-hidden', 'true');
       canvas.dataset['mount'] = this.mountId();

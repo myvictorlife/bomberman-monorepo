@@ -9,7 +9,8 @@ import {
   inkOnly,
   MountPose,
   Path,
-  RIDER_SCALE,
+  mountFrame,
+  riderFrame,
   roundRect,
   shadeRight,
   stepOf,
@@ -40,6 +41,7 @@ export function paintPato(
   const breath = walking ? 0 : Math.sin((t * TAU) / 2.4) * 0.5;
   const waddle = walking ? step * 0.06 : 0;
   beginFrame(ctx, o.facing);
+  mountFrame(ctx, o.facing);
 
   const foot = (x: number, y: number, lift: number) => {
     ctx.beginPath();
@@ -147,10 +149,7 @@ export function paintPato(
   };
   const riderAt = (hx: number, hy: number) => {
     if (!withRider) return;
-    const k = RIDER_SCALE;
-    ctx.save();
-    ctx.translate(hx - 32 * k, hy - 38 * k);
-    ctx.scale(k, k);
+    riderFrame(ctx, o.facing, hx, hy);
     rider(ctx, {
       facing: o.facing === 'left' ? 'right' : o.facing,
       frame: 0,
@@ -206,5 +205,6 @@ export function paintPato(
     fillStroke(ctx, DUCK);
     head(32, 52, 9.5, 0);
   }
+  ctx.restore();
   ctx.restore();
 }

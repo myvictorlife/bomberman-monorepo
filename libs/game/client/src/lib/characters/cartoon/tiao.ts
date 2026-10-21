@@ -1,10 +1,12 @@
 import {
   beginFrame,
+  bodyFrame,
   CharacterPose,
   circle,
   Ctx,
   ellipse,
   fillStroke,
+  headFrame,
   headPath,
   INK,
   inkOnly,
@@ -48,6 +50,7 @@ export function paintTiao(ctx: Ctx, o: CharacterPose): void {
   const seated = !!o.seated;
   const bob = seated ? 0 : walking ? -1.2 : Math.sin((t * TAU) / 2.4) * 0.4;
   beginFrame(ctx, o.facing);
+  bodyFrame(ctx);
 
   // ── legs: work trousers and boots ──
   const bootAt = (x: number, by: number, fwd: number, rot = 0) => {
@@ -288,6 +291,7 @@ export function paintTiao(ctx: Ctx, o: CharacterPose): void {
   }
 
   // ── head ──
+  headFrame(ctx, bob);
   const head: Path = () => headPath(ctx);
   head();
   fillStroke(ctx, SKIN);
@@ -400,5 +404,6 @@ export function paintTiao(ctx: Ctx, o: CharacterPose): void {
   ellipse(ctx, 26.5, 5.5, 3.6, 1.6, -0.5);
   ctx.fillStyle = 'rgba(255,255,255,0.6)';
   ctx.fill();
+  ctx.restore();
   ctx.restore();
 }

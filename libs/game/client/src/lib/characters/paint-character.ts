@@ -3,10 +3,19 @@ import {
   paintCartoonCharacter,
   paintCartoonMountIcon,
 } from './cartoon/cartoon';
-import { MOUNTED_HEADROOM } from './cartoon/ink';
+import { CHARACTER_HEADROOM, MOUNTED_HEADROOM, rimLight } from './cartoon/ink';
 
-/** Side of a character frame, in texture pixels. */
+/** Side of a character frame, in art units: every painter draws in 64 × 64. */
 export const CHARACTER_TILE = 64;
+
+/**
+ * Pixels per CSS pixel on this screen, 1 to 3: a frame painted for `size`
+ * CSS pixels gets that many pixels per unit of its side, so a dense screen
+ * shows it sharp instead of scaling a 64 px canvas up.
+ */
+export function characterPixelRatio(): number {
+  return Math.min(3, Math.max(1, globalThis.devicePixelRatio ?? 1));
+}
 
 export interface CharacterFrame {
   characterId: CharacterId;
@@ -17,6 +26,11 @@ export interface CharacterFrame {
   slot?: number;
   /** Riding this mount instead of on foot. */
   mountId?: MountId | null;
+  /**
+   * Rendered side, in CSS pixels: the canvas is painted at that size times
+   * the screen's pixel ratio, so it stays sharp. Defaults to one tile.
+   */
+  size?: number;
 }
 
 export type CharacterPainter = (
@@ -27,16 +41,25 @@ export type MountIconPainter = (
   doc: Document,
   mountId: MountId,
   slot?: number,
+  /** Rendered side, in CSS pixels; see {@link CharacterFrame.size}. */
+  size?: number,
 ) => HTMLCanvasElement;
 
+/**
+ * A square canvas for `size` CSS pixels, as many pixels as the screen shows
+ * for them, with its context scaled so the painters keep drawing in 64 units.
+ */
 function canvasFor(
   doc: Document,
+  size = CHARACTER_TILE,
 ): [HTMLCanvasElement, CanvasRenderingContext2D] {
   const canvas = doc.createElement('canvas');
-  canvas.width = CHARACTER_TILE;
-  canvas.height = CHARACTER_TILE;
+  const pixels = Math.max(1, Math.round(size * characterPixelRatio()));
+  canvas.width = pixels;
+  canvas.height = pixels;
   const ctx = canvas.getContext('2d');
   if (!ctx) throw new Error('2D canvas is not available');
+  ctx.scale(pixels / CHARACTER_TILE, pixels / CHARACTER_TILE);
   ctx.lineJoin = 'round';
   ctx.lineCap = 'round';
   return [canvas, ctx];
@@ -48,14 +71,13 @@ function canvasFor(
  * what the player picks is exactly what walks into the arena.
  */
 export const paintCharacterFrame: CharacterPainter = (doc, frame) => {
-  const [canvas, ctx] = canvasFor(doc);
-  if (frame.mountId) {
-    // The rider's head rises above the cell: shrink the whole frame to fit the square.
-    const fit = CHARACTER_TILE / (CHARACTER_TILE + MOUNTED_HEADROOM);
-    ctx.translate((CHARACTER_TILE * (1 - fit)) / 2, 0);
-    ctx.scale(fit, fit);
-    ctx.translate(0, MOUNTED_HEADROOM);
-  }
+  const [canvas, ctx] = canvasFor(doc, frame.size);
+  // The head rises above the cell: shrink the whole frame to fit the square.
+  const headroom = frame.mountId ? MOUNTED_HEADROOM : CHARACTER_HEADROOM;
+  const fit = CHARACTER_TILE / (CHARACTER_TILE + headroom);
+  ctx.translate((CHARACTER_TILE * (1 - fit)) / 2, 0);
+  ctx.scale(fit, fit);
+  ctx.translate(0, headroom);
   paintCartoonCharacter(ctx, {
     characterId: frame.characterId,
     facing: frame.facing,
@@ -63,12 +85,18 @@ export const paintCharacterFrame: CharacterPainter = (doc, frame) => {
     slot: frame.slot ?? 0,
     mountId: frame.mountId ?? null,
   });
+  rimLight(ctx, canvas.width / CHARACTER_TILE);
   return canvas;
 };
 
 /** The framed portrait of a mount, for lists. */
-export const paintMountIcon: MountIconPainter = (doc, mountId, slot = 0) => {
-  const [canvas, ctx] = canvasFor(doc);
+export const paintMountIcon: MountIconPainter = (
+  doc,
+  mountId,
+  slot = 0,
+  size,
+) => {
+  const [canvas, ctx] = canvasFor(doc, size);
   paintCartoonMountIcon(ctx, mountId, slot);
   return canvas;
 };

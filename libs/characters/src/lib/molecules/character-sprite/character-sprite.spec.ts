@@ -33,6 +33,7 @@ describe('CharacterSprite', () => {
         frame: 0,
         mountId: null,
         slot: 0,
+        size: 96,
       },
     ]);
 
@@ -61,6 +62,7 @@ describe('CharacterSprite', () => {
       frame: 2,
       mountId: 'pato',
       slot: 2,
+      size: 96,
     });
     expect(spectator.queryAll('canvas')).toHaveLength(1);
     expect(spectator.query('canvas')).toHaveAttribute('data-mount', 'pato');

@@ -35,7 +35,12 @@ export class MountIcon {
 
   constructor() {
     afterRenderEffect(() => {
-      const canvas = this.paint(this.document, this.mountId(), this.slot());
+      const canvas = this.paint(
+        this.document,
+        this.mountId(),
+        this.slot(),
+        this.size(),
+      );
       canvas.setAttribute('aria-hidden', 'true');
       canvas.dataset['mount'] = this.mountId();
       // Inserted at runtime, so the component's scoped styles never reach it.

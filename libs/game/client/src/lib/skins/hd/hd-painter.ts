@@ -8,7 +8,12 @@ import {
   PlayerColorId,
 } from '@libs/game-core';
 import { paintCartoonCharacter } from '../../characters/cartoon/cartoon';
-import { colorSlot, MOUNTED_HEADROOM } from '../../characters/cartoon/ink';
+import {
+  CHARACTER_HEADROOM,
+  colorSlot,
+  MOUNTED_HEADROOM,
+  rimLight,
+} from '../../characters/cartoon/ink';
 import {
   BOMB_FRAMES,
   FACINGS,
@@ -101,13 +106,18 @@ export function paintCharacterTextures(
     const id = characterId ?? DEFAULT_CHARACTER_ID;
     for (const facing of FACINGS) {
       for (let f = 0; f < PLAYER_FRAMES; f++) {
-        paint(TEXTURE.outsider(id, facing, f), (ctx) =>
-          paintCartoonCharacter(ctx, {
-            characterId: id,
-            facing,
-            frame: f,
-            slot: OUTSIDER_TEAM_SLOT,
-          }),
+        paint(
+          TEXTURE.outsider(id, facing, f),
+          (ctx) => {
+            paintCartoonCharacter(ctx, {
+              characterId: id,
+              facing,
+              frame: f,
+              slot: OUTSIDER_TEAM_SLOT,
+            });
+            rimLight(ctx, resolution);
+          },
+          CHARACTER_HEADROOM,
         );
       }
     }
@@ -120,27 +130,36 @@ export function paintCharacterTextures(
   ] as HdPlayerColors;
   for (const facing of FACINGS) {
     for (let f = 0; f < PLAYER_FRAMES; f++) {
-      paint(TEXTURE.player(slot, facing, f), (ctx) =>
-        characterId
-          ? paintCartoonCharacter(ctx, {
-              characterId,
-              facing,
-              frame: f,
-              slot: team,
-            })
-          : paintHdPlayer(ctx, colors, facing, f),
+      paint(
+        TEXTURE.player(slot, facing, f),
+        (ctx) => {
+          if (!characterId) {
+            paintHdPlayer(ctx, colors, facing, f);
+            return;
+          }
+          paintCartoonCharacter(ctx, {
+            characterId,
+            facing,
+            frame: f,
+            slot: team,
+          });
+          rimLight(ctx, resolution);
+        },
+        CHARACTER_HEADROOM,
       );
       for (const mountId of MOUNT_IDS) {
         paint(
           TEXTURE.playerMounted(slot, mountId, facing, f),
-          (ctx) =>
+          (ctx) => {
             paintCartoonCharacter(ctx, {
               characterId: characterId ?? DEFAULT_CHARACTER_ID,
               facing,
               frame: f,
               slot: team,
               mountId,
-            }),
+            });
+            rimLight(ctx, resolution);
+          },
           MOUNTED_HEADROOM,
         );
       }

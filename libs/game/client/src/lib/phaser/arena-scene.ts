@@ -957,6 +957,9 @@ export class ArenaScene extends Phaser.Scene {
         image
           .setDepth(DEPTH.outsider + o.y / 100)
           .setTexture(this.outsiderTexture(o, frame));
+        // Taller than the cell, like a player's frame: stand it on the cell.
+        const { width, height } = image.frame;
+        image.setOrigin(0.5, 1 - width / 2 / height);
         // On the top wall the usual lift would cut their head off at the canvas edge.
         const top = image.displayHeight * image.originY;
         image.setPosition(x, Math.max(y - this.tile * (0.12 + bob), top));
