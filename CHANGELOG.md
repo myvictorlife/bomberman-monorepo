@@ -11,6 +11,15 @@ config file. Ordinary app-level additions are minor.
 
 ## [Unreleased]
 
+### Added
+
+- **The cast acts.** Two poses join the standing frame and the two steps:
+  setting a bomb down (crouched, hands low, held for a quarter second with
+  a squash that springs back) and the winner's cheer (arms up, a knee up,
+  hopping on the spot from the moment the round is decided). Standing still,
+  a player breathes. Every character draws both poses in all four facings;
+  the classic pixel skin reuses its standing frame for them.
+
 ### Changed
 
 - **The cast has volume.** Every character and mount, and the egg, are

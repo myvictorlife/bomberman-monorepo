@@ -1,4 +1,5 @@
 import {
+  isDecided,
   BLOCK_BURN_TICKS,
   BOMB_FUSE_TICKS,
   BossBody,
@@ -27,6 +28,7 @@ import { flameFrame } from '../skins/flame-frame';
 import { ARENA_THEMES } from '../skins/hd/themes';
 import { ArenaMoment, blackoutAt } from '../skins/hd/themes/moments';
 import { ArenaSession } from '../session/arena-session';
+import { FRAME_CHEER, FRAME_PLACE } from '../characters/cartoon/ink';
 import { EGG_STAGES } from '../skins/hd/egg';
 import { loadArenaTheme, tileTextureKey } from '../skins/hd/themes';
 import { ArenaSkin } from '../skins/skin';
@@ -65,6 +67,8 @@ const OUTSIDER_GLOW = 0xf2f5ff;
 const CHECKER_TINT = 0xe6e6e6;
 /** Standing, step, standing, other step — four ticks-of-8 per cycle. */
 const WALK_CYCLE = [1, 0, 2, 0];
+/** How long a player holds the bomb-setting pose after placing one, in ticks. */
+const PLACE_TICKS = 14;
 
 type Image = Phaser.GameObjects.Image;
 
@@ -80,6 +84,8 @@ export class ArenaScene extends Phaser.Scene {
   private readonly bombs = new Map<number, Image>();
   private readonly flames = new Map<string, Image>();
   private readonly players = new Map<string, Image>();
+  /** When each player last set a bomb down: the crouch and the squash follow. */
+  private readonly placedAt = new Map<string, number>();
   private readonly outsiders = new Map<string, Image>();
   private readonly thrown = new Map<number, Image>();
   /** Stage mode: the creatures, by id, and the gate once it is in the open. */
@@ -1042,6 +1048,7 @@ export class ArenaScene extends Phaser.Scene {
       switch (event.type) {
         case 'bomb-placed':
           sfx.play('place');
+          this.placedAt.set(event.playerId, this.config.session.state.tick);
           break;
         case 'block-destroyed':
           this.burst(event.col, event.row, TEXTURE.debris, 7, false);
@@ -1339,9 +1346,22 @@ export class ArenaScene extends Phaser.Scene {
     }
 
     if (player.alive) {
-      const frame = player.moving
-        ? (WALK_CYCLE[Math.floor(tick / 8) % 4] ?? 0)
-        : 0;
+      const state = this.config.session.state;
+      const sincePlaced = tick - (this.placedAt.get(player.id) ?? -PLACE_TICKS);
+      const placing = !player.mountId && sincePlaced < PLACE_TICKS;
+      // The round is decided and this is the last one standing: the cheer starts
+      // before the round is declared over, as soon as the arena knows.
+      const cheering =
+        !player.mountId &&
+        isDecided(state) &&
+        state.players.filter((p) => p.alive).length === 1;
+      const frame = cheering
+        ? FRAME_CHEER
+        : placing
+          ? FRAME_PLACE
+          : player.moving
+            ? (WALK_CYCLE[Math.floor(tick / 8) % 4] ?? 0)
+            : 0;
       image.setTexture(
         player.mountId
           ? TEXTURE.playerMounted(
@@ -1377,7 +1397,23 @@ export class ArenaScene extends Phaser.Scene {
           .setScale(1.05, 0.97);
         return;
       }
-      image.setRotation(0).setScale(1);
+      if (cheering) {
+        // The winner hops on the spot.
+        const hop = Math.abs(Math.sin(tick * 0.28));
+        image
+          .setY(y - this.tile * 0.12 - hop * this.tile * 0.14)
+          .setRotation(0)
+          .setScale(1 + hop * 0.04, 1 + hop * 0.06);
+      } else if (placing) {
+        // Setting it down: a squash that springs back.
+        const t = sincePlaced / PLACE_TICKS;
+        const squash = (1 - t) * 0.14;
+        image.setRotation(0).setScale(1 + squash, 1 - squash);
+      } else if (!player.moving) {
+        // Standing: breathing.
+        const breath = Math.sin(tick * 0.16) * 0.012;
+        image.setRotation(0).setScale(1 - breath, 1 + breath);
+      } else image.setRotation(0).setScale(1);
       // The vest: a cool flicker while it lasts.
       if (tick < player.vestUntilTick)
         image.setTint(Math.floor(tick / 4) % 2 === 0 ? 0xffffff : 0x9ff0e0);

@@ -47,8 +47,8 @@ export const FACINGS: readonly Direction[] = ['down', 'up', 'left', 'right'];
 
 /** 0 = the biggest flame, 3 = almost gone. */
 export const FLAME_FRAMES = 4;
-/** 0 = standing, 1 and 2 = the two steps of the walk cycle. */
-export const PLAYER_FRAMES = 3;
+/** 0 = standing, 1 and 2 = the two steps of the walk cycle, 3 = placing a bomb, 4 = cheering. */
+export const PLAYER_FRAMES = 5;
 export const BOMB_FRAMES = 2;
 /** One set of player textures per slot the rules allow. */
 export const PLAYER_SLOTS = MAX_PLAYERS;

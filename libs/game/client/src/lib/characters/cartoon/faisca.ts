@@ -14,6 +14,8 @@ import {
   stepOf,
   TAU,
   teamFor,
+  FRAME_CHEER,
+  FRAME_PLACE,
   volume,
   lineOf,
 } from './ink';
@@ -38,10 +40,20 @@ export function paintFaisca(ctx: Ctx, o: CharacterPose): void {
   const blink = o.blink ?? 0;
   const side = o.facing === 'left' || o.facing === 'right';
   const back = o.facing === 'up';
-  const walking = o.frame !== 0;
+  const walking = o.frame === 1 || o.frame === 2;
+  const placing = o.frame === FRAME_PLACE;
+  const cheering = o.frame === FRAME_CHEER;
   const step = stepOf(o.frame);
   const seated = !!o.seated;
-  const bob = seated ? 0 : walking ? -1.2 : Math.sin((t * TAU) / 2.6) * 0.4;
+  const bob = seated
+    ? 0
+    : placing
+      ? 2.4
+      : cheering
+        ? -3
+        : walking
+          ? -1.2
+          : Math.sin((t * TAU) / 2.6) * 0.4;
   beginFrame(ctx, o.facing);
   bodyFrame(ctx);
 
@@ -95,6 +107,14 @@ export function paintFaisca(ctx: Ctx, o: CharacterPose): void {
     else {
       hangLeg(25, -1);
       hangLeg(39, 1);
+    }
+  } else if (cheering) {
+    if (side) {
+      legBoot(29, 2.5, 2);
+      legBoot(35, 0, 0);
+    } else {
+      legBoot(26.5, 2.5, 0);
+      legBoot(37.5, 0, 0);
     }
   } else if (side) {
     legBoot(29 - step * 4, step === 1 ? 2 : 0, step === 1 ? 2 : 0);
@@ -254,6 +274,21 @@ export function paintFaisca(ctx: Ctx, o: CharacterPose): void {
     else {
       arm(22, 25, 26, 34, 18, 31);
       arm(42, 25, 38, 34, 46, 31);
+    }
+  } else if (placing) {
+    if (side) arm(37, 25, 47, 38, 43, 31);
+    else if (back) {
+      arm(22, 25, 19, 40, 18, 33);
+      arm(42, 25, 45, 40, 46, 33);
+    } else {
+      arm(22, 25, 25, 41, 20, 33);
+      arm(42, 25, 39, 41, 44, 33);
+    }
+  } else if (cheering) {
+    if (side) arm(37, 25, 44, 9, 42, 17);
+    else {
+      arm(22, 25, 14, 10, 16, 18);
+      arm(42, 25, 50, 10, 48, 18);
     }
   } else if (side) {
     const sw = walking ? step * 5 : 0;

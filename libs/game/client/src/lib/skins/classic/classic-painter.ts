@@ -99,14 +99,21 @@ export function paintClassicTextures(
       for (let f = 0; f < PLAYER_FRAMES; f++) {
         const pose = facing === 'left' || facing === 'right' ? 'side' : facing;
         paint(TEXTURE.player(slot, facing, f), (ctx) =>
-          paintGrid(ctx, playerGrid(pose, f), palette, 0, 0, facing === 'left'),
+          paintGrid(
+            ctx,
+            playerGrid(pose, Math.min(f, 2)),
+            palette,
+            0,
+            0,
+            facing === 'left',
+          ),
         );
         // No pixel-art mounts yet: a mounted player looks like a player.
         for (const mountId of MOUNT_IDS) {
           paint(TEXTURE.playerMounted(slot, mountId, facing, f), (ctx) =>
             paintGrid(
               ctx,
-              playerGrid(pose, f),
+              playerGrid(pose, Math.min(f, 2)),
               palette,
               0,
               0,

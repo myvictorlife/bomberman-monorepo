@@ -222,6 +222,11 @@ export function glowFill(ctx: Ctx, color: string, blur: number): void {
   ctx.restore();
 }
 
+/** Frame 3: crouched, hands low in front — setting a bomb down. */
+export const FRAME_PLACE = 3;
+/** Frame 4: arms up, one knee up — the winner's cheer. */
+export const FRAME_CHEER = 4;
+
 /** Standing, step, standing, other step — the arena's walk cycle. */
 export const CARTOON_WALK_CYCLE: readonly number[] = [1, 0, 2, 0];
 

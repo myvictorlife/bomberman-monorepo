@@ -20,6 +20,8 @@ import {
   stepOf,
   TAU,
   teamFor,
+  FRAME_CHEER,
+  FRAME_PLACE,
   volume,
 } from './ink';
 
@@ -51,10 +53,20 @@ export function paintNovato(ctx: Ctx, o: CharacterPose): void {
   const blink = o.blink ?? 0;
   const side = o.facing === 'left' || o.facing === 'right';
   const back = o.facing === 'up';
-  const walking = o.frame !== 0;
+  const walking = o.frame === 1 || o.frame === 2;
+  const placing = o.frame === FRAME_PLACE;
+  const cheering = o.frame === FRAME_CHEER;
   const step = stepOf(o.frame);
   const seated = !!o.seated;
-  const bob = seated ? 0 : walking ? -1.2 : Math.sin((t * TAU) / 2.4) * 0.4;
+  const bob = seated
+    ? 0
+    : placing
+      ? 2.4
+      : cheering
+        ? -3
+        : walking
+          ? -1.2
+          : Math.sin((t * TAU) / 2.4) * 0.4;
   beginFrame(ctx, o.facing);
   bodyFrame(ctx);
 
@@ -135,6 +147,14 @@ export function paintNovato(ctx: Ctx, o: CharacterPose): void {
     else {
       hang(25, -1);
       hang(39, 1);
+    }
+  } else if (cheering) {
+    if (side) {
+      legAt(29, 2.5, 2);
+      legAt(35, 0, 0);
+    } else {
+      legAt(26.5, 2.5, 0);
+      legAt(37.5, 0, 0);
     }
   } else if (side) {
     legAt(29 - step * 4, step === 1 ? 2 : 0, step === 1 ? 2 : 0);
@@ -333,6 +353,21 @@ export function paintNovato(ctx: Ctx, o: CharacterPose): void {
     else {
       arm(22, 25, 18, 31, 26, 34);
       arm(42, 25, 46, 31, 38, 34);
+    }
+  } else if (placing) {
+    if (side) arm(37, 25, 43, 31, 47, 38);
+    else if (back) {
+      arm(22, 25, 18, 33, 19, 40);
+      arm(42, 25, 46, 33, 45, 40);
+    } else {
+      arm(22, 25, 20, 33, 25, 41);
+      arm(42, 25, 44, 33, 39, 41);
+    }
+  } else if (cheering) {
+    if (side) arm(37, 25, 42, 17, 44, 9);
+    else {
+      arm(22, 25, 16, 18, 14, 10);
+      arm(42, 25, 48, 18, 50, 10);
     }
   } else if (side) {
     const sw = walking ? step * 5 : 0;
