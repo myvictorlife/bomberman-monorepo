@@ -20,6 +20,7 @@ import {
   parseRules,
   PLAYER_NAME_LENGTH,
   PUBLIC_ROOM_RULES,
+  ROOM_BOT_LEVELS,
   REACTIONS,
   RULE_FIELDS,
   secondsLeft,
@@ -365,5 +366,17 @@ describe('parsePickStage', () => {
     expect(parsePickStage({ stageId: 'nowhere-9' })).toBeNull();
     expect(parsePickStage({ stageId: 3 })).toBeNull();
     expect(parsePickStage(null)).toBeNull();
+  });
+});
+
+describe('bot level', () => {
+  it('is medium by default, the online casual, and takes only 1 to 3', () => {
+    expect(PUBLIC_ROOM_RULES.botLevel).toBe(2);
+    expect(ROOM_BOT_LEVELS[PUBLIC_ROOM_RULES.botLevel]).toBe('casual');
+    expect(ROOM_BOT_LEVELS[1]).toBe('easy');
+    expect(ROOM_BOT_LEVELS[3]).toBe('hard');
+    expect(parseRules({ botLevel: 3 }, PUBLIC_ROOM_RULES)?.botLevel).toBe(3);
+    expect(parseRules({ botLevel: 4 }, PUBLIC_ROOM_RULES)).toBeNull();
+    expect(parseRules({ botLevel: 'hard' }, PUBLIC_ROOM_RULES)).toBeNull();
   });
 });

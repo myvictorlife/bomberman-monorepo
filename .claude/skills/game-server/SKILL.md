@@ -135,9 +135,11 @@ on `/online` draws itself from the schema; `parseRules` validates a change.
   by the lobby (`bot: true`, ids `cpu1…` — `isBotId`, names drawn from
   `BOT_NAMES`, never twice nor like a person in the round), never requeued,
   never champion. The room plays them with a `BotDirector`
-  (`@libs/game-ai`, level `BOT_LEVEL` = `casual`: a notch under `/play`'s
-  medium, and not offered there) and merges its inputs before
-  `tick`. A bot runs inside the server with no lag, so `casual` is slowed
+  (`@libs/game-ai`) at the room's `rules.botLevel` — 1 easy, 2 medium
+  (default), 3 hard, an admin rule like the others; `ROOM_BOT_LEVELS` in
+  `game-protocol` maps it to the AI's `easy`, `casual` (a notch under
+  `/play`'s medium, and not offered there) and `hard` — and merges its
+  inputs before `tick`. A saved `rules.json` without it keeps medium. A bot runs inside the server with no lag, so `casual` is slowed
   to an online player's pace: it notices a bomb only after `reactionTicks`
   (45, ~0.75 s — a network trip plus a human reaction; its own bombs it
   always knows), runs for a random nearby refuge `slipChance` (25%) of the

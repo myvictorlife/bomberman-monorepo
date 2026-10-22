@@ -101,6 +101,13 @@ export interface RoomRules {
    */
   botsFillTo: number;
   /**
+   * How well the bots play: 1 easy, 2 medium, 3 hard. Medium is the online
+   * room's own level, a notch under `/play`'s medium — the bots run inside
+   * the server with no lag, so they are slowed to an online player's pace.
+   * See {@link ROOM_BOT_LEVELS}.
+   */
+  botLevel: number;
+  /**
    * A player in a round who sends no input for this long is out of it — and
    * out of the line: a phone that went dark, a tab left open and forgotten.
    * `0` never kicks anyone.
@@ -121,9 +128,10 @@ export interface RuleField {
   options?: readonly number[];
   /**
    * How a number reads: a count, milliseconds shown as seconds, wins in a row,
-   * or a number of players — `0` as "off" for all but a count.
+   * a number of players — `0` as "off" for all but a count — or a level
+   * (1 easy, 2 medium, 3 hard).
    */
-  unit?: 'count' | 'seconds' | 'wins' | 'players';
+  unit?: 'count' | 'seconds' | 'wins' | 'players' | 'level';
 }
 
 const range = (from: number, to: number): number[] =>
@@ -186,6 +194,7 @@ export const RULE_FIELDS: readonly RuleField[] = [
     options: [0, ...range(2, MAX_PLAYERS)],
     unit: 'players',
   },
+  { key: 'botLevel', kind: 'number', options: [1, 2, 3], unit: 'level' },
   {
     key: 'idleMs',
     kind: 'number',
@@ -193,6 +202,14 @@ export const RULE_FIELDS: readonly RuleField[] = [
     unit: 'seconds',
   },
 ];
+
+/**
+ * The bot level a room's `botLevel` plays at, by name of `@libs/game-ai`'s
+ * levels: easy, the online room's casual, and hard.
+ */
+export const ROOM_BOT_LEVELS: Readonly<
+  Record<number, 'easy' | 'casual' | 'hard'>
+> = { 1: 'easy', 2: 'casual', 3: 'hard' };
 
 /**
  * A change of rules from an admin, checked against {@link RULE_FIELDS}: only
@@ -238,6 +255,7 @@ export const PUBLIC_ROOM_RULES: RoomRules = {
   winnerStays: 5,
   bots: MAX_PLAYERS,
   botsFillTo: 3,
+  botLevel: 2,
   idleMs: 30_000,
 };
 
@@ -263,6 +281,7 @@ export const STAGES_ROOM_RULES: RoomRules = {
   winnerStays: 0,
   bots: 0,
   botsFillTo: 0,
+  botLevel: 2,
   idleMs: 30_000,
 };
 

@@ -807,6 +807,11 @@
       "BOTS_DESC": "How many bots play by themselves while someone watches and nobody is in line. 0: no bots.",
       "BOTS_FILL_TO": "Bots fill up to",
       "BOTS_FILL_TO_DESC": "With people in line, bots complete the round up to this many players: with 3, one person plays two bots, two play one, three or more play without bots. Off: bots never play with people.",
+      "BOT_LEVEL": "Bot level",
+      "BOT_LEVEL_DESC": "How well the bots play. Medium is the room's usual; hard bots read chains, set traps and never hesitate.",
+      "LEVEL_1": "Easy",
+      "LEVEL_2": "Medium",
+      "LEVEL_3": "Hard",
       "IDLE_MS": "Idle limit",
       "IDLE_MS_DESC": "A player who sends nothing for this long is taken out of the round and the line. Off: nobody is ever removed for standing still."
     },

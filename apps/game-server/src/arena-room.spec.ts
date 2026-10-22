@@ -43,6 +43,7 @@ const RULES: RoomRules = {
   winnerStays: 0,
   bots: 0,
   botsFillTo: 5,
+  botLevel: 2,
   idleMs: 0,
 };
 const saved: RoomRules[] = [];

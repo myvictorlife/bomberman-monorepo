@@ -807,6 +807,11 @@
       "BOTS_DESC": "Quantos bots jogam sozinhos enquanto alguém assiste e ninguém está na fila. 0: sem bots.",
       "BOTS_FILL_TO": "Bots completam até",
       "BOTS_FILL_TO_DESC": "Com gente na fila, os bots completam a partida até este número de jogadores: com 3, uma pessoa joga com dois bots, duas com um, três ou mais sem bots. Desligado: bots nunca jogam com pessoas.",
+      "BOT_LEVEL": "Nível dos bots",
+      "BOT_LEVEL_DESC": "Quão bem os bots jogam. Médio é o de sempre da sala; no difícil eles leem reações em cadeia, armam armadilhas e não hesitam.",
+      "LEVEL_1": "Fácil",
+      "LEVEL_2": "Médio",
+      "LEVEL_3": "Difícil",
       "IDLE_MS": "Limite de inatividade",
       "IDLE_MS_DESC": "Quem fica esse tempo sem mandar nenhum comando sai da rodada e da fila. Desligado: ninguém é removido por ficar parado."
     },

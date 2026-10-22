@@ -11,6 +11,15 @@ config file. Ordinary app-level additions are minor.
 
 ## [Unreleased]
 
+### Added
+
+- **Bot level in the online room.** A new room rule, "Bot level"
+  (`botLevel`: 1 easy, 2 medium, 3 hard; medium by default, the level the
+  room's bots already played at), on the admin panel with the other rules.
+  `ROOM_BOT_LEVELS` in `game-protocol` maps it to the AI's `easy`, `casual`
+  and `hard`. A rules file saved before it keeps medium. A server change:
+  the server and the site ship together.
+
 ### Fixed
 
 - **A bomb set beside someone passing now blocks them.** Whoever merely

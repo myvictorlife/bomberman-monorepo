@@ -18,7 +18,7 @@ describe('RulesPanelComponent', () => {
   });
 
   it('reads the rules out to everyone, one row per rule', () => {
-    expect(spectator.queryAll('.rules__row')).toHaveLength(12);
+    expect(spectator.queryAll('.rules__row')).toHaveLength(13);
     expect(spectator.query('[data-testid="rules-outsiders"]')).toHaveText(
       'ONLINE.RULES.COUNT',
     );
@@ -27,6 +27,10 @@ describe('RulesPanelComponent', () => {
     );
     expect(spectator.query('[data-testid="rules-roundTimerMs"]')).toHaveText(
       'ONLINE.RULES.SECONDS',
+    );
+    // The bots' level reads as a word.
+    expect(spectator.query('[data-testid="rules-botLevel"]')).toHaveText(
+      'ONLINE.RULES.LEVEL_2',
     );
     expect(spectator.query('lib-segmented-control')).not.toExist();
     expect(spectator.query('[data-testid="rules-pending"]')).not.toExist();
@@ -90,7 +94,7 @@ describe('RulesPanelComponent', () => {
     spectator.component.ruleChange.subscribe((c) => changes.push(c));
     spectator.setInput('admin', true);
 
-    expect(spectator.queryAll('lib-segmented-control')).toHaveLength(10);
+    expect(spectator.queryAll('lib-segmented-control')).toHaveLength(11);
     expect(spectator.queryAll('lib-switch')).toHaveLength(2);
     const outsiders = spectator.component.options({
       key: 'outsiders',

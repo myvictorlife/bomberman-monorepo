@@ -51,6 +51,7 @@ import {
   parsePickStage,
   parseReaction,
   parseRules,
+  ROOM_BOT_LEVELS,
   RECONNECT_GRACE_MS,
   RoomRules,
   Seat,
@@ -101,9 +102,6 @@ export function chatOutcome(
   const type = outcome.stays ? 'champion-stays' : 'champion-limit';
   return { type, name, streak: outcome.streak };
 }
-
-/** How well the room's bots play: a notch under `/play`'s medium, so people stand a chance. */
-const BOT_LEVEL: BotLevel = 'casual';
 
 /**
  * How many guests from one address may hold a place — queued or playing — at
@@ -733,7 +731,11 @@ export function createArenaRoom(deps: ArenaRoomDeps) {
         const bots = start.players.filter((s) => s.bot);
         this.bots = bots.length
           ? new BotDirector(
-              bots.map((s) => ({ id: s.id, level: BOT_LEVEL })),
+              bots.map((s) => ({
+                id: s.id,
+                level: (ROOM_BOT_LEVELS[rules.botLevel] ??
+                  'casual') as BotLevel,
+              })),
               seed,
             )
           : null;
