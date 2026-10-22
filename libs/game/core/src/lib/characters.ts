@@ -15,6 +15,7 @@ export type CharacterId =
   | 'novato'
   | 'faisca'
   | 'byte'
+  | 'gestora'
   | 'lia'
   | 'motoca'
   | 'tiao';
@@ -95,6 +96,7 @@ export const CHARACTERS: readonly Character[] = [
   { id: 'novato', group: 'starter' },
   { id: 'faisca', group: 'demolition' },
   { id: 'byte', group: 'tech' },
+  { id: 'gestora', group: 'tech' },
   { id: 'lia', group: 'health' },
   { id: 'motoca', group: 'delivery' },
   { id: 'tiao', group: 'works' },

@@ -37,6 +37,7 @@ describe('characters', () => {
       'novato',
       'faisca',
       'byte',
+      'gestora',
       'lia',
       'motoca',
       'tiao',

@@ -334,6 +334,11 @@
       "JOB": "Developer",
       "STORY": "Tired Dev has been awake for 36 hours over a bug that turned out to be a semicolon. He joined the arena because \"it's like a production deploy, just with fewer explosions\". Dr. Lia has told him to sleep three times; he answered \"one more coffee\"."
     },
+    "GESTORA": {
+      "NAME": "Tired Manager",
+      "JOB": "Software engineer and manager",
+      "STORY": "The Manager does not suffer through meetings: she books every one of them. Daily at 9, alignment at 10, \"pre-alignment for the alignment\" at 11 and a surprise one-on-one with Tired Dev right after lunch. If anyone's calendar shows fifteen free minutes, the invite has already landed. She is the one who woke Tired Dev at 3 a.m. over the semicolon bug, and the one who promised the client \"it ships by Friday\". She joined the arena to \"unblock the team\" and found that a bomb unblocks things far faster than a Jira ticket. She does not sleep either: after 6 p.m. she finally opens the editor to write her own code."
+    },
     "LIA": {
       "NAME": "Dr. Lia",
       "JOB": "Doctor",

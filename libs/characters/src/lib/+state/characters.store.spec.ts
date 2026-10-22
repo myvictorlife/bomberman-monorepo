@@ -14,7 +14,7 @@ describe('CharactersStore', () => {
     const store = createStore();
 
     expect(store.selectedId()).toBe('novato');
-    expect(store.characters().length).toBe(6);
+    expect(store.characters().length).toBe(7);
     expect(store.mounts().length).toBe(5);
     expect(store.groups().map((g) => g.id)).toEqual([
       'starter',

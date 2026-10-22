@@ -59,7 +59,7 @@ test.describe('navigation', () => {
     await expect(stage).toBeVisible();
     await expect(stage).toHaveAttribute('data-facing', 'down');
     await expect(page.locator('[data-testid="characters-card"]')).toHaveCount(
-      6,
+      7,
     );
 
     await page.locator('[data-testid="characters-stage"]').click();

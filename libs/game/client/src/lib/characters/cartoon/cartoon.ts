@@ -9,6 +9,7 @@ import { paintByte } from './byte';
 import { paintCapivara } from './capivara';
 import { paintFaisca } from './faisca';
 import { paintGalinha } from './galinha';
+import { paintGestora } from './gestora';
 import {
   CharacterPainter,
   circle,
@@ -34,6 +35,7 @@ export const CHARACTER_PAINTERS: Readonly<
   novato: paintNovato,
   faisca: paintFaisca,
   byte: paintByte,
+  gestora: paintGestora,
   lia: paintLia,
   motoca: paintMotoca,
   tiao: paintTiao,

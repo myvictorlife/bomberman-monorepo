@@ -13,6 +13,11 @@ config file. Ordinary app-level additions are minor.
 
 ### Added
 
+- **A Gestora Cansada joins the crew.** A second IT character (`gestora`),
+  the software engineer who manages people and books every meeting: slate
+  blazer over a team-coloured tee, a headset round her neck, a badge, a
+  laptop under one arm and a tall glass mug of coffee. Drawn by the same
+  cartoon painter as the rest of the cast, in every facing and pose.
 - **Game feel.** A blast holds the arena for two frames and flashes white
   for its first instant (a fifth flame frame); a crate's chips fly out,
   drop and bounce on the floor; a bomb pulses harder and faster as the fuse
