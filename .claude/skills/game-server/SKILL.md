@@ -169,6 +169,49 @@ on `/online` draws itself from the schema; `parseRules` validates a change.
   left out of the line, told `error: idle`, and the chat gets an `idle-out`
   event. Bots and outsiders are not checked.
 
+## The stages room (`/online/stages`)
+
+A second public room, `STAGES_ROOM` (`stages`), runs beside the versus
+`arena`: the campaign's stages played as a team. It is the same
+`createArenaRoom` with `STAGES_ROOM_RULES` (`mode: 'stages'`), created at
+boot by `main.ts`; its rules are fixed (no admin panel, nothing saved).
+The page is the `/online` component, told its room by the `ONLINE_ROOM`
+token the route provides; the store keeps a reconnection token per room
+(`sessionTokenKey`).
+
+- **Mode.** `RoomRules.mode` is `versus` or `stages`. It is not a
+  `RULE_FIELDS` entry: `parseRules` keeps the room's own mode and refuses
+  another.
+- **Who plays.** One person starts the countdown (60 s); up to
+  `STAGE_TEAM_SIZE` (4) play. No outsiders, no bots, no winner who stays, no
+  ranking. The idle rule still applies.
+- **Host.** First of the round being played, else first in line
+  (`Lobby.hostId`). Only the host sends `stage:pick { stageId }` (among
+  the stages their campaign has open — `stage-locked` otherwise) and
+  `queue:start` (start now with whoever is in line). Anyone else gets
+  `not-host`. A new host starts from where they are in the campaign.
+- **Campaign.** `queue:join` may carry the browser's `campaign`. The room
+  merges it with the account's record (`mergeProgress`: the record's lives,
+  kit and points, every stage either side cleared); a guest's lives only in
+  memory. Each seat starts the stage with its campaign's kit.
+- **End of a stage.** `Lobby.finishStage` moves every player's campaign on
+  (`progressAfterStage`): cleared counts for everyone who played it — one
+  who fell goes on with the starting kit — and a loss costs each a life. The
+  room saves accounts' campaigns on their record (`recordStage`, sent back
+  in `profile.campaign`), announces `stage-cleared` / `stage-failed`, and the
+  team goes back to the front of the line, host first, on a short
+  countdown (`STAGE_CONTINUE_MS`, 10 s). The next stage is the host's next
+  one (`nextStageFor`): the same after a loss, the area's first after the
+  host's game over. The page writes my campaign back to this browser's
+  `campaign-progress`, so the campaign map agrees.
+- **Snapshot.** `LobbySnapshot.stage` carries the stage, the host, the
+  host's choices and each player's campaign; `null` in a versus room.
+- **Game rules** (`game-core`, so `/campaign/play` gets them too): a
+  teammate's flame never hurts in a stage — one's own still does — and the
+  gate stays open `EXIT_GRACE_TICKS` (5 s) after the first one through, then
+  shuts: whoever is still inside is left behind (`player-left-behind`) and
+  loses their kit.
+
 ## Chat and reactions
 
 `Chat` in `@libs/game-lobby` holds every limit; the room only passes messages

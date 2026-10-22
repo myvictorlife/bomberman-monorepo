@@ -11,6 +11,7 @@ import {
   RankingEntry,
   RoomRules,
   SERVER_MESSAGE,
+  STAGES_ROOM_RULES,
 } from '@libs/game-protocol';
 // The SDK is banned in the server's own code; a test plays the browser's part.
 // eslint-disable-next-line @nx/enforce-module-boundaries
@@ -29,6 +30,7 @@ import { TokenVerifier } from './auth';
 import { RecordsStore } from './records-store';
 
 const RULES: RoomRules = {
+  mode: 'versus',
   maxPlayers: 5,
   minPlayers: 2,
   countdownMs: 300,
@@ -116,6 +118,14 @@ beforeAll(async () => {
     'idle',
     createArenaRoom({
       rules: { ...RULES, idleMs: 600 },
+      verify: fakeVerify,
+      records,
+    }),
+  );
+  server.define(
+    'stages',
+    createArenaRoom({
+      rules: { ...STAGES_ROOM_RULES, countdownMs: 5_000, resultsMs: 300 },
       verify: fakeVerify,
       records,
     }),
@@ -1284,6 +1294,78 @@ describe('ArenaRoom', () => {
       expect(chatOutcome(undefined, null, true)).toEqual({
         type: 'round-draw',
       });
+    });
+  });
+
+  describe('stages room', () => {
+    it('lets only the host pick and start, plays the stage, and keeps each account’s campaign', async () => {
+      const ana = await signedIn('sta', true, 'stages');
+      const bia = await signedIn('stb', true, 'stages');
+      ana.room.send(CLIENT_MESSAGE.joinQueue, {
+        campaign: { cleared: ['gramado-1'] },
+      });
+      await ana.next<LobbySnapshot>(SERVER_MESSAGE.lobby, (l) =>
+        l.queue.some((q) => q.id === 'sta'),
+      );
+      bia.room.send(CLIENT_MESSAGE.joinQueue, {});
+      const lobby = await bia.next<LobbySnapshot>(
+        SERVER_MESSAGE.lobby,
+        (l) => l.queue.length === 2 && l.phase === 'countdown',
+      );
+      expect(lobby.stage).toMatchObject({
+        id: 'gramado-2',
+        hostId: 'sta',
+        choices: ['gramado-1', 'gramado-2'],
+      });
+
+      bia.room.send(CLIENT_MESSAGE.startNow);
+      await bia.next<{ code: string }>(
+        SERVER_MESSAGE.error,
+        (e) => e.code === 'not-host',
+      );
+      ana.room.send(CLIENT_MESSAGE.pickStage, { stageId: 'gramado-4' });
+      await ana.next<{ code: string }>(
+        SERVER_MESSAGE.error,
+        (e) => e.code === 'stage-locked',
+      );
+      ana.room.send(CLIENT_MESSAGE.pickStage, { stageId: 'gramado-1' });
+      await ana.next<LobbySnapshot>(
+        SERVER_MESSAGE.lobby,
+        (l) => l.stage?.id === 'gramado-1',
+      );
+      ana.room.send(CLIENT_MESSAGE.startNow);
+
+      const frame = await bia.next<FrameMessage>(
+        SERVER_MESSAGE.frame,
+        (f) => f.state.phase === 'playing',
+      );
+      expect(frame.state.stage?.stageId).toBe('gramado-1');
+      expect(frame.state.players.map((p) => p.id)).toEqual(['sta', 'stb']);
+      expect(frame.state.outsiders).toEqual([]);
+
+      // Everyone falls: the stage is lost, a life each, and the team stays in line.
+      const game = localRoom(ana).game as GameState;
+      for (const p of game.players) p.alive = false;
+      const chat = await ana.next<ChatMessage>(
+        SERVER_MESSAGE.chat,
+        (m) => m.event?.type === 'stage-failed',
+      );
+      expect(chat.event).toEqual({ type: 'stage-failed', code: '1-1' });
+      const profile = await ana.next<PlayerProfile>(
+        SERVER_MESSAGE.profile,
+        (p) => p.campaign !== undefined,
+      );
+      expect(profile.campaign).toMatchObject({
+        cleared: ['gramado-1'],
+        lives: 2,
+      });
+      expect(records.get('stb')?.campaign?.lives).toBe(2);
+      const after = await ana.next<LobbySnapshot>(
+        SERVER_MESSAGE.lobby,
+        (l) => l.phase === 'countdown',
+      );
+      expect(after.queue.map((q) => q.id)).toEqual(['sta', 'stb']);
+      expect(after.stage?.id).toBe('gramado-1');
     });
   });
 });

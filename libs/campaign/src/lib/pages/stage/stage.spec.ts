@@ -50,7 +50,14 @@ const hud = (
   players: [me],
   secondsLeft: 125,
   closing: false,
-  stage: { boss: null, score: 0, livesGained: 0, bonus: false, ...stage },
+  stage: {
+    boss: null,
+    score: 0,
+    livesGained: 0,
+    bonus: false,
+    gateClosesIn: null,
+    ...stage,
+  },
 });
 
 describe('Stage', () => {

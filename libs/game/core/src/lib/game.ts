@@ -850,11 +850,28 @@ function killPlayersInFlames(state: GameState): void {
     if (player.jump || isAirborne(player)) continue;
     const [col, row] = playerCell(player);
     const flame = state.flames.find((f) => f.col === col && f.row === row);
-    if (!flame || !hitPlayer(state, player, flame.ownerId)) continue;
+    if (!flame) continue;
+    // A stage is played as a team: a teammate's flame does not hurt — only
+    // one's own bomb does, as ever.
+    if (state.stage && isTeammateFlame(state, player, flame.ownerId)) continue;
+    if (!hitPlayer(state, player, flame.ownerId)) continue;
 
     const thrower = state.outsiders.find((o) => o.id === flame.ownerId);
     if (thrower) enterArena(state, thrower, player);
   }
+}
+
+/** Whether a flame was lit by another player of the stage — a teammate, never an outsider. */
+function isTeammateFlame(
+  state: GameState,
+  player: Player,
+  ownerId: string | null,
+): boolean {
+  return (
+    ownerId !== null &&
+    ownerId !== player.id &&
+    state.players.some((p) => p.id === ownerId)
+  );
 }
 
 /**

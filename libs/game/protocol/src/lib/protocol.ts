@@ -1,4 +1,5 @@
 import {
+  CampaignProgress,
   CHARACTERS,
   CharacterId,
   DEFAULT_CHARACTER_ID,
@@ -7,8 +8,10 @@ import {
   GameState,
   isCharacterId,
   isPlayerColorId,
+  isStageId,
   MAX_PLAYERS,
   PlayerColorId,
+  sanitizeProgress,
   TICK_RATE,
 } from '@libs/game-core';
 
@@ -21,8 +24,23 @@ import {
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
-/** The one public room of the first version. */
+/** The public versus room: everyone against everyone. */
 export const ARENA_ROOM = 'arena';
+/**
+ * The public stages room: a team of up to four plays the campaign's stages
+ * together, one after the other. Same server, same messages, other rules
+ * ({@link STAGES_ROOM_RULES}).
+ */
+export const STAGES_ROOM = 'stages';
+
+/**
+ * What a room plays: `versus` rounds with a winner, or the campaign's
+ * `stages` as a team — no outsiders, no bots, no winner; the first in line
+ * is the host, who picks the stage among those they have open and may start
+ * at once instead of waiting the countdown out. After a stage the team
+ * stays first in line, so it goes on to the next one together.
+ */
+export type RoomMode = 'versus' | 'stages';
 
 /** Where the game server listens unless `PORT` says otherwise. */
 export const DEFAULT_GAME_SERVER_PORT = 8086;
@@ -40,6 +58,8 @@ export const RECONNECT_GRACE_MS = 60_000;
 
 /** Tuning of a room. The public room uses {@link PUBLIC_ROOM_RULES}; rooms people create later pick their own. */
 export interface RoomRules {
+  /** Versus rounds, or the campaign's stages as a team. See {@link RoomMode}. Not a rule an admin changes. */
+  mode: RoomMode;
   /** A round starts at once when this many are queued. */
   maxPlayers: number;
   /** With at least this many queued, the countdown runs. */
@@ -94,7 +114,8 @@ export interface RoomRules {
  * its `ONLINE.RULES.<KEY>` strings — nothing else to wire.
  */
 export interface RuleField {
-  key: keyof RoomRules;
+  /** Every rule but the mode: that is what the room is, not a setting. */
+  key: Exclude<keyof RoomRules, 'mode'>;
   kind: 'number' | 'boolean';
   /** The numbers to pick from, in order. A rule never takes a free value. */
   options?: readonly number[];
@@ -185,6 +206,12 @@ export function parseRules(
   if (!isRecord(value)) return null;
   const next: RoomRules = { ...current };
   for (const [key, raw] of Object.entries(value)) {
+    // The room's mode is what the room is, never a change: the same mode
+    // passes (a saved file carries it), another is refused.
+    if (key === 'mode') {
+      if (raw !== current.mode) return null;
+      continue;
+    }
     const field = RULE_FIELDS.find((f) => f.key === key);
     if (!field) return null;
     if (field.kind === 'boolean') {
@@ -199,6 +226,7 @@ export function parseRules(
 }
 
 export const PUBLIC_ROOM_RULES: RoomRules = {
+  mode: 'versus',
   maxPlayers: MAX_PLAYERS,
   minPlayers: 2,
   countdownMs: 15_000,
@@ -210,6 +238,31 @@ export const PUBLIC_ROOM_RULES: RoomRules = {
   winnerStays: 5,
   bots: MAX_PLAYERS,
   botsFillTo: 3,
+  idleMs: 30_000,
+};
+
+/** How many play a stage together: the four corners; the middle spawn stays free. */
+export const STAGE_TEAM_SIZE = 4;
+
+/**
+ * The stages room: one person is enough to start; the countdown is long,
+ * since the host may cut it short with "start now" and friends need time to
+ * arrive. No outsiders, no bots, no winner who stays, no ranking.
+ */
+export const STAGES_ROOM_RULES: RoomRules = {
+  mode: 'stages',
+  maxPlayers: STAGE_TEAM_SIZE,
+  minPlayers: 1,
+  countdownMs: 60_000,
+  resultsMs: 6_000,
+  outsiders: 0,
+  // The stage's own clock applies; see `createGame` with a `stageId`.
+  roundTimerMs: 0,
+  closingWalls: true,
+  dropItems: false,
+  winnerStays: 0,
+  bots: 0,
+  botsFillTo: 0,
   idleMs: 30_000,
 };
 
@@ -312,6 +365,26 @@ export interface LobbySnapshot {
   watchers: Watchers;
   /** Players of this round who leave when it ends: they are not put back in line. */
   leavingAfter?: string[];
+  /** The stages room: which stage is next, who picks it, and how everyone stands. `null` in a versus room. */
+  stage?: StageLobby | null;
+}
+
+/** The stages room's state beyond the queue, for the page. */
+export interface StageLobby {
+  /** The stage the next round plays: the host's pick among `choices`. */
+  id: string;
+  /**
+   * First in line — or first of the round being played: picks the stage and
+   * may start the round before the countdown ends. `null` with nobody in line.
+   */
+  hostId: string | null;
+  /** The stages the host may pick: open or cleared, in play order. */
+  choices: string[];
+  /**
+   * How far each player in line or in the round is in the campaign: lives,
+   * the run's points, the kit they bring.
+   */
+  progress: Record<string, CampaignProgress>;
 }
 
 export interface Champion {
@@ -359,6 +432,8 @@ export interface PlayerProfile extends RankingEntry {
   returning: boolean;
   /** 1-based place in the ranking, `null` before the first win. */
   rank: number | null;
+  /** How far they are in the campaign, played online; absent until they play a stage. */
+  campaign?: CampaignProgress;
 }
 
 /** The server simulates at 60 Hz and sends every third tick: 20 frames a second. */
@@ -391,7 +466,11 @@ export type ServerErrorCode =
   /** Too many guests from the same address are already queued or playing. */
   | 'guest-limit'
   /** Out of the round and the line: no input for the room's `idleMs`. */
-  | 'idle';
+  | 'idle'
+  /** Only the host — first in line — picks the stage or starts the round early. */
+  | 'not-host'
+  /** The host asked for a stage they have not opened yet. */
+  | 'stage-locked';
 
 /** A player's name on the ranking, in characters (an emoji is one). */
 export const PLAYER_NAME_LENGTH = { min: 2, max: 20 } as const;
@@ -439,7 +518,11 @@ export type ChatEvent =
   | { type: 'round-draw' }
   | { type: 'outsider-entered'; name: string }
   /** Sent no input for the room's `idleMs`: out of the round and the line. */
-  | { type: 'idle-out'; name: string };
+  | { type: 'idle-out'; name: string }
+  /** The team got through stage `code` (as players read it: `1-3`). */
+  | { type: 'stage-cleared'; code: string }
+  /** Nobody got through stage `code`. */
+  | { type: 'stage-failed'; code: string };
 
 export interface ChatMessage {
   /** Grows with each message of the room; an admin removes one by it. */
@@ -475,6 +558,10 @@ export const CLIENT_MESSAGE = {
   guest: 'guest',
   joinQueue: 'queue:join',
   leaveQueue: 'queue:leave',
+  /** The host starts the round now, with whoever is in line, instead of waiting the countdown out. */
+  startNow: 'queue:start',
+  /** The host picks the stage the next round plays (stages room). */
+  pickStage: 'stage:pick',
   /**
    * A player of the round in progress asks to leave when it ends — or, with
    * `leave: false`, changes their mind. The round itself is played out.
@@ -536,6 +623,11 @@ export interface GuestIdentity {
 
 export interface JoinQueueMessage {
   characterId: CharacterId;
+  /**
+   * Stages room: the campaign as this browser has it. The server only uses
+   * it for a guest, or for an account it has no campaign for yet.
+   */
+  campaign?: CampaignProgress;
 }
 
 export interface InputMessage {
@@ -593,11 +685,25 @@ export function parseHello(value: unknown): HelloMessage | null {
 export function parseJoinQueue(value: unknown): JoinQueueMessage {
   const id = isRecord(value) ? value['characterId'] : undefined;
   const known = CHARACTERS.find((c) => c.id === id);
-  return { characterId: known?.id ?? DEFAULT_CHARACTER_ID };
+  const campaign = isRecord(value) ? value['campaign'] : undefined;
+  return {
+    characterId: known?.id ?? DEFAULT_CHARACTER_ID,
+    ...(campaign !== undefined ? { campaign: sanitizeProgress(campaign) } : {}),
+  };
 }
 
 export interface LeaveAfterRoundMessage {
   leave: boolean;
+}
+
+export interface PickStageMessage {
+  stageId: string;
+}
+
+/** A known stage id; whether the host may play it is the room's call. */
+export function parsePickStage(value: unknown): PickStageMessage | null {
+  const stageId = isRecord(value) ? value['stageId'] : undefined;
+  return typeof stageId === 'string' && isStageId(stageId) ? { stageId } : null;
 }
 
 /** Anything but an explicit `leave: false` asks to leave. */

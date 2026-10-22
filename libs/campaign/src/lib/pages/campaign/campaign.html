@@ -163,6 +163,17 @@
         >
           {{ 'CAMPAIGN.PLAY' | translate: { code: s.code } }}
         </a>
+        <!-- The stages room: the same stages with friends, online. The page
+             lives in the online feature; the app composes them by URL. -->
+        <a
+          routerLink="/online/stages"
+          libButton
+          variant="secondary"
+          [block]="true"
+          data-testid="campaign-play-together"
+        >
+          {{ 'CAMPAIGN.PLAY_TOGETHER' | translate }}
+        </a>
         } @else {
         <button
           type="button"

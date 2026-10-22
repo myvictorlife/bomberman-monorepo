@@ -14,6 +14,7 @@ import {
   CHARGE_SPEED,
   EXIT_BOMB_SPAWN,
   isExitRevealed,
+  EXIT_GRACE_TICKS,
   kitsAfterStage,
   SLIME_TICKS,
   TIME_BONUS_PER_SECOND,
@@ -436,6 +437,80 @@ describe('playing as a team', () => {
       START_KIT,
       START_KIT,
     ]);
+  });
+
+  it('keeps the gate open a moment after the first one is through, then leaves the rest behind', () => {
+    const state = duo();
+    const [p1, p2] = state.players;
+    if (!p1 || !p2) throw new Error('two players');
+    p2.maxBombs = 5;
+    const { exit } = stageOf(state);
+    Object.assign(p1, { x: exit.col, y: exit.row });
+    // P2 stands clear of the gate and of any creature.
+    Object.assign(p2, { x: 1, y: 1 });
+
+    tick(state, {});
+    expect(stageOf(state).exited).toEqual(['p1']);
+    expect(stageOf(state).result).toBeNull();
+    expect(stageOf(state).exitClosesAtTick).toBe(1 + EXIT_GRACE_TICKS);
+
+    run(state, EXIT_GRACE_TICKS - 1);
+    expect(stageOf(state).result).toBeNull();
+    expect(p2.alive).toBe(true);
+
+    tick(state, {});
+    expect(stageOf(state).result).toBe('cleared');
+    expect(p2.alive).toBe(false);
+    expect(state.events).toContainEqual({
+      type: 'player-left-behind',
+      playerId: 'p2',
+    });
+    expect(kitsAfterStage(state)?.['p2']).toEqual(START_KIT);
+  });
+
+  it('lets the second one through the gate within the grace, kit and all', () => {
+    const state = duo();
+    const [p1, p2] = state.players;
+    if (!p1 || !p2) throw new Error('two players');
+    p2.maxBombs = 5;
+    const { exit } = stageOf(state);
+    Object.assign(p1, { x: exit.col, y: exit.row });
+    Object.assign(p2, { x: 1, y: 1 });
+    tick(state, {});
+
+    Object.assign(p2, { x: exit.col, y: exit.row });
+    tick(state, {});
+
+    expect(stageOf(state).exited).toEqual(['p1', 'p2']);
+    expect(stageOf(state).result).toBe('cleared');
+    expect(kitsAfterStage(state)?.['p2']?.maxBombs).toBe(5);
+  });
+
+  it("does not burn a teammate with one's flame, but one's own bomb still hurts", () => {
+    const state = duo();
+    const [p1, p2] = state.players;
+    if (!p1 || !p2) throw new Error('two players');
+    Object.assign(p1, { x: 1, y: 1 });
+    Object.assign(p2, { x: 2, y: 1 });
+    state.flames.push({
+      col: 2,
+      row: 1,
+      shape: 'center',
+      ticksLeft: 10,
+      ownerId: 'p1',
+    });
+    state.flames.push({
+      col: 1,
+      row: 1,
+      shape: 'center',
+      ticksLeft: 10,
+      ownerId: 'p1',
+    });
+
+    tick(state, {});
+
+    expect(p2.alive).toBe(true);
+    expect(p1.alive).toBe(false);
   });
 });
 

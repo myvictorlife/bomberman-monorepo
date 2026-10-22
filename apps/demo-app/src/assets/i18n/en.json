@@ -913,7 +913,9 @@
       "chat-muted": "An admin silenced you in the chat.",
       "name-taken": "That name is taken. Pick another.",
       "guest-limit": "Too many guests from your connection are already playing. Sign in to join.",
-      "idle": "You were taken out of the round for standing still too long. Join the queue to play again."
+      "idle": "You were taken out of the round for standing still too long. Join the queue to play again.",
+      "not-host": "Only the first in line picks the stage and starts.",
+      "stage-locked": "That stage isn’t open for you yet."
     },
     "PLAYERS": {
       "TITLE": "In the arena",
@@ -943,7 +945,9 @@
         "outsider-entered": "💣 {{name}} got in from the border",
         "champion-stays": "👑 {{name}} won and stays: {{streak}} in a row",
         "champion-limit": "🏆 {{name}} won {{streak}} in a row, the most the room allows: to the back of the line",
-        "idle-out": "💤 {{name}} left the round by standing still"
+        "idle-out": "💤 {{name}} left the round by standing still",
+        "stage-cleared": "🚪 The team cleared stage {{code}}",
+        "stage-failed": "💥 The team lost stage {{code}}"
       },
       "BLOCKED": {
         "sign-in": "Sign in to write in the chat. Anyone can react.",
@@ -951,6 +955,22 @@
         "offline": "The chat is back once the room reconnects."
       },
       "BACK_TO_GAME": "Esc, or a click on the arena, hands the keys back to the game."
+    },
+    "STAGES": {
+      "TITLE": "Stages together",
+      "LEAD": "The campaign as a team of up to {{max}}: get in line, and the first in line picks the stage and starts — at once, or after waiting for friends. No friendly fire. Clear it and the team goes on to the next one.",
+      "TEAM_STAGE": "The team’s stage",
+      "PICK": "Stage",
+      "START_NOW": "Start now",
+      "START_HINT": "Or wait: the stage starts on its own when the countdown ends, or when the team is full.",
+      "YOU_HOST": "You pick the stage. Get in line to start.",
+      "HOST": "{{name}} picks the stage and starts.",
+      "HOST_TAG": "Picks the stage",
+      "EMPTY": "Nobody in line. Get in and you pick the stage.",
+      "WAITING_HINT": "Get in line: one person is enough to play.",
+      "COUNTDOWN_HINT": "{{n}} of {{max}} in the team · the first in line can start now",
+      "NEXT": "The team stays together for the next stage.",
+      "GATE_CLOSES": "gate shuts in {{s}}s"
     }
   },
   "PODIUM": {
@@ -1019,7 +1039,8 @@
       "FAILED": "Could not sign in right now. Try again.",
       "VERIFY": "Confirm your e-mail to play: open the link we sent you.",
       "VERIFY_LINK": "See my account"
-    }
+    },
+    "PLAY_TOGETHER": "Play with friends online"
   },
   "COLLECTION": {
     "TITLE": "Collection",

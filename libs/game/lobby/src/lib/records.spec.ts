@@ -4,6 +4,7 @@ import {
   PlayerRecord,
   ranking,
   recordRound,
+  recordStage,
   recordVisit,
   toProfile,
   updateProfile,
@@ -262,5 +263,32 @@ describe('toProfile', () => {
     expect(toProfile(record('b', 0, 0), [])).toMatchObject({
       nameChosen: false,
     });
+  });
+});
+
+describe('the campaign on the record', () => {
+  const base = {
+    id: 'a',
+    name: 'Ana',
+    wins: 0,
+    matches: 0,
+    visits: 1,
+    firstSeenAt: 0,
+    lastSeenAt: 0,
+  };
+
+  it('keeps the campaign a stage left, cleaned, and shows it on the profile', () => {
+    const record = recordStage(
+      base,
+      { cleared: ['gramado-1', 'nowhere'], lives: 2 },
+      50,
+    );
+
+    expect(record.campaign).toEqual({ cleared: ['gramado-1'], lives: 2 });
+    expect(record.lastSeenAt).toBe(50);
+    expect(toProfile(record, [record]).campaign?.cleared).toEqual([
+      'gramado-1',
+    ]);
+    expect(toProfile(base, [base]).campaign).toBeUndefined();
   });
 });

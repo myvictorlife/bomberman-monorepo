@@ -294,6 +294,8 @@ export type GameEvent =
   /** Stage mode: the last creature fell — the gate is open. */
   | { type: 'exit-opened'; col: number; row: number }
   | { type: 'player-exited'; playerId: string }
+  /** The gate shut with this player still inside: out of the stage, nothing kept. */
+  | { type: 'player-left-behind'; playerId: string }
   | { type: 'stage-over'; result: StageResult }
   /** The boss went underground; then the ground cracked where it will come up. */
   /** The skull: a curse fell on a player, or passed from one to another. */
@@ -403,6 +405,12 @@ export interface StageRun {
   slime: { col: number; row: number; untilTick: number }[];
   /** A flame on the gate brings creatures out once per flame. */
   exitHurtUntilTick: number;
+  /**
+   * When the gate shuts: {@link EXIT_GRACE_TICKS} after the first player went
+   * through it. Whoever is still inside then is left behind — out of the
+   * stage, kit lost — and the stage is decided. `null` until someone is through.
+   */
+  exitClosesAtTick: number | null;
 }
 
 export type GamePhase = 'playing' | 'over';

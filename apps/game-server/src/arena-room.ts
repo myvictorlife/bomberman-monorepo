@@ -6,9 +6,12 @@ import {
   eliminatePlayer,
   GameEvent,
   GameState,
+  kitsAfterStage,
   MAPS,
   PlayerInput,
   removeOutsider,
+  stageCode,
+  START_KIT,
   tick,
   TICK_RATE,
 } from '@libs/game-core';
@@ -16,12 +19,15 @@ import {
   Chat,
   isBotId,
   Lobby,
+  mergeProgress,
   nameKey,
   PlayerRecord,
   ranking,
   recordRound,
+  recordStage,
   recordVisit,
   RoundOutcome,
+  StageOutcome,
   toProfile,
 } from '@libs/game-lobby';
 import {
@@ -42,10 +48,12 @@ import {
   parseInput,
   parseJoinQueue,
   parseLeaveAfterRound,
+  parsePickStage,
   parseReaction,
   parseRules,
   RECONNECT_GRACE_MS,
   RoomRules,
+  Seat,
   SERVER_MESSAGE,
   ServerErrorCode,
   Watchers,
@@ -205,6 +213,12 @@ export function createArenaRoom(deps: ArenaRoomDeps) {
       );
       this.onMessage(CLIENT_MESSAGE.leaveAfterRound, (client, message) =>
         this.leaveAfterRound(client, message),
+      );
+      this.onMessage(CLIENT_MESSAGE.startNow, (client) =>
+        this.startNow(client),
+      );
+      this.onMessage(CLIENT_MESSAGE.pickStage, (client, message) =>
+        this.pickStage(client, message),
       );
       this.onMessage(CLIENT_MESSAGE.input, (client, message) =>
         this.input(client, message),
@@ -546,15 +560,22 @@ export function createArenaRoom(deps: ArenaRoomDeps) {
       if (guest && this.placesHeldFrom(guest) >= GUESTS_PER_ADDRESS)
         return this.fail(client, 'guest-limit');
 
-      const { characterId } = parseJoinQueue(message);
+      const { characterId, campaign } = parseJoinQueue(message);
       // The colour is the profile's, never the message's: it is the server's record.
-      const color = account && deps.records.get(account.id)?.color;
-      const result = this.lobby.join({
-        id: player.id,
-        name: player.name,
-        characterId,
-        ...(color ? { color } : {}),
-      });
+      const record = account && deps.records.get(account.id);
+      const color = record?.color;
+      // Stages room: the record's campaign, with the stages the browser
+      // cleared alone added; for a guest, what the browser brought.
+      const progress = mergeProgress(record?.campaign, campaign);
+      const result = this.lobby.join(
+        {
+          id: player.id,
+          name: player.name,
+          characterId,
+          ...(color ? { color } : {}),
+        },
+        progress,
+      );
       if (result !== 'queued') return this.fail(client, result);
       this.refreshLobby();
     }
@@ -565,6 +586,27 @@ export function createArenaRoom(deps: ArenaRoomDeps) {
       if (!account || this.lobby.isPlaying(account.id)) return;
       this.lobby.leave(account.id);
       this.refreshLobby();
+    }
+
+    /** Stages room: the host starts the round now, with whoever is in line. */
+    startNow(client: Client): void {
+      const player = this.player(client);
+      if (!player) return this.fail(client, 'auth-required');
+      const result = this.lobby.startNow(player.id, now());
+      if (result === 'not-host') return this.fail(client, 'not-host');
+      if (result === 'ok') this.refreshLobby();
+    }
+
+    /** Stages room: the host picks the stage of the next round. */
+    pickStage(client: Client, message: unknown): void {
+      const player = this.player(client);
+      if (!player) return this.fail(client, 'auth-required');
+      const pick = parsePickStage(message);
+      if (!pick) return this.fail(client, 'bad-message');
+      const result = this.lobby.pickStage(player.id, pick.stageId);
+      if (result === 'ok') this.refreshLobby();
+      else if (result === 'not-host' || result === 'stage-locked')
+        this.fail(client, result);
     }
 
     /** A player of the round plays it out, then is not put back in line. */
@@ -700,22 +742,26 @@ export function createArenaRoom(deps: ArenaRoomDeps) {
         const startedAt = now();
         for (const seat of start.players)
           if (!seat.bot) this.lastInputAt.set(seat.id, startedAt);
-        this.game = createGame({
-          seed,
-          mapId: MAPS[Math.floor(random() * MAPS.length)]?.id,
-          players: start.players.map(({ id, name, characterId, color }) => ({
-            id,
-            name,
-            characterId,
-            color,
-          })),
-          roundTicks:
-            rules.roundTimerMs > 0
-              ? Math.round((rules.roundTimerMs / 1000) * TICK_RATE)
-              : null,
-          closingWalls: rules.closingWalls,
-          dropItems: rules.dropItems,
-        });
+        this.game = start.stageId
+          ? this.createStage(start.stageId, start.players, seed)
+          : createGame({
+              seed,
+              mapId: MAPS[Math.floor(random() * MAPS.length)]?.id,
+              players: start.players.map(
+                ({ id, name, characterId, color }) => ({
+                  id,
+                  name,
+                  characterId,
+                  color,
+                }),
+              ),
+              roundTicks:
+                rules.roundTimerMs > 0
+                  ? Math.round((rules.roundTimerMs / 1000) * TICK_RATE)
+                  : null,
+              closingWalls: rules.closingWalls,
+              dropItems: rules.dropItems,
+            });
         this.heldInputs.clear();
         this.pendingEvents = [];
       }
@@ -738,7 +784,76 @@ export function createArenaRoom(deps: ArenaRoomDeps) {
       }
     }
 
+    /**
+     * Stages room: the stage the host picked, each player with the kit their
+     * campaign carries; the stage's own clock, no border, no bots.
+     */
+    private createStage(
+      stageId: string,
+      seats: Seat[],
+      seed: number,
+    ): GameState {
+      return createGame({
+        seed,
+        stageId,
+        players: seats.map(({ id, name, characterId, color }) => {
+          const kit = this.lobby.progressOf(id)?.kit;
+          return {
+            id,
+            name,
+            characterId,
+            ...(color ? { color } : {}),
+            ...(kit ? { kit } : {}),
+          };
+        }),
+      });
+    }
+
+    /**
+     * Stages room: the stage is decided. Each player's campaign moves on —
+     * kept on the account's record — and the chat says how it went.
+     */
+    private endStage(game: GameState): void {
+      const run = game.stage;
+      const result = run?.result ?? 'failed';
+      const kits = kitsAfterStage(game) ?? {};
+      const outcomes: Record<string, StageOutcome> = {};
+      for (const player of game.players)
+        outcomes[player.id] = {
+          kit: kits[player.id] ?? START_KIT,
+          tally: {
+            score: run?.score[player.id] ?? 0,
+            livesGained: run?.livesGained[player.id] ?? 0,
+          },
+        };
+      const changed = this.lobby.finishStage(result, outcomes, now());
+      const at = now();
+      const saved = new Set<string>();
+      for (const [id, progress] of changed) {
+        const record = deps.records.get(id);
+        if (!record) continue;
+        deps.records.put(recordStage(record, progress, at));
+        saved.add(id);
+      }
+      const code = stageCode(run?.stageId ?? '');
+      this.announce({
+        type: result === 'cleared' ? 'stage-cleared' : 'stage-failed',
+        code,
+      });
+      for (const client of this.clients) {
+        const account = this.accounts.get(client.sessionId);
+        const record = account && deps.records.get(account.id);
+        if (record && saved.has(record.id))
+          client.send(
+            SERVER_MESSAGE.profile,
+            toProfile(record, deps.records.all().values()),
+          );
+      }
+      this.refreshLobby();
+    }
+
     private endRound(game: GameState): void {
+      if (game.stage) return this.endStage(game);
       // Bots and guests have no record, so only accounts are counted, and only
       // in a round with enough of them.
       const people = this.lobby.people();

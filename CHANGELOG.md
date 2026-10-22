@@ -18,6 +18,19 @@ config file. Ordinary app-level additions are minor.
   blazer over a team-coloured tee, a headset round her neck, a badge, a
   laptop under one arm and a tall glass mug of coffee. Drawn by the same
   cartoon painter as the rest of the cast, in every facing and pose.
+- **Stages together, online.** A second public room on the game server,
+  `/online/stages`, plays the campaign's stages as a team of up to four.
+  The first in line hosts: picks the stage among those their campaign has
+  open, and either waits for friends or presses "Start now". No friendly
+  fire, no bots, no ranking. Clear a stage and the team stays together for
+  the next one; lose it and everyone loses a life. Each account's campaign
+  is kept on its server record, merged with what the browser cleared alone,
+  and written back to the browser. The campaign page links to it ("Play
+  with friends online").
+- **The gate waits for the team.** In a stage, the gate stays open five
+  seconds after the first player goes through, then shuts; whoever is still
+  inside is left behind without their kit. A teammate's flame no longer
+  hurts in a stage.
 - **Game feel.** A blast holds the arena for two frames and flashes white
   for its first instant (a fifth flame frame); a crate's chips fly out,
   drop and bounce on the floor; a bomb pulses harder and faster as the fuse

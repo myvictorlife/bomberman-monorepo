@@ -913,7 +913,9 @@
       "chat-muted": "Um admin silenciou você no chat.",
       "name-taken": "Esse nome já está em uso. Escolha outro.",
       "guest-limit": "Já há convidados demais jogando da sua conexão. Entre na sua conta para jogar.",
-      "idle": "Você saiu da rodada por ficar parado tempo demais. Entre na fila para jogar de novo."
+      "idle": "Você saiu da rodada por ficar parado tempo demais. Entre na fila para jogar de novo.",
+      "not-host": "Só o primeiro da fila escolhe a fase e começa.",
+      "stage-locked": "Essa fase ainda não está aberta para você."
     },
     "PLAYERS": {
       "TITLE": "Na arena",
@@ -943,7 +945,9 @@
         "outsider-entered": "💣 {{name}} entrou jogando de fora",
         "champion-stays": "👑 {{name}} venceu e continua: {{streak}} seguidas",
         "champion-limit": "🏆 {{name}} venceu {{streak}} seguidas, o máximo da sala: vai para o fim da fila",
-        "idle-out": "💤 {{name}} saiu da rodada por inatividade"
+        "idle-out": "💤 {{name}} saiu da rodada por inatividade",
+        "stage-cleared": "🚪 A equipa passou a fase {{code}}",
+        "stage-failed": "💥 A equipa perdeu a fase {{code}}"
       },
       "BLOCKED": {
         "sign-in": "Entre na sua conta para escrever no chat. Qualquer um pode reagir.",
@@ -951,6 +955,22 @@
         "offline": "O chat volta quando a sala reconectar."
       },
       "BACK_TO_GAME": "Esc, ou um clique na arena, devolve as teclas ao jogo."
+    },
+    "STAGES": {
+      "TITLE": "Fases em equipa",
+      "LEAD": "A campanha em equipa de até {{max}}: entre na fila, e o primeiro da fila escolhe a fase e começa — na hora, ou depois de esperar os amigos. Sem fogo amigo. Passou, a equipa segue para a próxima.",
+      "TEAM_STAGE": "A fase da equipa",
+      "PICK": "Fase",
+      "START_NOW": "Começar agora",
+      "START_HINT": "Ou espere: a fase começa sozinha quando a contagem acabar, ou quando a equipa estiver completa.",
+      "YOU_HOST": "Você escolhe a fase. Entre na fila para começar.",
+      "HOST": "{{name}} escolhe a fase e começa.",
+      "HOST_TAG": "Escolhe a fase",
+      "EMPTY": "Ninguém na fila. Entre e você escolhe a fase.",
+      "WAITING_HINT": "Entre na fila: uma pessoa já basta para jogar.",
+      "COUNTDOWN_HINT": "{{n}} de {{max}} na equipa · o primeiro da fila pode começar agora",
+      "NEXT": "A equipa segue junta para a próxima fase.",
+      "GATE_CLOSES": "portão fecha em {{s}}s"
     }
   },
   "PODIUM": {
@@ -1019,7 +1039,8 @@
       "FAILED": "Não deu para entrar agora. Tente de novo.",
       "VERIFY": "Confirme o seu e-mail para jogar: abra o link que enviamos.",
       "VERIFY_LINK": "Ver minha conta"
-    }
+    },
+    "PLAY_TOGETHER": "Jogar com amigos online"
   },
   "COLLECTION": {
     "TITLE": "Coleção",

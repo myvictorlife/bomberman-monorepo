@@ -1,4 +1,10 @@
-import { CHARACTERS, DEFAULT_CHARACTER_ID } from '@libs/game-core';
+import {
+  CampaignProgress,
+  CHARACTERS,
+  DEFAULT_CHARACTER_ID,
+  EMPTY_PROGRESS,
+  StageResult,
+} from '@libs/game-core';
 import {
   botsFor,
   Champion,
@@ -8,8 +14,26 @@ import {
   peopleNeeded,
   RoomRules,
   Seat,
+  StageLobby,
   Watchers,
 } from '@libs/game-protocol';
+import {
+  currentStage,
+  nextStageFor,
+  progressAfterStage,
+  stageChoices,
+  StageOutcome,
+} from './stage-run';
+
+/** Between two stages, the team's countdown: short, since they are all there already. */
+export const STAGE_CONTINUE_MS = 10_000;
+
+/** Why the host's request was refused; `ok` when it went through. */
+export type HostResult =
+  | 'ok'
+  | 'not-host'
+  | 'stage-locked'
+  | 'nothing-to-start';
 
 export type JoinResult = 'queued' | 'already-queued' | 'already-playing';
 
@@ -24,6 +48,8 @@ export interface RoundOutcome {
 /** What the room has to do after {@link Lobby.update}: start a round with these seats. */
 export interface StartRound {
   players: Seat[];
+  /** Stages room: the stage this round plays. */
+  stageId?: string;
 }
 
 /** A bot's id. Account ids are Firebase uids, so they never look like this. */
@@ -113,6 +139,16 @@ export class Lobby {
   private pendingRules: RoomRules | null = null;
   /** Rounds started, so each round's bots look a little different. */
   private rounds = 0;
+  /** Stages room: each player's campaign, while they hold a place. */
+  private readonly progress = new Map<string, CampaignProgress>();
+  /** Stages room: what the next round plays — the host's pick. */
+  private stagePick: string | null = null;
+  /** Whose pick `stagePick` is: a new host starts from where they are in the campaign. */
+  private pickHost: string | null = null;
+  /** Stages room: the team just finished a stage and goes on together, on a short countdown. */
+  private continuing = false;
+  /** Stages room: the stage of the round being played — fixed when it starts, whoever hosts after. */
+  private roundStage: string | null = null;
 
   /** `random` picks the bots' names; tests pass a fixed one. */
   constructor(
@@ -190,11 +226,119 @@ export class Lobby {
     return true;
   }
 
-  join(seat: Seat): JoinResult {
+  /**
+   * Gets in line. In the stages room `progress` is how far they are in the
+   * campaign — the host's decides which stages the team may play.
+   */
+  join(seat: Seat, progress?: CampaignProgress): JoinResult {
     if (this.isQueued(seat.id)) return 'already-queued';
     if (this.isPlaying(seat.id)) return 'already-playing';
     this.queue.push({ ...seat });
+    if (this.isStages) this.progress.set(seat.id, progress ?? EMPTY_PROGRESS);
     return 'queued';
+  }
+
+  private get isStages(): boolean {
+    return this.rulesValue.mode === 'stages';
+  }
+
+  /** A player's campaign as the room knows it; `undefined` without a place. */
+  progressOf(id: string): CampaignProgress | undefined {
+    return this.progress.get(id);
+  }
+
+  /**
+   * The stages room's host: the first of the round being played (or just
+   * decided), else the first in line. Picks the stage and may start early.
+   */
+  hostId(): string | null {
+    if (this.phaseValue === 'playing' || this.phaseValue === 'results') {
+      const first = this.players.find((s) => !s.bot && !this.gone.has(s.id));
+      if (first) return first.id;
+    }
+    return this.queue[0]?.id ?? null;
+  }
+
+  /** The stage the next round plays: the host's pick, kept among the host's choices. */
+  stageId(): string | null {
+    if (!this.isStages) return null;
+    const host = this.hostId();
+    const progress = (host && this.progress.get(host)) || EMPTY_PROGRESS;
+    const choices = stageChoices(progress);
+    if (
+      host !== this.pickHost ||
+      !this.stagePick ||
+      !choices.includes(this.stagePick)
+    )
+      this.stagePick = currentStage(progress);
+    this.pickHost = host;
+    return this.stagePick;
+  }
+
+  /** The host picks the stage of the next round, among those they have open. */
+  pickStage(id: string, stageId: string): HostResult {
+    if (!this.isStages || id !== this.hostId()) return 'not-host';
+    if (this.phaseValue === 'playing') return 'not-host';
+    const progress = this.progress.get(id) ?? EMPTY_PROGRESS;
+    if (!stageChoices(progress).includes(stageId)) return 'stage-locked';
+    this.stagePick = stageId;
+    this.pickHost = id;
+    return 'ok';
+  }
+
+  /**
+   * The host starts the round now with whoever is in line, rather than
+   * waiting the countdown out. Call {@link update} after it: the round
+   * starts there.
+   */
+  startNow(id: string, now: number): HostResult {
+    if (!this.isStages || id !== this.hostId() || !this.isQueued(id))
+      return 'not-host';
+    if (this.phaseValue !== 'waiting' && this.phaseValue !== 'countdown')
+      return 'nothing-to-start';
+    if (this.queue.length < peopleNeeded(this.rules)) return 'nothing-to-start';
+    this.phaseValue = 'countdown';
+    this.countdownEndsAt = now;
+    return 'ok';
+  }
+
+  /**
+   * The stage is over. Each player's campaign moves on — cleared, it counts
+   * for everyone who played it; lost, it costs each a life — and the next
+   * stage is the host's next. Returns the players' new progress, by id, for
+   * the room to keep.
+   */
+  finishStage(
+    result: StageResult,
+    outcomes: Record<string, StageOutcome>,
+    now: number,
+  ): Map<string, CampaignProgress> {
+    const changed = new Map<string, CampaignProgress>();
+    if (this.phaseValue !== 'playing' || !this.isStages) return changed;
+    const stageId = this.roundStage ?? this.stageId() ?? '';
+    const host = this.hostId();
+    let hostGameOver = false;
+    for (const seat of this.players) {
+      const outcome = outcomes[seat.id];
+      if (seat.bot || !outcome) continue;
+      const next = progressAfterStage(
+        this.progress.get(seat.id),
+        stageId,
+        result,
+        outcome,
+      );
+      this.progress.set(seat.id, next.progress);
+      changed.set(seat.id, next.progress);
+      if (seat.id === host) hostGameOver = next.gameOver;
+    }
+    const hostProgress = (host && this.progress.get(host)) || EMPTY_PROGRESS;
+    this.stagePick = nextStageFor(hostProgress, stageId, result, hostGameOver);
+    this.pickHost = host;
+    this.phaseValue = 'results';
+    this.resultsEndsAt = now + this.rules.resultsMs;
+    this.winnerId = null;
+    this.championValue = null;
+    return changed;
   }
 
   /**
@@ -225,6 +369,7 @@ export class Lobby {
     this.queue = this.queue.filter((s) => s.id !== id);
     if (this.championValue?.id === id) this.championValue = null;
     if (this.players.some((s) => s.id === id)) this.gone.add(id);
+    else this.progress.delete(id);
   }
 
   /**
@@ -279,8 +424,13 @@ export class Lobby {
     const enough = this.enoughToPlay(watched);
     if (this.phaseValue === 'waiting' && enough) {
       this.phaseValue = 'countdown';
-      this.countdownEndsAt = now + this.rules.countdownMs;
+      // A team that just finished a stage goes on together, soon.
+      const wait = this.continuing
+        ? Math.min(this.rules.countdownMs, STAGE_CONTINUE_MS)
+        : this.rules.countdownMs;
+      this.countdownEndsAt = now + wait;
     }
+    this.continuing = false;
 
     if (this.phaseValue === 'countdown') {
       if (!enough) {
@@ -311,6 +461,28 @@ export class Lobby {
       nextRules: this.pendingRules ? { ...this.pendingRules } : null,
       watchers: { names: [...watchers.names], anonymous: watchers.anonymous },
       leavingAfter: [...this.leavingAfter],
+      stage: this.stageSnapshot(),
+    };
+  }
+
+  private stageSnapshot(): StageLobby | null {
+    const pick = this.stageId();
+    // During the round, the stage on screen; otherwise the next one.
+    const id =
+      this.phaseValue === 'playing' && this.roundStage ? this.roundStage : pick;
+    if (id === null) return null;
+    const hostId = this.hostId();
+    const progress: Record<string, CampaignProgress> = {};
+    for (const seat of [...this.players, ...this.queue])
+      if (!seat.bot && this.progress.has(seat.id))
+        progress[seat.id] = this.progress.get(seat.id) as CampaignProgress;
+    return {
+      id,
+      hostId,
+      choices: stageChoices(
+        (hostId && this.progress.get(hostId)) || EMPTY_PROGRESS,
+      ),
+      progress,
     };
   }
 
@@ -326,6 +498,9 @@ export class Lobby {
   }
 
   private startRound(): StartRound {
+    // The host's pick, read while the host is still first in line.
+    const stageId = this.stageId();
+    this.roundStage = stageId;
     const people = this.queue.splice(0, this.rules.maxPlayers);
     this.players = [...people, ...this.bots(people)];
     this.rounds++;
@@ -334,7 +509,10 @@ export class Lobby {
     this.phaseValue = 'playing';
     this.countdownEndsAt = null;
     this.winnerId = null;
-    return { players: this.players.map((s) => ({ ...s })) };
+    return {
+      players: this.players.map((s) => ({ ...s })),
+      ...(stageId ? { stageId } : {}),
+    };
   }
 
   /**
@@ -380,6 +558,7 @@ export class Lobby {
   }
 
   private requeuePlayers(): void {
+    if (this.isStages) return this.requeueTeam();
     const place = (id: string) => {
       if (id === this.winnerId) return -1;
       const index = this.standings.indexOf(id);
@@ -397,6 +576,29 @@ export class Lobby {
     const champion = back.find((s) => s.id === this.championValue?.id);
     if (champion) this.queue.unshift(champion);
     this.queue.push(...back.filter((s) => s !== champion));
+    this.players = [];
+    this.standings = [];
+    this.gone.clear();
+    this.leavingAfter.clear();
+  }
+
+  /**
+   * The stages room: the team stays together at the front of the line, host
+   * first, so it plays the next stage with those already waiting filling the
+   * seats left. Whoever left gives their place — and their progress — up.
+   */
+  private requeueTeam(): void {
+    const team = this.players.filter(
+      (s) =>
+        !s.bot &&
+        !this.gone.has(s.id) &&
+        !this.leavingAfter.has(s.id) &&
+        !this.isQueued(s.id),
+    );
+    for (const seat of this.players)
+      if (!team.includes(seat)) this.progress.delete(seat.id);
+    this.queue.unshift(...team);
+    this.continuing = team.length > 0;
     this.players = [];
     this.standings = [];
     this.gone.clear();

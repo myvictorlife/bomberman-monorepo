@@ -2,6 +2,7 @@ import { RoomRules, Seat } from '@libs/game-protocol';
 import { BOT_NAMES, botId, isBotId, Lobby } from './lobby';
 
 const RULES: RoomRules = {
+  mode: 'versus',
   maxPlayers: 5,
   minPlayers: 2,
   countdownMs: 15_000,

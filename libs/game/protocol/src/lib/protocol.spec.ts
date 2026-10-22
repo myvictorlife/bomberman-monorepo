@@ -12,6 +12,7 @@ import {
   parseInput,
   parseJoinQueue,
   parseLeaveAfterRound,
+  parsePickStage,
   parsePlayerName,
   parseProfileUpdate,
   parseReaction,
@@ -23,6 +24,7 @@ import {
   RULE_FIELDS,
   secondsLeft,
   serverOffset,
+  STAGES_ROOM_RULES,
 } from './protocol';
 
 describe('PUBLIC_ROOM_RULES', () => {
@@ -178,8 +180,11 @@ describe('parseRules', () => {
       if (field.kind === 'boolean') expect(typeof value).toBe('boolean');
       else expect(field.options).toContain(value);
     }
+    // Every rule but the mode, which is what the room is, not a setting.
     expect(RULE_FIELDS.map((f) => f.key).sort()).toEqual(
-      Object.keys(PUBLIC_ROOM_RULES).sort(),
+      Object.keys(PUBLIC_ROOM_RULES)
+        .filter((k) => k !== 'mode')
+        .sort(),
     );
   });
 });
@@ -329,5 +334,36 @@ describe('guests', () => {
     expect(countsForRanking([account('a'), guest(1), guest(2)])).toBe(false);
     expect(countsForRanking([account('a'), bot(1), bot(2)])).toBe(false);
     expect(countsForRanking([guest(1), guest(2)])).toBe(false);
+  });
+});
+
+describe('STAGES_ROOM_RULES', () => {
+  it('plays the campaign as a team of four, starting with one person and no bots', () => {
+    expect(STAGES_ROOM_RULES.mode).toBe('stages');
+    expect(STAGES_ROOM_RULES.maxPlayers).toBe(4);
+    expect(STAGES_ROOM_RULES.minPlayers).toBe(1);
+    expect(STAGES_ROOM_RULES.bots).toBe(0);
+    expect(STAGES_ROOM_RULES.outsiders).toBe(0);
+    expect(STAGES_ROOM_RULES.winnerStays).toBe(0);
+    expect(peopleNeeded(STAGES_ROOM_RULES)).toBe(1);
+  });
+
+  it('keeps the mode through a change of rules: it is not one an admin sets', () => {
+    expect(parseRules({ outsiders: 1 }, STAGES_ROOM_RULES)?.mode).toBe(
+      'stages',
+    );
+    expect(parseRules({ mode: 'versus' }, STAGES_ROOM_RULES)).toBeNull();
+    expect(PUBLIC_ROOM_RULES.mode).toBe('versus');
+  });
+});
+
+describe('parsePickStage', () => {
+  it('accepts a known stage and nothing else', () => {
+    expect(parsePickStage({ stageId: 'gramado-2' })).toEqual({
+      stageId: 'gramado-2',
+    });
+    expect(parsePickStage({ stageId: 'nowhere-9' })).toBeNull();
+    expect(parsePickStage({ stageId: 3 })).toBeNull();
+    expect(parsePickStage(null)).toBeNull();
   });
 });

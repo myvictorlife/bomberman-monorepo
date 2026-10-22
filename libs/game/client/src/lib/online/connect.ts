@@ -53,7 +53,8 @@ async function loadSdk() {
 }
 
 /**
- * Joins the public room — the server creates it and refuses to make another.
+ * Joins a public room — `arena` (versus) unless told `stages` — the server
+ * creates each one and refuses to make another.
  * With a `reconnectionToken` from a dropped connection it asks for that
  * session back first (the place, the identity), and joins afresh if the
  * server no longer holds it. The Colyseus client is imported here,
@@ -62,14 +63,15 @@ async function loadSdk() {
 export async function connectToArena(
   serverUrl: string,
   reconnectionToken?: string,
+  roomName: string = ARENA_ROOM,
 ): Promise<ArenaConnection> {
   const { Client } = await loadSdk();
   const client = new Client(serverUrl);
   const room = reconnectionToken
     ? await client
         .reconnect(reconnectionToken)
-        .catch(() => client.join(ARENA_ROOM))
-    : await client.join(ARENA_ROOM);
+        .catch(() => client.join(roomName))
+    : await client.join(roomName);
   return {
     token: room.reconnectionToken,
     send: (type, payload) => room.send(type, payload),

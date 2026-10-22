@@ -1,6 +1,12 @@
 import { matchMaker, Server } from '@colyseus/core';
 import { WebSocketTransport } from '@colyseus/ws-transport';
-import { ARENA_ROOM, PUBLIC_ROOM_RULES, RoomStatus } from '@libs/game-protocol';
+import {
+  ARENA_ROOM,
+  PUBLIC_ROOM_RULES,
+  RoomStatus,
+  STAGES_ROOM,
+  STAGES_ROOM_RULES,
+} from '@libs/game-protocol';
 import { createServer, IncomingMessage, ServerResponse } from 'node:http';
 import { join } from 'node:path';
 import { createArenaRoom } from './arena-room';
@@ -72,6 +78,12 @@ server.define(
     saveRules: (next) => rulesStore.save(next),
   }),
 );
+// The stages room: a team plays the campaign's stages together. Its rules
+// are fixed (no admin changes are saved for it); the records are shared.
+server.define(
+  STAGES_ROOM,
+  createArenaRoom({ rules: STAGES_ROOM_RULES, verify, records }),
+);
 
 // One public room, created below by the server itself: a client may join it,
 // never make another. Colyseus exposes `create` and `joinOrCreate` by default,
@@ -96,6 +108,7 @@ httpServer.on('request', (req: IncomingMessage, res: ServerResponse) => {
 // The one public room exists from the start, so the first visitor joins it
 // instead of creating it.
 await matchMaker.createRoom(ARENA_ROOM, {});
+await matchMaker.createRoom(STAGES_ROOM, {});
 
 let stopping = false;
 async function shutdown(signal: string): Promise<void> {
@@ -113,7 +126,7 @@ process.once('SIGINT', () => void shutdown('SIGINT'));
 process.once('SIGTERM', () => void shutdown('SIGTERM'));
 
 console.log(
-  `[game-server] ws://${config.host ?? 'localhost'}:${config.port} — room "${ARENA_ROOM}" ready`,
+  `[game-server] ws://${config.host ?? 'localhost'}:${config.port} — rooms "${ARENA_ROOM}" and "${STAGES_ROOM}" ready`,
 );
 console.log(
   `[game-server] rules: ${JSON.stringify(rules)} · admins: ${config.admins.length}`,

@@ -1,4 +1,9 @@
-import { CharacterId, PlayerColorId } from '@libs/game-core';
+import {
+  CampaignProgress,
+  CharacterId,
+  PlayerColorId,
+  sanitizeProgress,
+} from '@libs/game-core';
 import {
   PlayerProfile,
   ProfileUpdate,
@@ -22,6 +27,8 @@ export interface PlayerRecord {
   favoriteCharacterId?: CharacterId;
   /** The colour they asked for; a round may give them the closest free one. */
   color?: PlayerColorId;
+  /** How far they are in the campaign, played in the stages room. */
+  campaign?: CampaignProgress;
 }
 
 /**
@@ -42,6 +49,7 @@ export function cleanRecord(record: PlayerRecord): PlayerRecord {
     nameChosen,
     favoriteCharacterId,
     color,
+    campaign,
   } = record;
   return {
     id,
@@ -55,7 +63,17 @@ export function cleanRecord(record: PlayerRecord): PlayerRecord {
     ...(nameChosen ? { nameChosen } : {}),
     ...(favoriteCharacterId ? { favoriteCharacterId } : {}),
     ...(color ? { color } : {}),
+    ...(campaign ? { campaign: sanitizeProgress(campaign) } : {}),
   };
+}
+
+/** A stage played in the stages room moved the player's campaign on. */
+export function recordStage(
+  record: PlayerRecord,
+  campaign: CampaignProgress,
+  now: number,
+): PlayerRecord {
+  return cleanRecord({ ...record, campaign, lastSeenAt: now });
 }
 
 /** Coming back after this long away counts as a new visit. */
@@ -198,5 +216,6 @@ export function toProfile(
     lastSeenAt: record.lastSeenAt,
     returning: record.visits > 1,
     rank: place === -1 ? null : place + 1,
+    ...(record.campaign ? { campaign: record.campaign } : {}),
   };
 }

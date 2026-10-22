@@ -58,6 +58,8 @@ export interface HudSnapshot {
 export interface HudStage {
   creaturesLeft: number;
   exitOpen: boolean;
+  /** Whole seconds until the gate shuts behind the first one through; `null` while nobody is. */
+  gateClosesIn: number | null;
   result: StageResult | null;
   /** The boss's health, on a boss stage; `null` elsewhere. */
   boss: { hp: number; maxHp: number } | null;
@@ -84,6 +86,15 @@ export function toHud(state: GameState): HudSnapshot {
       ? {
           creaturesLeft: creaturesLeft(state.stage),
           exitOpen: isExitOpen(state.stage),
+          gateClosesIn:
+            state.stage.exitClosesAtTick === null
+              ? null
+              : Math.max(
+                  0,
+                  Math.ceil(
+                    (state.stage.exitClosesAtTick - state.tick) / TICK_RATE,
+                  ),
+                ),
           result: state.stage.result,
           boss: state.stage.boss
             ? { hp: state.stage.boss.hp, maxHp: state.stage.boss.maxHp }
@@ -132,6 +143,7 @@ export function sameHud(a: HudSnapshot | null, b: HudSnapshot): boolean {
   if (
     a.stage?.creaturesLeft !== b.stage?.creaturesLeft ||
     a.stage?.exitOpen !== b.stage?.exitOpen ||
+    a.stage?.gateClosesIn !== b.stage?.gateClosesIn ||
     a.stage?.result !== b.stage?.result ||
     a.stage?.boss?.hp !== b.stage?.boss?.hp ||
     a.stage?.score !== b.stage?.score ||

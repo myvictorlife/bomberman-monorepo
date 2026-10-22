@@ -62,6 +62,11 @@ export const EXIT_REACH = 0.3;
 export const TIME_BONUS_PER_SECOND = 10;
 /** A flame on the uncovered gate brings out this many creatures. */
 export const EXIT_BOMB_SPAWN = 2;
+/**
+ * With a team, the gate stays open this long after the first one is through:
+ * time for the others to reach it with what they picked up. Then it shuts.
+ */
+export const EXIT_GRACE_TICKS = 5 * TICK_RATE;
 /** How long a snail's slime stays on the floor, and slows whoever steps in it. */
 export const SLIME_TICKS = 5 * TICK_RATE;
 export const SLIMED_TICKS = Math.round(1.5 * TICK_RATE);
@@ -188,6 +193,7 @@ export function setUpStage(
     livesGained: {},
     slime: [],
     exitHurtUntilTick: 0,
+    exitClosesAtTick: null,
   };
   // The boss's anthills take the next open cells, away from the middle where it stands.
   if (stage.boss) {
@@ -523,7 +529,21 @@ export function updateStageEnd(state: GameState): void {
         player.moving = false;
         run.exited.push(player.id);
         state.events.push({ type: 'player-exited', playerId: player.id });
+        // The first one through starts the clock on the gate for the rest.
+        run.exitClosesAtTick ??= state.tick + EXIT_GRACE_TICKS;
       }
+    }
+  }
+  // The gate shuts: whoever is still inside is left behind — on a bonus
+  // stage, through with the others, as at the end of its clock.
+  if (run.exitClosesAtTick !== null && state.tick >= run.exitClosesAtTick) {
+    for (const player of state.players) {
+      if (!player.alive) continue;
+      player.alive = false;
+      player.moving = false;
+      if (run.bonus) run.exited.push(player.id);
+      else
+        state.events.push({ type: 'player-left-behind', playerId: player.id });
     }
   }
   // A bonus stage ends when its time is up: whoever is still in it is through.
@@ -562,8 +582,9 @@ export function updateStageEnd(state: GameState): void {
 
 /**
  * What each player takes into the next stage once this one is over. With a
- * team, the stage is cleared as soon as one of them gets through the gate:
- * those who did keep their kit, those who fell come back next stage with the
+ * team, the stage is cleared once one of them gets through the gate and it
+ * shuts {@link EXIT_GRACE_TICKS} later: those who got through keep their
+ * kit, those who fell or were left behind come back next stage with the
  * starting one — dying loses it all. A lost stage (nobody through) leaves
  * everyone with nothing. `null` while the stage is still being played.
  */

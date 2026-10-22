@@ -202,6 +202,7 @@ describe('hud', () => {
     expect(hud.stage).toEqual({
       creaturesLeft: 6,
       exitOpen: false,
+      gateClosesIn: null,
       result: null,
       boss: null,
       score: 0,
