@@ -11,9 +11,19 @@ config file. Ordinary app-level additions are minor.
 
 ## [Unreleased]
 
+### Fixed
+
+- **A bomb set beside someone passing now blocks them.** Whoever merely
+  brushed the bomb's cell when it was set could turn back and walk through
+  it, because everyone overlapping the cell was let through. Now only whoever
+  stands on it (centre in the cell, `standsOn` in `movement.ts`) may walk off
+  it; anyone else walks on but cannot step deeper into the cell. Applies to
+  set, dropped and landing bombs alike. A game-core change: the server and
+  the site must be deployed together.
+
 ### Added
 
-- **A Gestora Cansada joins the crew.** A second IT character (`gestora`),
+- **A Gestora Estressada joins the crew.** A second IT character (`gestora`),
   the software engineer who manages people and books every meeting: slate
   blazer over a team-coloured tee, a headset round her neck, a badge, a
   laptop under one arm and a tall glass mug of coffee. Drawn by the same

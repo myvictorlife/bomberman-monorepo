@@ -1,7 +1,7 @@
 import { tileAt } from './arena';
 import { bonk, headsAt } from './bonk';
 import { BOMB_FLIGHT_TICKS_PER_CELL } from './constants';
-import { DIRECTION_DELTA, overlapsCell } from './movement';
+import { DIRECTION_DELTA, standsOn } from './movement';
 import { Bomb, Direction, Flight, GameState, ThrownBomb } from './types';
 
 /**
@@ -154,7 +154,7 @@ export function landThrownBombs(state: GameState): void {
       fuse: thrown.fuse,
       range: thrown.range,
       passThrough: state.players
-        .filter((p) => p.alive && overlapsCell(p, col, row))
+        .filter((p) => p.alive && standsOn(p, col, row))
         .map((p) => p.id),
       pierce: thrown.pierce,
       remote: thrown.remote,

@@ -47,6 +47,21 @@ export function playerCell(player: Pick<Body, 'x' | 'y'>): [number, number] {
   return [Math.round(player.x), Math.round(player.y)];
 }
 
+/**
+ * Who may walk off a bomb just set on `col, row`: whoever stands on that cell
+ * — their centre in it, as {@link playerCell} counts. Someone merely brushing
+ * its edge on the way past is not on it, and the bomb blocks them like any
+ * other: they walk on, but cannot turn back through it.
+ */
+export function standsOn(
+  player: Pick<Body, 'x' | 'y'>,
+  col: number,
+  row: number,
+): boolean {
+  const [c, r] = playerCell(player);
+  return c === col && r === row;
+}
+
 /** Whether `player`'s 1×1 body overlaps cell `col, row` at all. */
 export function overlapsCell(
   player: Pick<Body, 'x' | 'y'>,
@@ -177,6 +192,11 @@ export function moveBody(
       ) {
         next = entering - 1;
       }
+      // Already brushing a cell that blocks — a bomb set as they passed —
+      // they may not walk deeper into it.
+      const brushing = Math.ceil(current - EPS);
+      if (brushing > current + EPS && blocked(brushing, player[perp]))
+        next = Math.min(next, current);
     } else {
       const entering = Math.floor(next + EPS);
       if (
@@ -185,6 +205,9 @@ export function moveBody(
       ) {
         next = entering + 1;
       }
+      const brushing = Math.floor(current + EPS);
+      if (brushing < current - EPS && blocked(brushing, player[perp]))
+        next = Math.max(next, current);
     }
     player[along] = snap(next);
   }

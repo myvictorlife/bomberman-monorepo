@@ -30,6 +30,7 @@ import {
   DIRECTION_DELTA,
   movePlayer,
   overlapsCell,
+  standsOn,
   playerCell,
 } from './movement';
 import {
@@ -468,7 +469,7 @@ function dropHeldBomb(state: GameState, player: Player): Bomb | null {
   bomb.col = col;
   bomb.row = row;
   bomb.passThrough = state.players
-    .filter((p) => p.alive && overlapsCell(p, col, row))
+    .filter((p) => p.alive && standsOn(p, col, row))
     .map((p) => p.id);
   state.bombs.push(bomb);
   return bomb;
@@ -561,7 +562,7 @@ function placeBombAt(
       : BOMB_FUSE_TICKS,
     range,
     passThrough: state.players
-      .filter((p) => p.alive && overlapsCell(p, col, row))
+      .filter((p) => p.alive && standsOn(p, col, row))
       .map((p) => p.id),
     pierce: player.pierce,
     remote: player.remote,

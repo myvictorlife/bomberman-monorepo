@@ -177,3 +177,37 @@ describe('mount passives', () => {
     expect(isBlockedFor(state, p1, 2, 1)).toBe(true);
   });
 });
+
+describe('a bomb set beside someone passing', () => {
+  // p1 sets a bomb on (3,1) while p2, walking right, is mostly past it, at x 3.8.
+  const setUp = () => {
+    const state = openArena();
+    const p1 = player(state, 'p1');
+    const p2 = player(state, 'p2');
+    p1.x = 3;
+    p1.y = 1;
+    p2.x = 3.8;
+    p2.y = 1;
+    run(state, 1, { p1: input(null, true), p2: input() });
+    return { state, p1, p2 };
+  };
+
+  it('lets the bomber, standing on it, walk off it', () => {
+    const { state, p1 } = setUp();
+    expect(state.bombs).toHaveLength(1);
+    run(state, 30, { p1: input('left') });
+    expect(p1.x).toBeLessThan(2.5);
+  });
+
+  it('does not let the one passing turn back through it', () => {
+    const { state, p2 } = setUp();
+    run(state, 60, { p2: input('left') });
+    expect(p2.x).toBeGreaterThan(3.7);
+  });
+
+  it('still lets the one passing walk on, away from it', () => {
+    const { state, p2 } = setUp();
+    run(state, 30, { p2: input('right') });
+    expect(p2.x).toBeGreaterThan(4.5);
+  });
+});
