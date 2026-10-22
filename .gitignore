@@ -69,3 +69,7 @@ hosting/dist/
 .nx/migrate-runs
 # Game server runtime data (player records)
 .data
+
+# Promo videos and their thumbnails, rendered locally
+/detona-angular-demo*
+*.mp4
