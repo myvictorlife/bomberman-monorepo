@@ -2,6 +2,7 @@ import { computed, inject } from '@angular/core';
 import { ArenaConnection, HudSnapshot } from '@libs/game-client';
 import {
   AdminMessage,
+  ARENA_ROOM,
   CHAT_HISTORY,
   ChatMessage,
   ChatRemovedMessage,
@@ -23,7 +24,7 @@ import {
   ServerErrorCode,
   serverOffset,
 } from '@libs/game-protocol';
-import { CharacterId } from '@libs/game-core';
+import { CampaignProgress, CharacterId } from '@libs/game-core';
 import {
   patchState,
   signalStore,
@@ -72,6 +73,13 @@ export const RECONNECT_MAX_MS = 30_000;
 export const RESTART_RETRY_MS = 2_000;
 /** sessionStorage key for the reconnection token, so a reload gets the same session back. */
 export const SESSION_TOKEN_KEY = 'online.session';
+
+/** The token's key for a room: each room its own, so a reload never lands in the other one. */
+export function sessionTokenKey(roomName: string): string {
+  return roomName === ARENA_ROOM
+    ? SESSION_TOKEN_KEY
+    : `${SESSION_TOKEN_KEY}.${roomName}`;
+}
 
 export function reconnectDelay(attempt: number, random = Math.random): number {
   const base = Math.min(RECONNECT_MAX_MS, RECONNECT_BASE_MS * 2 ** attempt);
@@ -134,12 +142,15 @@ export const OnlineStore = signalStore(
     players: computed(() => lobby()?.players ?? []),
     watchers: computed(() => lobby()?.watchers ?? NO_WATCHERS),
     rules: computed((): RoomRules => lobby()?.rules ?? PUBLIC_ROOM_RULES),
+    /** The stages room's stage, host and team progress; `null` in a versus room. */
+    stage: computed(() => lobby()?.stage ?? null),
     /** Rules an admin set during the round, for the next one; `null` when nothing is pending. */
     nextRules: computed((): RoomRules | null => lobby()?.nextRules ?? null),
   })),
   withMethods((store, connect = inject(ARENA_CONNECTOR)) => {
     let connection: ArenaConnection | null = null;
     let url: string | null = null;
+    let roomName: string = ARENA_ROOM;
     /** Whether the page wants to be connected: drops are retried only while it does. */
     let wanted = false;
     /** The pending retry, between a drop and the next attempt. */
@@ -151,7 +162,8 @@ export const OnlineStore = signalStore(
     const readToken = (): string | undefined => {
       try {
         return (
-          globalThis.sessionStorage?.getItem(SESSION_TOKEN_KEY) ?? undefined
+          globalThis.sessionStorage?.getItem(sessionTokenKey(roomName)) ??
+          undefined
         );
       } catch {
         return undefined;
@@ -159,8 +171,9 @@ export const OnlineStore = signalStore(
     };
     const keepToken = (token: string | undefined): void => {
       try {
-        if (token) globalThis.sessionStorage?.setItem(SESSION_TOKEN_KEY, token);
-        else globalThis.sessionStorage?.removeItem(SESSION_TOKEN_KEY);
+        if (token)
+          globalThis.sessionStorage?.setItem(sessionTokenKey(roomName), token);
+        else globalThis.sessionStorage?.removeItem(sessionTokenKey(roomName));
       } catch {
         // Storage off: a reload is a fresh session, which still works.
       }
@@ -230,7 +243,7 @@ export const OnlineStore = signalStore(
       await previous?.leave().catch(() => undefined);
       try {
         // Back on the same session when the server still holds it; fresh otherwise.
-        const opened = await connect(url, readToken());
+        const opened = await connect(url, readToken(), roomName);
         if (!wanted) {
           // The page left while the socket was opening.
           void opened.leave().catch(() => undefined);
@@ -321,8 +334,13 @@ export const OnlineStore = signalStore(
       markUnavailable(): void {
         patchState(store, { status: 'unavailable' });
       },
-      connect(serverUrl: string): Promise<void> {
+      /** Opens the connection to a room: the versus `arena` unless told otherwise. */
+      connect(serverUrl: string, room: string = ARENA_ROOM): Promise<void> {
         url = serverUrl;
+        // Another room than last time: nothing of the old one stays on screen.
+        if (room !== roomName)
+          patchState(store, { lobby: null, hud: null, ranking: [] });
+        roomName = room;
         return open();
       },
       /** Drops the connection and opens a fresh one — also forgets who was signed in on it. */
@@ -370,9 +388,23 @@ export const OnlineStore = signalStore(
       forgetGuest(): void {
         patchState(store, { guest: null });
       },
-      joinQueue(characterId: CharacterId): void {
+      /** Gets in line; in the stages room with the campaign this browser has. */
+      joinQueue(characterId: CharacterId, campaign?: CampaignProgress): void {
         patchState(store, { serverError: null });
-        send(CLIENT_MESSAGE.joinQueue, { characterId });
+        send(CLIENT_MESSAGE.joinQueue, {
+          characterId,
+          ...(campaign ? { campaign } : {}),
+        });
+      },
+      /** Stages room, host only: start now with whoever is in line. */
+      startNow(): void {
+        patchState(store, { serverError: null });
+        send(CLIENT_MESSAGE.startNow);
+      },
+      /** Stages room, host only: the stage the next round plays. */
+      pickStage(stageId: string): void {
+        patchState(store, { serverError: null });
+        send(CLIENT_MESSAGE.pickStage, { stageId });
       },
       leaveQueue(): void {
         send(CLIENT_MESSAGE.leaveQueue);

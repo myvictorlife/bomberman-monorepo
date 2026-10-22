@@ -16,9 +16,11 @@
   } @case ('signed-out') {
   <lib-card padding="lg" data-testid="profile-signed-out">
     <p class="profile__text">{{ 'PROFILE.SIGNED_OUT' | translate }}</p>
-    <a libButton variant="primary" routerLink="/online">
-      {{ 'PROFILE.SIGN_IN' | translate }}
-    </a>
+    <ng-container [ngTemplateOutlet]="accountPanel" />
+  </lib-card>
+  } @case ('verify') {
+  <lib-card padding="lg" data-testid="profile-verify">
+    <ng-container [ngTemplateOutlet]="accountPanel" />
   </lib-card>
   } @case ('error') {
   <lib-alert
@@ -149,3 +151,21 @@
   </div>
   } }
 </main>
+
+<ng-template #accountPanel>
+  <lib-account-panel
+    [available]="account.available"
+    [ready]="account.ready()"
+    [user]="account.user()"
+    [busy]="account.busy()"
+    [error]="account.error()"
+    [notice]="account.notice()"
+    (signIn)="signIn($event)"
+    (signUp)="signUp($event)"
+    (signInWith)="signInWith($event)"
+    (signOut)="account.signOut()"
+    (resendVerification)="account.resendVerification()"
+    (checkVerification)="account.checkVerification()"
+    (resetPassword)="account.resetPassword($event)"
+  />
+</ng-template>

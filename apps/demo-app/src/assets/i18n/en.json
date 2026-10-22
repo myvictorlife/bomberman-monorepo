@@ -3,7 +3,7 @@
   "BACK": "Back",
   "HEADER": {
     "HOME": "Home",
-    "PLAY": "Play",
+    "PLAY": "Online",
     "START": "Play",
     "MENU_ARIA": "Open menu",
     "DESIGN": "Design system",
@@ -15,7 +15,13 @@
     "ITEMS": "Items",
     "MOUNTS": "Mounts",
     "PROFILE": "Profile",
-    "CAMPAIGN": "Stages"
+    "CAMPAIGN": "Stages",
+    "SIGN_IN": "Sign in",
+    "SIGN_IN_GOOGLE": "Continue with Google",
+    "SIGN_IN_EMAIL": "Sign in with e-mail",
+    "SIGN_OUT": "Sign out",
+    "VERIFY": "Confirm your e-mail",
+    "ACCOUNT_ARIA": "Account of {{name}}"
   },
   "LANGUAGE_SELECT": {
     "TRIGGER_ARIA": "Change language",

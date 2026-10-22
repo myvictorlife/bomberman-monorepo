@@ -242,3 +242,13 @@
   font-size: var(--font-size-base);
   text-align: center;
 }
+
+// Desktop only, like the "play" button it replaces: the mobile menu carries
+// the same choices laid flat.
+.header__account {
+  display: none;
+
+  @media #{bp.$sm} {
+    display: block;
+  }
+}

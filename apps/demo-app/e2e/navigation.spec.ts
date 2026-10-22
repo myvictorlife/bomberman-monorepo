@@ -230,6 +230,20 @@ test.describe('navigation', () => {
     expect(errors).toEqual([]);
   });
 
+  test('lazy-loads the stages room, the same page on another room', async ({
+    page,
+  }) => {
+    const errors: string[] = [];
+    page.on('pageerror', (error) => errors.push(String(error)));
+    await page.goto('/online/stages');
+
+    await expect(page.locator('[data-testid="online-title"]')).toBeVisible();
+    await expect(page.locator('[data-testid="stage-panel"]')).toBeVisible();
+    await expect(page.locator('[data-testid="online-ranking"]')).toHaveCount(0);
+    await expect(page.locator('[data-testid="queue-panel"]')).toBeVisible();
+    expect(errors).toEqual([]);
+  });
+
   test('lazy-loads the settings feature', async ({ page }) => {
     await page.goto('/settings');
 

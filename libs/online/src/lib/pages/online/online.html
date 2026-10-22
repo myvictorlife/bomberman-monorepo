@@ -1,6 +1,14 @@
 <section class="online">
   <header class="online__header">
     <div>
+      @if (stagesMode) {
+      <h1 class="online__title" data-testid="online-title">
+        {{ 'ONLINE.STAGES.TITLE' | translate }}
+      </h1>
+      <p class="online__lead">
+        {{ 'ONLINE.STAGES.LEAD' | translate: { max: maxPlayers() } }}
+      </p>
+      } @else {
       <h1 class="online__title" data-testid="online-title">
         {{ 'ONLINE.TITLE' | translate }}
       </h1>
@@ -8,10 +16,17 @@
         {{ 'ONLINE.LEAD' | translate: { max: maxPlayers(), min: minPlayers() }
         }}
       </p>
+      }
     </div>
+    @if (stagesMode) {
+    <a routerLink="/campaign" libButton size="sm" data-testid="online-map-link"
+      >{{ 'STAGE_PLAY.BACK' | translate }}</a
+    >
+    } @else {
     <a routerLink="/play" libButton size="sm"
       >{{ 'ONLINE.LOCAL' | translate }}</a
     >
+    }
   </header>
 
   @switch (status()) { @case ('unavailable') {
@@ -62,6 +77,20 @@
     [class.online__layout--sideways]="sideways()"
     data-testid="online-layout"
   >
+    @if (stagesMode) {
+    <aside class="online__rank" data-testid="online-stage-card">
+      <lib-stage-panel
+        [stage]="stage()"
+        [phase]="phase()"
+        [queue]="queue()"
+        [players]="players()"
+        [maxPlayers]="maxPlayers()"
+        [myId]="myId()"
+        (pick)="pickStage($event)"
+        (start)="startNow()"
+      />
+    </aside>
+    } @else {
     <aside class="online__rank" data-testid="online-ranking">
       <h2 class="online__card-title">
         {{ 'ONLINE.RANKING.TITLE' | translate }}
@@ -88,6 +117,7 @@
       />
       }
     </aside>
+    }
 
     <div class="online__main">
       <div class="online__screen">
@@ -106,6 +136,25 @@
           } @else if (roundClock(); as time) {
           <p class="online__clock" data-testid="online-clock">
             <span aria-hidden="true">⏱</span> {{ time }}
+          </p>
+          } @if (hudStage(); as s) {
+          <p class="online__chips" data-testid="online-stage-hud">
+            @if (s.boss; as b) {
+            <span class="online__chip">👑 {{ b.hp }}/{{ b.maxHp }}</span>
+            } @else if (!s.bonus) {
+            <span class="online__chip">🐜 {{ s.creaturesLeft }}</span>
+            } @if (s.gateClosesIn !== null) {
+            <span
+              class="online__chip online__chip--alert"
+              data-testid="online-gate-closing"
+              >🚪 {{ 'ONLINE.STAGES.GATE_CLOSES' | translate: { s:
+              s.gateClosesIn } }}</span
+            >
+            } @else if (s.exitOpen) {
+            <span class="online__chip online__chip--open"
+              >🚪 {{ 'STAGE_PLAY.EXIT_OPEN' | translate }}</span
+            >
+            }
           </p>
           }
           <lib-players-panel
@@ -156,8 +205,10 @@
               {{ 'ONLINE.STAGE.COUNTDOWN' | translate: { s: secondsLeft() } }}
             </p>
             <p class="online__small">
-              {{ 'ONLINE.STAGE.COUNTDOWN_HINT' | translate: { n: queue().length,
-              max: maxPlayers() } }}
+              @if (stagesMode) { {{ 'ONLINE.STAGES.COUNTDOWN_HINT' | translate:
+              { n: queue().length, max: maxPlayers() } }} } @else { {{
+              'ONLINE.STAGE.COUNTDOWN_HINT' | translate: { n: queue().length,
+              max: maxPlayers() } }} }
             </p>
           </div>
           } @else if (phase() === 'results') {
@@ -167,11 +218,13 @@
             role="status"
           >
             <p class="online__big">
-              @if (winner(); as w) { {{ 'ONLINE.STAGE.WINNER' | translate: {
-              name: w.name } }} } @else { {{ 'ONLINE.STAGE.DRAW' | translate }}
-              }
+              {{ resultKey() | translate: resultParams() }}
             </p>
-            @if (guestWon()) {
+            @if (stagesMode) {
+            <p class="online__small" data-testid="online-stage-next">
+              {{ 'ONLINE.STAGES.NEXT' | translate }}
+            </p>
+            } @if (guestWon()) {
             <p class="online__small" data-testid="online-guest-won">
               {{ 'ONLINE.STAGE.GUEST_WON' | translate }}
             </p>
@@ -185,8 +238,9 @@
           >
             <p class="online__big">{{ 'ONLINE.STAGE.WAITING' | translate }}</p>
             <p class="online__small">
-              {{ 'ONLINE.STAGE.WAITING_HINT' | translate: { n: queue().length,
-              min: minPlayers() } }}
+              @if (stagesMode) { {{ 'ONLINE.STAGES.WAITING_HINT' | translate }}
+              } @else { {{ 'ONLINE.STAGE.WAITING_HINT' | translate: { n:
+              queue().length, min: minPlayers() } }} }
             </p>
           </div>
           }
@@ -291,6 +345,7 @@
           [leavingAfter]="leavingAfter()"
           [guest]="guestName()"
           [ranked]="ranked()"
+          [versus]="!stagesMode"
           (join)="join()"
           (playAsGuest)="playAsGuest($event)"
           (leave)="leave()"
@@ -329,6 +384,7 @@
         />
       </div>
 
+      @if (!stagesMode) {
       <div class="online__card">
         <lib-rules-panel
           [rules]="rules()"
@@ -337,6 +393,7 @@
           (ruleChange)="setRules($event)"
         />
       </div>
+      }
 
       <div class="online__card" data-testid="online-watchers">
         <h2 class="online__card-title">

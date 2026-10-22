@@ -1,0 +1,26 @@
+{
+  "name": "account",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/shared/account/src",
+  "prefix": "lib",
+  "projectType": "library",
+  "tags": ["scope:account-lib"],
+  "targets": {
+    "test": {
+      "executor": "@angular/build:unit-test",
+      "options": {
+        "coverageInclude": ["libs/shared/account/src/**/*.ts"],
+        "coverageExclude": [
+          "libs/shared/account/src/**/index.ts",
+          "libs/shared/account/src/**/*.spec.ts"
+        ],
+        "coverageThresholds": {
+          "statements": 95,
+          "branches": 90,
+          "functions": 95,
+          "lines": 95
+        }
+      }
+    }
+  }
+}

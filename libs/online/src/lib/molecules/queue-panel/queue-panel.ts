@@ -49,6 +49,8 @@ export class QueuePanelComponent {
   readonly guest = input<string | null>(null);
   /** The round on screen counts for the ranking: two accounts or more in it. */
   readonly ranked = input(false);
+  /** A versus room: rounds may count for the ranking. Off in the stages room, which has none. */
+  readonly versus = input(true);
 
   readonly join = output<void>();
   readonly leave = output<void>();

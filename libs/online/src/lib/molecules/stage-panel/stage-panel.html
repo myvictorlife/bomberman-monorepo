@@ -1,0 +1,75 @@
+<section class="stage-panel" data-testid="stage-panel">
+  <h2 class="stage-panel__title">
+    {{ 'ONLINE.STAGES.TEAM_STAGE' | translate }}
+  </h2>
+  @if (stage(); as s) {
+  <p class="stage-panel__stage" data-testid="stage-panel-stage">
+    <span class="stage-panel__code"
+      >{{ 'CAMPAIGN.STAGE' | translate: { code: code() } }}</span
+    >
+    <span class="stage-panel__name">{{ nameKey() | translate }}</span>
+  </p>
+
+  @if (canPick()) {
+  <label class="stage-panel__field">
+    <span>{{ 'ONLINE.STAGES.PICK' | translate }}</span>
+    <select
+      [value]="s.id"
+      (change)="onPick($event)"
+      data-testid="stage-panel-pick"
+    >
+      @for (id of s.choices; track id) {
+      <option [value]="id" [selected]="id === s.id">
+        {{ codeOf(id) }} · {{ nameOf(id) | translate }}
+      </option>
+      }
+    </select>
+  </label>
+  } @if (canStart()) {
+  <button
+    type="button"
+    libButton
+    variant="primary"
+    [block]="true"
+    (click)="start.emit()"
+    data-testid="stage-panel-start"
+  >
+    {{ 'ONLINE.STAGES.START_NOW' | translate }}
+  </button>
+  <p class="stage-panel__hint">{{ 'ONLINE.STAGES.START_HINT' | translate }}</p>
+  } @else if (amHost()) {
+  <p class="stage-panel__hint" data-testid="stage-panel-you-host">
+    {{ 'ONLINE.STAGES.YOU_HOST' | translate }}
+  </p>
+  } @else if (hostName(); as name) {
+  <p class="stage-panel__hint" data-testid="stage-panel-host">
+    {{ 'ONLINE.STAGES.HOST' | translate: { name: name } }}
+  </p>
+  } @else {
+  <p class="stage-panel__hint" data-testid="stage-panel-empty">
+    {{ 'ONLINE.STAGES.EMPTY' | translate }}
+  </p>
+  }
+
+  <ul class="stage-panel__team" role="list" data-testid="stage-panel-team">
+    @for (row of team(); track row.id) {
+    <li
+      class="stage-panel__row"
+      [class.stage-panel__row--me]="row.id === myId()"
+    >
+      <span class="stage-panel__who"
+        >{{ row.name }} @if (row.host) {<span
+          class="stage-panel__host-tag"
+          [title]="'ONLINE.STAGES.HOST_TAG' | translate"
+          >⭐</span
+        >}</span
+      >
+      <span class="stage-panel__stats"
+        >❤️ {{ row.lives }} · {{ row.score }} {{ 'STAGE_PLAY.SCORE' | translate
+        }}</span
+      >
+    </li>
+    }
+  </ul>
+  }
+</section>

@@ -3,7 +3,7 @@
   "BACK": "Voltar",
   "HEADER": {
     "HOME": "Início",
-    "PLAY": "Jogar",
+    "PLAY": "Online",
     "START": "Jogar",
     "MENU_ARIA": "Abrir menu",
     "DESIGN": "Design system",
@@ -15,7 +15,13 @@
     "ITEMS": "Itens",
     "MOUNTS": "Montarias",
     "PROFILE": "Perfil",
-    "CAMPAIGN": "Fases"
+    "CAMPAIGN": "Fases",
+    "SIGN_IN": "Entrar",
+    "SIGN_IN_GOOGLE": "Continuar com Google",
+    "SIGN_IN_EMAIL": "Entrar com e-mail",
+    "SIGN_OUT": "Sair",
+    "VERIFY": "Confirme o seu e-mail",
+    "ACCOUNT_ARIA": "Conta de {{name}}"
   },
   "LANGUAGE_SELECT": {
     "TRIGGER_ARIA": "Alterar idioma",

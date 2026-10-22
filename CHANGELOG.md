@@ -18,6 +18,19 @@ config file. Ordinary app-level additions are minor.
   blazer over a team-coloured tee, a headset round her neck, a badge, a
   laptop under one arm and a tall glass mug of coffee. Drawn by the same
   cartoon painter as the rest of the cast, in every facing and pose.
+- **Sign in and out from the header.** With sign-in configured, the header's
+  "Play" button becomes "Sign in" (Google in one click, or e-mail on the
+  profile page); signed in, it shows the player's initial and name, with the
+  profile, a nudge to confirm the e-mail, and "Sign out". The mobile menu
+  carries the same choices at the top. The nav's "Play" link reads
+  "Online", and "Profile" moves into the account menu. A fork without
+  sign-in keeps the old button. The profile page now signs a visitor in
+  itself instead of sending them to `/online`.
+- **`@libs/account`** (`scope:account-lib`): `AccountService`, the shared
+  sign-in state (`start()` restores the session after the first paint and
+  reads a returning redirect's failure once), and `AccountPanelComponent`,
+  moved here from `@libs/online`. The header gets a `HeaderAccount` input
+  and stays presentational; the app shell composes the two.
 - **Stages together, online.** A second public room on the game server,
   `/online/stages`, plays the campaign's stages as a team of up to four.
   The first in line hosts: picks the stage among those their campaign has

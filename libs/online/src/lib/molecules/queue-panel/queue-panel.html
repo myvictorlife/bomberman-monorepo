@@ -101,7 +101,7 @@
   } } @if (phase() === 'playing' || phase() === 'results') {
   <div class="queue__live" data-testid="queue-live">
     <h3 class="queue__subtitle">
-      {{ 'ONLINE.QUEUE.NOW_PLAYING' | translate }}
+      {{ 'ONLINE.QUEUE.NOW_PLAYING' | translate }} @if (versus()) {
       <span
         class="queue__ranked"
         [class.queue__ranked--on]="ranked()"
@@ -110,6 +110,7 @@
         >{{ (ranked() ? 'ONLINE.QUEUE.RANKED' : 'ONLINE.QUEUE.FRIENDLY') |
         translate }}</span
       >
+      }
     </h3>
     <p class="queue__live-names">
       @for (seat of players(); track seat.id; let last = $last) {

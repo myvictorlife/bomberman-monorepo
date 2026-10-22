@@ -13,7 +13,13 @@ import {
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AudioSettingsService } from '@libs/audio-settings';
-import { AUTH, AuthError, AuthErrorCode, AuthProvider } from '@libs/auth';
+import {
+  AccountPanelComponent,
+  AccountService,
+  SignInRequest,
+  SignUpRequest,
+} from '@libs/account';
+import { AUTH, AuthProvider } from '@libs/auth';
 import { CharacterSelectionService } from '@libs/character-select';
 import { environment } from '@libs/environment';
 import {
@@ -29,10 +35,12 @@ import {
   WASD_KEYS,
 } from '@libs/game-client';
 import {
+  CampaignProgress,
   DEFAULT_CHARACTER_ID,
   GameState,
   isCharacterId,
   isPlayerColorId,
+  sanitizeProgress,
 } from '@libs/game-core';
 import {
   countsForRanking,
@@ -41,6 +49,7 @@ import {
   Reaction,
   RoomRules,
   secondsLeft,
+  STAGES_ROOM,
 } from '@libs/game-protocol';
 import {
   AlertComponent,
@@ -55,12 +64,6 @@ import {
 } from '@libs/ui';
 import { TranslatePipe } from '@ngx-translate/core';
 import { OnlineStore } from '../../+state/online.store';
-import {
-  AccountNotice,
-  AccountPanelComponent,
-  SignInRequest,
-  SignUpRequest,
-} from '../../molecules/account-panel/account-panel';
 import { ChatPanelComponent } from '../../molecules/chat-panel/chat-panel';
 import { PlayersPanelComponent } from '../../molecules/players-panel/players-panel';
 import {
@@ -69,7 +72,11 @@ import {
 } from '../../molecules/queue-panel/queue-panel';
 import { RankingListComponent } from '../../molecules/ranking-list/ranking-list';
 import { RulesPanelComponent } from '../../molecules/rules-panel/rules-panel';
-import { ONLINE_ARENA_LAUNCHER } from '../../services/online.tokens';
+import { StagePanelComponent } from '../../molecules/stage-panel/stage-panel';
+import {
+  ONLINE_ARENA_LAUNCHER,
+  ONLINE_ROOM,
+} from '../../services/online.tokens';
 
 /** Either hand drives your player online: both schemes map to you. */
 export const ONLINE_CONTROLS: ControlScheme[] = [
@@ -78,6 +85,34 @@ export const ONLINE_CONTROLS: ControlScheme[] = [
 ];
 
 const GUEST_KEY = 'online.guest';
+
+/**
+ * Where this browser keeps its campaign — the key the campaign feature's
+ * progress service writes (`CAMPAIGN_PROGRESS_KEY` in `@libs/campaign`, which
+ * this feature may not import). The stages room starts from it and writes
+ * back what each stage did, so the map shows the same progress.
+ */
+export const LOCAL_CAMPAIGN_KEY = 'campaign-progress';
+
+export function readLocalCampaign(): CampaignProgress | undefined {
+  try {
+    const raw = globalThis.localStorage?.getItem(LOCAL_CAMPAIGN_KEY);
+    return raw ? sanitizeProgress(JSON.parse(raw)) : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+export function writeLocalCampaign(progress: CampaignProgress): void {
+  try {
+    globalThis.localStorage?.setItem(
+      LOCAL_CAMPAIGN_KEY,
+      JSON.stringify(sanitizeProgress(progress)),
+    );
+  } catch {
+    // Storage off: the server's record still has it, for an account.
+  }
+}
 
 interface SavedGuest {
   name: string;
@@ -178,6 +213,7 @@ function unlockOrientation(): void {
     RankingListComponent,
     PlayersPanelComponent,
     RulesPanelComponent,
+    StagePanelComponent,
     ChatPanelComponent,
     PodiumComponent,
     VirtualGamepadComponent,
@@ -202,6 +238,10 @@ export class Online {
   private readonly layout =
     viewChild.required<ElementRef<HTMLElement>>('layout');
   readonly auth = inject(AUTH);
+  /** Which room this page is: the versus `arena`, or `stages` — provided on the route. */
+  readonly room = inject(ONLINE_ROOM);
+  /** The stages room: the campaign's stages played as a team. */
+  readonly stagesMode = this.room === STAGES_ROOM;
 
   readonly status = this.store.status;
   readonly lobby = this.store.lobby;
@@ -221,6 +261,10 @@ export class Online {
   readonly rules = this.store.rules;
   readonly nextRules = this.store.nextRules;
   readonly admin = this.store.admin;
+  /** Stages room: the stage, its host and the team's progress. */
+  readonly stage = this.store.stage;
+  /** Stages room: the stage on screen, from the arena — creatures, gate, boss, result. */
+  readonly hudStage = computed(() => this.store.hud()?.stage ?? null);
   /** Players of the round on screen, with what they picked up. */
   readonly hudPlayers = computed(() => this.store.hud()?.players ?? []);
   /** Sound effects off: read from `AudioSettingsService`, shared with the settings page. */
@@ -248,9 +292,11 @@ export class Online {
   readonly user = this.auth.user;
   readonly characterId = this.selection.selectedId;
 
-  readonly authBusy = signal(false);
-  readonly authError = signal<AuthErrorCode | null>(null);
-  readonly notice = signal<AccountNotice | null>(null);
+  /** Signing in and out: the state the header's menu shares. */
+  private readonly account = inject(AccountService);
+  readonly authBusy = this.account.busy;
+  readonly authError = this.account.error;
+  readonly notice = this.account.notice;
   /** Something is being drawn on the stage. */
   readonly watching = signal(false);
   /** The arena fills the screen with the chat docked beside it. */
@@ -308,6 +354,15 @@ export class Online {
     const lobby = this.lobby();
     return lobby?.players.find((p) => p.id === lobby.winnerId) ?? null;
   });
+  /** The headline over a decided round: the stage's result, the winner, or a draw. */
+  readonly resultKey = computed(() => {
+    if (this.stagesMode)
+      return this.hudStage()?.result === 'cleared'
+        ? 'STAGE_PLAY.CLEARED'
+        : 'STAGE_PLAY.FAILED';
+    return this.winner() ? 'ONLINE.STAGE.WINNER' : 'ONLINE.STAGE.DRAW';
+  });
+  readonly resultParams = computed(() => ({ name: this.winner()?.name }));
   /** I won the round just decided as a guest: an account would have counted it. */
   readonly guestWon = computed(() => {
     const id = this.guest()?.id;
@@ -365,21 +420,27 @@ export class Online {
         const winner = this.winner();
         const me = this.myId();
         this.analytics.logEvent('round_end', {
-          mode: 'online',
+          mode: this.stagesMode ? 'stages' : 'online',
           winner: !winner ? 'draw' : winner.id === me ? 'me' : 'other',
           watching: !this.players().some((p) => p.id === me),
         });
       }
       lastPhase = phase;
     });
-    const url = environment.gameServerUrl;
-    if (url) void this.store.connect(url);
-    else this.store.markUnavailable();
-    void this.auth.initialize().then(() => {
-      // Back from the provider's page: a failed sign-in is reported here.
-      const code = this.auth.takeRedirectError();
-      if (code && code !== 'cancelled') this.authError.set(code);
+    // Stages room: what a stage did to my campaign goes to this browser too,
+    // so the campaign's map shows the same progress.
+    effect(() => {
+      if (!this.stagesMode || this.phase() !== 'results') return;
+      const me = this.myId();
+      const progress = me ? this.stage()?.progress[me] : undefined;
+      if (progress) writeLocalCampaign(progress);
     });
+    const url = environment.gameServerUrl;
+    if (url) void this.store.connect(url, this.room);
+    else this.store.markUnavailable();
+    // Restores the session; a sign-in back from the provider's page that
+    // failed shows up in `authError`, here and in the header alike.
+    void this.account.start();
 
     const stop = this.store.onFrame((frame) => this.onFrame(frame));
     const timer = setInterval(() => this.clock.set(Date.now()), 250);
@@ -442,7 +503,10 @@ export class Online {
   }
 
   join(): void {
-    this.store.joinQueue(this.characterId());
+    this.store.joinQueue(
+      this.characterId(),
+      this.stagesMode ? readLocalCampaign() : undefined,
+    );
     this.analytics.logEvent('queue_join', { character: this.characterId() });
     // On a touch screen the round is played full screen with the controller;
     // this tap is the gesture the browser wants for it.
@@ -520,6 +584,16 @@ export class Online {
 
   leave(): void {
     this.store.leaveQueue();
+  }
+
+  /** Stages room, host: start now with whoever is in line. */
+  startNow(): void {
+    this.store.startNow();
+  }
+
+  /** Stages room, host: the stage the next round plays. */
+  pickStage(stageId: string): void {
+    this.store.pickStage(stageId);
   }
 
   leaveAfterRound(leave: boolean): void {
@@ -605,57 +679,31 @@ export class Online {
   }
 
   signIn(request: SignInRequest): Promise<void> {
-    return this.authAction(() =>
-      this.auth.signIn(request.email, request.password),
-    );
+    return this.account.signIn(request.email, request.password);
   }
 
   signInWith(provider: AuthProvider): Promise<void> {
-    return this.authAction(() => this.auth.signInWith(provider));
+    return this.account.signInWith(provider);
   }
 
   signUp(request: SignUpRequest): Promise<void> {
-    return this.authAction(async () => {
-      await this.auth.signUp(request.email, request.password, request.name);
-      this.notice.set('verification-sent');
-    });
+    return this.account.signUp(request.email, request.password, request.name);
   }
 
   signOut(): Promise<void> {
-    return this.authAction(() => this.auth.signOut());
+    return this.account.signOut();
   }
 
   resendVerification(): Promise<void> {
-    return this.authAction(async () => {
-      await this.auth.sendVerificationEmail();
-      this.notice.set('verification-sent');
-    });
+    return this.account.resendVerification();
   }
 
   checkVerification(): Promise<void> {
-    return this.authAction(() => this.auth.reload());
+    return this.account.checkVerification();
   }
 
   resetPassword(email: string): Promise<void> {
-    return this.authAction(async () => {
-      await this.auth.sendPasswordReset(email);
-      this.notice.set('reset-sent');
-    });
-  }
-
-  private async authAction(action: () => Promise<void>): Promise<void> {
-    this.authBusy.set(true);
-    this.authError.set(null);
-    this.notice.set(null);
-    try {
-      await action();
-    } catch (error) {
-      const code = error instanceof AuthError ? error.code : 'unknown';
-      // Closing the provider's window is a choice, not a failure.
-      if (code !== 'cancelled') this.authError.set(code);
-    } finally {
-      this.authBusy.set(false);
-    }
+    return this.account.resetPassword(email);
   }
 
   private async sayHello(): Promise<void> {

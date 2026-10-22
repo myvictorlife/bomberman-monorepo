@@ -172,4 +172,62 @@ describe('HeaderComponent', () => {
       expect(spectator.query('.language-select__list')).toBeNull();
     });
   });
+
+  describe('account', () => {
+    it('keeps the play button and the profile link with no sign-in configured', () => {
+      expect(spectator.query('.header__cta')).not.toBeNull();
+      expect(spectator.query('a.header__link[href="/profile"]')).not.toBeNull();
+      expect(spectator.query('[data-testid="account-menu"]')).toBeNull();
+    });
+
+    it('offers to sign in instead, and moves the profile into the menu', () => {
+      spectator.setInput('account', { state: 'signed-out' });
+
+      expect(spectator.query('.header__cta')).toBeNull();
+      expect(spectator.query('a.header__link[href="/profile"]')).toBeNull();
+      const google = vi.fn();
+      spectator.output('signInWithGoogle').subscribe(google);
+      spectator.click('[data-testid="account-menu-sign-in"]');
+      spectator.click('[data-testid="account-menu-google"]');
+      expect(google).toHaveBeenCalled();
+    });
+
+    it('shows who is signed in, and signs out from the menu', () => {
+      spectator.setInput('account', {
+        state: 'signed-in',
+        name: 'Ana',
+        verified: true,
+      });
+      const signOut = vi.fn();
+      spectator.output('signOut').subscribe(signOut);
+
+      expect(
+        spectator.query('[data-testid="account-menu-trigger"]'),
+      ).toHaveText('Ana');
+      spectator.click('[data-testid="account-menu-trigger"]');
+      spectator.click('[data-testid="account-menu-sign-out"]');
+      expect(signOut).toHaveBeenCalled();
+    });
+
+    it('lays the same choices flat at the top of the mobile menu', () => {
+      spectator.setInput('account', { state: 'signed-out' });
+      spectator.click('.header__menu-btn');
+
+      expect(
+        spectator.query('[data-testid="account-menu-inline"]'),
+      ).not.toBeNull();
+      spectator.click('[data-testid="account-menu-email"]');
+      expect(spectator.query('.header__mobile-menu')).toBeNull();
+    });
+
+    it('closes the language list when the account menu opens, and the other way round', () => {
+      spectator.setInput('account', { state: 'signed-out' });
+      spectator.click('.language-select__trigger');
+      spectator.click('[data-testid="account-menu-sign-in"]');
+      expect(spectator.query('.language-select__list')).toBeNull();
+
+      spectator.click('.language-select__trigger');
+      expect(spectator.query('[data-testid="account-menu-panel"]')).toBeNull();
+    });
+  });
 });

@@ -363,6 +363,31 @@
   color: #ff8a8a;
 }
 
+/* Stages room: what is left of the stage, beside the clock. */
+.online__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+.online__chip {
+  padding: 0.125rem var(--space-2);
+  border-radius: var(--radius-sm);
+  background: rgb(0 0 0 / 0.5);
+  color: #fff;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  font-variant-numeric: tabular-nums;
+}
+
+.online__chip--open {
+  color: #8affb0;
+}
+
+.online__chip--alert {
+  color: #ffd27a;
+}
+
 /* Reactions rise from the bottom of the arena and fade; nothing to click. */
 .online__reactions {
   position: absolute;

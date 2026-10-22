@@ -21,6 +21,16 @@ const depConstraints = [
 
   // The AUTH contract: e-mail accounts with no vendor type in sight.
   { sourceTag: 'scope:auth-lib', onlyDependOnLibsWithTags: [] },
+  // Signing in and out, shared by the header (through the app), the profile
+  // page and the online room. Never a game library: a fork keeps it as is.
+  {
+    sourceTag: 'scope:account-lib',
+    onlyDependOnLibsWithTags: [
+      'scope:auth-lib',
+      'scope:translate',
+      'scope:ui-lib',
+    ],
+  },
   // Only this lib may name Firebase Authentication; only the app imports it.
   {
     sourceTag: 'scope:auth-firebase-lib',
@@ -37,6 +47,7 @@ const depConstraints = [
   {
     sourceTag: 'scope:profile',
     onlyDependOnLibsWithTags: [
+      'scope:account-lib',
       'scope:auth-lib',
       'scope:character-select-lib',
       'scope:entity-lib',
@@ -216,6 +227,7 @@ const depConstraints = [
   {
     sourceTag: 'scope:online',
     onlyDependOnLibsWithTags: [
+      'scope:account-lib',
       'scope:analytics-lib',
       'scope:audio-settings-lib',
       'scope:controls-settings-lib',
@@ -270,6 +282,7 @@ const depConstraints = [
   {
     sourceTag: 'scope:demo-app',
     onlyDependOnLibsWithTags: [
+      'scope:account-lib',
       'scope:analytics-lib',
       'scope:analytics-firebase-lib',
       'scope:auth-lib',

@@ -11,7 +11,12 @@ import {
 } from '@libs/game-protocol';
 import { ARENA_CONNECTOR } from '../services/online.tokens';
 import { FakeConnection } from '../testing/fake-connection';
-import { OnlineStore, REACTION_MS } from './online.store';
+import {
+  OnlineStore,
+  REACTION_MS,
+  SESSION_TOKEN_KEY,
+  sessionTokenKey,
+} from './online.store';
 
 const lobby = (over: Partial<LobbySnapshot> = {}): LobbySnapshot => ({
   phase: 'waiting',
@@ -70,7 +75,7 @@ describe('OnlineStore', () => {
     await pending;
 
     const c = connections[0] as FakeConnection;
-    expect(connector).toHaveBeenCalledWith('http://server', undefined);
+    expect(connector).toHaveBeenCalledWith('http://server', undefined, 'arena');
     expect(store.status()).toBe('online');
 
     c.push(
@@ -203,6 +208,7 @@ describe('OnlineStore', () => {
       expect(connector).toHaveBeenLastCalledWith(
         'http://server',
         'session-token',
+        'arena',
       );
       expect(store.reconnectAttempt()).toBe(1);
       expect(store.status()).toBe('reconnecting');
@@ -438,6 +444,70 @@ describe('OnlineStore', () => {
       await store.reconnect();
 
       expect(store.chat()).toEqual([]);
+    });
+  });
+
+  describe('the stages room', () => {
+    it('connects to the room it is told, with a session token of its own', async () => {
+      const store = setup();
+      await store.connect('http://server', 'stages');
+
+      expect(connector).toHaveBeenCalledWith(
+        'http://server',
+        undefined,
+        'stages',
+      );
+      expect(sessionTokenKey('stages')).toBe(`${SESSION_TOKEN_KEY}.stages`);
+      expect(sessionTokenKey('arena')).toBe(SESSION_TOKEN_KEY);
+      expect(sessionStorage.getItem(sessionTokenKey('stages'))).toBe(
+        'session-token',
+      );
+      store.disconnect();
+    });
+
+    it('sends the host actions and the campaign with the join, and mirrors the stage', async () => {
+      const store = setup();
+      await store.connect('http://server', 'stages');
+      const c = connections[0] as FakeConnection;
+
+      store.joinQueue('byte', { cleared: ['gramado-1'] });
+      store.pickStage('gramado-2');
+      store.startNow();
+
+      expect(c.sent).toEqual([
+        {
+          type: CLIENT_MESSAGE.joinQueue,
+          payload: {
+            characterId: 'byte',
+            campaign: { cleared: ['gramado-1'] },
+          },
+        },
+        { type: CLIENT_MESSAGE.pickStage, payload: { stageId: 'gramado-2' } },
+        { type: CLIENT_MESSAGE.startNow, payload: undefined },
+      ]);
+
+      expect(store.stage()).toBeNull();
+      const stage = {
+        id: 'gramado-2',
+        hostId: 'a',
+        choices: ['gramado-1', 'gramado-2'],
+        progress: {},
+      };
+      c.push(SERVER_MESSAGE.lobby, lobby({ stage }));
+      expect(store.stage()).toEqual(stage);
+    });
+
+    it('forgets the other room when it switches', async () => {
+      const store = setup();
+      await store.connect('http://server');
+      (connections[0] as FakeConnection).push(
+        SERVER_MESSAGE.lobby,
+        lobby({ phase: 'playing' }),
+      );
+
+      const pending = store.connect('http://server', 'stages');
+      expect(store.lobby()).toBeNull();
+      await pending;
     });
   });
 });

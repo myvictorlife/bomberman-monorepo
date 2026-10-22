@@ -18,9 +18,16 @@ import { OnlineStore } from '../../+state/online.store';
 import {
   ARENA_CONNECTOR,
   ONLINE_ARENA_LAUNCHER,
+  ONLINE_ROOM,
 } from '../../services/online.tokens';
 import { FakeConnection } from '../../testing/fake-connection';
-import { Online, roundKey, savedGuest } from './online';
+import {
+  LOCAL_CAMPAIGN_KEY,
+  Online,
+  readLocalCampaign,
+  roundKey,
+  savedGuest,
+} from './online';
 
 const flush = () => new Promise((r) => setTimeout(r, 0));
 
@@ -951,5 +958,145 @@ describe('Online', () => {
   it('names the chosen character', async () => {
     await render();
     expect(spectator.component.characterKey('lia')).toBe('CHARACTERS.LIA.NAME');
+  });
+
+  describe('the stages room', () => {
+    const renderStages = async () => {
+      spectator = createComponent({
+        providers: [{ provide: ONLINE_ROOM, useValue: 'stages' }],
+      });
+      spectator.detectChanges();
+      await flush();
+      spectator.detectChanges();
+    };
+    const meSignedIn = async () => {
+      user.set({
+        id: 'me',
+        email: 'me@x.dev',
+        displayName: 'Me',
+        emailVerified: true,
+      });
+      spectator.detectChanges();
+      await flush();
+      connection.push(SERVER_MESSAGE.profile, {
+        id: 'me',
+        name: 'Me',
+        wins: 0,
+        matches: 0,
+        visits: 1,
+        firstSeenAt: 0,
+        lastSeenAt: 0,
+        returning: false,
+        rank: null,
+      });
+      spectator.detectChanges();
+    };
+    const stage = (over: object = {}) => ({
+      id: 'gramado-2',
+      hostId: 'me',
+      choices: ['gramado-1', 'gramado-2'],
+      progress: { me: { cleared: ['gramado-1'], lives: 2, score: 300 } },
+      ...over,
+    });
+    const me = { id: 'me', name: 'Me', characterId: 'lia' as const };
+
+    afterEach(() => localStorage.removeItem(LOCAL_CAMPAIGN_KEY));
+
+    it('shows the team’s stage instead of the ranking, and no rules to change', async () => {
+      await renderStages();
+      connection.push(
+        SERVER_MESSAGE.lobby,
+        lobby({ stage: stage({ hostId: null, progress: {} }) }),
+      );
+      spectator.detectChanges();
+
+      expect(spectator.component.stagesMode).toBe(true);
+      expect(spectator.query('[data-testid="online-title"]')).toHaveText(
+        'ONLINE.STAGES.TITLE',
+      );
+      expect(spectator.query('[data-testid="online-stage-card"]')).toExist();
+      expect(spectator.query('[data-testid="online-ranking"]')).not.toExist();
+      expect(spectator.query('lib-rules-panel')).not.toExist();
+      expect(spectator.query('[data-testid="stage-panel-empty"]')).toExist();
+    });
+
+    it('joins with this browser’s campaign, and lets the host pick and start', async () => {
+      localStorage.setItem(
+        LOCAL_CAMPAIGN_KEY,
+        JSON.stringify({ cleared: ['gramado-1'] }),
+      );
+      await renderStages();
+      await meSignedIn();
+
+      spectator.component.join();
+      expect(connection.sent).toContainEqual({
+        type: CLIENT_MESSAGE.joinQueue,
+        payload: {
+          characterId: spectator.component.characterId(),
+          campaign: { cleared: ['gramado-1'] },
+        },
+      });
+
+      connection.push(
+        SERVER_MESSAGE.lobby,
+        lobby({ phase: 'countdown', queue: [me], stage: stage() }),
+      );
+      spectator.detectChanges();
+      expect(spectator.query('[data-testid="stage-panel-team"]')).toContainText(
+        '❤️ 2',
+      );
+
+      spectator.selectOption(
+        spectator.query(
+          '[data-testid="stage-panel-pick"]',
+        ) as HTMLSelectElement,
+        'gramado-1',
+      );
+      spectator.click('[data-testid="stage-panel-start"]');
+      expect(connection.sent).toContainEqual({
+        type: CLIENT_MESSAGE.pickStage,
+        payload: { stageId: 'gramado-1' },
+      });
+      expect(connection.sent).toContainEqual({
+        type: CLIENT_MESSAGE.startNow,
+        payload: undefined,
+      });
+    });
+
+    it('names the host to everyone else, who gets no start button', async () => {
+      await renderStages();
+      connection.push(
+        SERVER_MESSAGE.lobby,
+        lobby({
+          phase: 'countdown',
+          queue: [{ id: 'ana', name: 'Ana', characterId: 'lia' }],
+          stage: stage({ hostId: 'ana' }),
+        }),
+      );
+      spectator.detectChanges();
+
+      expect(spectator.query('[data-testid="stage-panel-host"]')).toExist();
+      expect(
+        spectator.query('[data-testid="stage-panel-start"]'),
+      ).not.toExist();
+      expect(spectator.query('[data-testid="stage-panel-pick"]')).not.toExist();
+    });
+
+    it('writes what the stage did to my campaign back to this browser', async () => {
+      await renderStages();
+      await meSignedIn();
+      connection.push(
+        SERVER_MESSAGE.lobby,
+        lobby({ phase: 'results', players: [me], stage: stage() }),
+      );
+      spectator.detectChanges();
+
+      expect(readLocalCampaign()).toEqual({
+        cleared: ['gramado-1'],
+        lives: 2,
+        score: 300,
+      });
+      expect(spectator.query('[data-testid="online-stage-next"]')).toExist();
+    });
   });
 });

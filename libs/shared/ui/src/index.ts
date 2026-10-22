@@ -10,6 +10,7 @@ export * from './lib/atoms/theme-toggle/theme-toggle';
 
 // Molecules
 export * from './lib/molecules/language-select/language-select';
+export * from './lib/molecules/account-menu/account-menu';
 export * from './lib/molecules/page-header/page-header';
 export * from './lib/molecules/player-badges/player-badges';
 export * from './lib/molecules/podium/podium';

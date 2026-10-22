@@ -30,6 +30,7 @@
       "@libs/game-protocol": ["libs/game/protocol/src/index.ts"],
       "@libs/game-lobby": ["libs/game/lobby/src/index.ts"],
       "@libs/characters": ["libs/characters/src/index.ts"],
+      "@libs/account": ["libs/shared/account/src/index.ts"],
       "@libs/character-select": ["libs/shared/character-select/src/index.ts"],
       "@libs/arenas": ["libs/arenas/src/index.ts"],
       "@libs/items": ["libs/items/src/index.ts"],

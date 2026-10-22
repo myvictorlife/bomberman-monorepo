@@ -40,6 +40,14 @@ describe('Profile', () => {
     user,
     ready,
     initialize: vi.fn(async () => undefined),
+    takeRedirectError: vi.fn(() => null),
+    signIn: vi.fn(async () => undefined),
+    signInWith: vi.fn(async () => undefined),
+    signUp: vi.fn(async () => undefined),
+    signOut: vi.fn(async () => undefined),
+    sendVerificationEmail: vi.fn(async () => undefined),
+    sendPasswordReset: vi.fn(async () => undefined),
+    reload: vi.fn(async () => undefined),
   };
   const service: {
     available: boolean;
@@ -93,14 +101,40 @@ describe('Profile', () => {
     expect(spectator.query('[role="status"]')).toBeTruthy();
   });
 
-  it('sends a signed-out visitor to sign in', () => {
+  it('lets a signed-out visitor sign in right here, with Google or an e-mail', async () => {
     user.set(null);
     render();
 
-    expect(
-      byId('profile-signed-out')?.querySelector('a')?.getAttribute('href'),
-    ).toBe('/online');
+    expect(byId('profile-signed-out')).toBeTruthy();
+    expect(byId('account-form')).toBeTruthy();
+    spectator.click('[data-testid="account-google"]');
+    expect(auth.signInWith).toHaveBeenCalledWith('google');
+    // The Google attempt settles before the form is free again.
+    await new Promise((r) => setTimeout(r, 0));
+    spectator.detectChanges();
+
+    spectator.typeInElement('ana@example.com', '[data-testid="account-email"]');
+    spectator.typeInElement('secret1', '[data-testid="account-password"]');
+    spectator.click('[data-testid="account-submit"]');
+    expect(auth.signIn).toHaveBeenCalledWith('ana@example.com', 'secret1');
     expect(service.fetchProfile).not.toHaveBeenCalled();
+  });
+
+  it('asks a new account to confirm the e-mail before showing a profile', () => {
+    user.set({ ...ana, emailVerified: false });
+    render();
+
+    expect(byId('profile-verify')).toBeTruthy();
+    spectator.click('[data-testid="account-verify-check"]');
+    expect(auth.reload).toHaveBeenCalled();
+  });
+
+  it('offers sign-in even without a game server: the profile itself waits for one', () => {
+    service.available = false;
+    user.set(null);
+    render();
+
+    expect(byId('profile-signed-out')).toBeTruthy();
   });
 
   it('shows the name, the numbers and a hint to choose a name', () => {

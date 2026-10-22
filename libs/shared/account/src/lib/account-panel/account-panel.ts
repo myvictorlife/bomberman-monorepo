@@ -8,7 +8,6 @@ import {
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AuthErrorCode, AuthProvider, AuthUser } from '@libs/auth';
-import { PlayerProfile } from '@libs/game-protocol';
 import { ButtonComponent } from '@libs/ui';
 import { TranslatePipe } from '@ngx-translate/core';
 
@@ -22,6 +21,20 @@ export interface SignUpRequest extends SignInRequest {
 }
 
 export type AccountNotice = 'verification-sent' | 'reset-sent';
+
+/**
+ * What the panel shows of a signed-in player, once a server knows them —
+ * the game server's `PlayerProfile` fits it. A shape of its own, so this
+ * library never depends on a game's protocol.
+ */
+export interface AccountSummary {
+  name: string;
+  returning: boolean;
+  wins: number;
+  matches: number;
+  rank: number | null;
+  nameChosen: boolean;
+}
 
 export const MIN_PASSWORD = 6;
 export const NAME_LENGTH = { min: 2, max: 20 };
@@ -41,7 +54,7 @@ export class AccountPanelComponent {
   readonly available = input(true);
   readonly ready = input(true);
   readonly user = input<AuthUser | null>(null);
-  readonly profile = input<PlayerProfile | null>(null);
+  readonly profile = input<AccountSummary | null>(null);
   readonly busy = input(false);
   readonly error = input<AuthErrorCode | null>(null);
   readonly notice = input<AccountNotice | null>(null);

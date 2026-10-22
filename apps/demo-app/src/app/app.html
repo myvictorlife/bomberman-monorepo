@@ -1,3 +1,8 @@
-<lib-header [repoUrl]="repoUrl" />
+<lib-header
+  [repoUrl]="repoUrl"
+  [account]="headerAccount()"
+  (signInWithGoogle)="signInWithGoogle()"
+  (signOut)="signOut()"
+/>
 
 <router-outlet></router-outlet>

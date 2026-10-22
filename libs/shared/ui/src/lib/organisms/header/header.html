@@ -48,9 +48,12 @@
         {{ 'HEADER.ITEMS' | translate }}
       </a>
 
+      <!-- With sign-in on, the profile lives in the account menu instead. -->
+      @if (account().state === 'off') {
       <a routerLink="/profile" class="header__link">
         {{ 'HEADER.PROFILE' | translate }}
       </a>
+      }
 
       <a routerLink="/settings" class="header__link">
         {{ 'HEADER.SETTINGS' | translate }}
@@ -72,11 +75,19 @@
       >
         <lib-icon name="github" size="md" />
       </a>
-      }
-
+      } @if (account().state === 'off') {
       <a routerLink="/online" class="header__cta" (click)="trackPlay()">
         {{ 'HEADER.START' | translate }}
       </a>
+      } @else {
+      <lib-account-menu
+        class="header__account"
+        [account]="account()"
+        (signInWithGoogle)="signInWithGoogle.emit()"
+        (signOut)="signOut.emit()"
+        (opened)="onAccountOpened()"
+      />
+      }
 
       <button
         type="button"
@@ -98,6 +109,13 @@
     aria-hidden="true"
   ></div>
   <div id="header-mobile-menu" class="header__mobile-menu">
+    <lib-account-menu
+      [account]="account()"
+      [inline]="true"
+      (signInWithGoogle)="signInWithGoogle.emit()"
+      (signOut)="signOut.emit()"
+      (done)="closeMobileMenu()"
+    />
     <a
       routerLink="/online"
       class="header__mobile-link"
@@ -140,6 +158,7 @@
     >
       {{ 'HEADER.ITEMS' | translate }}
     </a>
+    @if (account().state === 'off') {
     <a
       routerLink="/profile"
       class="header__mobile-link"
@@ -147,6 +166,7 @@
     >
       {{ 'HEADER.PROFILE' | translate }}
     </a>
+    }
     <a
       routerLink="/settings"
       class="header__mobile-link"

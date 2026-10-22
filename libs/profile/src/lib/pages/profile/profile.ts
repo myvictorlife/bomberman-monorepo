@@ -7,8 +7,15 @@ import {
   linkedSignal,
   untracked,
 } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { AUTH } from '@libs/auth';
+import {
+  AccountPanelComponent,
+  AccountService,
+  SignInRequest,
+  SignUpRequest,
+} from '@libs/account';
+import { AUTH, AuthProvider } from '@libs/auth';
 import {
   CharacterId,
   DEFAULT_CHARACTER_ID,
@@ -36,6 +43,8 @@ export type ProfileView =
   | 'unavailable'
   | 'starting'
   | 'signed-out'
+  /** Signed in, but the e-mail is not confirmed yet: the server will not keep a profile. */
+  | 'verify'
   | 'loading'
   | 'error'
   | 'ready';
@@ -43,17 +52,19 @@ export type ProfileView =
 /**
  * The signed-in player's profile: the name on the ranking, the favourite
  * character and the colour, saved on the game server so they follow the
- * account to any device. Signing in happens on `/online`; this page links there.
+ * account to any device. Signed out, the page is where one signs in.
  */
 @Component({
   selector: 'lib-profile',
   imports: [
+    AccountPanelComponent,
     AlertComponent,
     ButtonComponent,
     CardComponent,
     CharacterPickerComponent,
     ColorPickerComponent,
     IconComponent,
+    NgTemplateOutlet,
     RouterLink,
     SpinnerComponent,
     SpriteTileComponent,
@@ -67,6 +78,8 @@ export class Profile {
   private readonly store = inject(ProfileStore);
   private readonly auth = inject(AUTH);
   private readonly available = inject(ProfileService).available;
+  /** Signing in happens here too: the header's "sign in with e-mail" lands on this page. */
+  readonly account = inject(AccountService);
 
   readonly profile = this.store.profile;
   readonly saving = this.store.saving;
@@ -77,9 +90,11 @@ export class Profile {
   private readonly userId = computed(() => this.auth.user()?.id ?? null);
 
   readonly view = computed<ProfileView>(() => {
-    if (!this.available) return 'unavailable';
+    if (!this.account.available) return 'unavailable';
     if (!this.auth.ready()) return 'starting';
     if (!this.userId()) return 'signed-out';
+    if (!this.auth.user()?.emailVerified) return 'verify';
+    if (!this.available) return 'unavailable';
     if (this.store.error()) return 'error';
     if (!this.profile()) return 'loading';
     return 'ready';
@@ -113,12 +128,24 @@ export class Profile {
   });
 
   constructor() {
+    void this.account.start();
     if (!this.available) return;
-    void this.auth.initialize();
     effect(() => {
       const id = this.userId();
       untracked(() => (id ? this.store.fetchProfile() : this.store.clear()));
     });
+  }
+
+  signIn(request: SignInRequest): Promise<void> {
+    return this.account.signIn(request.email, request.password);
+  }
+
+  signInWith(provider: AuthProvider): Promise<void> {
+    return this.account.signInWith(provider);
+  }
+
+  signUp(request: SignUpRequest): Promise<void> {
+    return this.account.signUp(request.email, request.password, request.name);
   }
 
   retry(): void {

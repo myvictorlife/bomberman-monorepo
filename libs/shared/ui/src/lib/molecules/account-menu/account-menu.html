@@ -1,0 +1,103 @@
+<ng-template #choices>
+  @if (signedIn(); as me) {
+  <p class="account-menu__who" data-testid="account-menu-name">{{ me.name }}</p>
+  @if (!me.verified) {
+  <a
+    routerLink="/profile"
+    class="account-menu__item account-menu__item--warn"
+    (click)="finish()"
+    data-testid="account-menu-verify"
+    >{{ 'HEADER.VERIFY' | translate }}</a
+  >
+  }
+  <a
+    routerLink="/profile"
+    class="account-menu__item"
+    (click)="finish()"
+    data-testid="account-menu-profile"
+    >{{ 'HEADER.PROFILE' | translate }}</a
+  >
+  <button
+    type="button"
+    class="account-menu__item"
+    (click)="leave()"
+    data-testid="account-menu-sign-out"
+  >
+    {{ 'HEADER.SIGN_OUT' | translate }}
+  </button>
+  } @else if (signedOut(); as out) {
+  <button
+    type="button"
+    class="account-menu__item account-menu__item--primary"
+    [disabled]="out.busy"
+    (click)="google()"
+    data-testid="account-menu-google"
+  >
+    {{ 'HEADER.SIGN_IN_GOOGLE' | translate }}
+  </button>
+  <a
+    routerLink="/profile"
+    class="account-menu__item"
+    (click)="finish()"
+    data-testid="account-menu-email"
+    >{{ 'HEADER.SIGN_IN_EMAIL' | translate }}</a
+  >
+  @if (out.errorKey) {
+  <p class="account-menu__error" role="alert" data-testid="account-menu-error">
+    {{ out.errorKey | translate }}
+  </p>
+  } }
+</ng-template>
+
+@if (account().state !== 'off') { @if (inline()) {
+<div class="account-menu__inline" data-testid="account-menu-inline">
+  <ng-container [ngTemplateOutlet]="choices" />
+</div>
+} @else {
+<div class="account-menu" data-testid="account-menu">
+  @if (account().state === 'loading') {
+  <span
+    class="account-menu__placeholder"
+    aria-hidden="true"
+    data-testid="account-menu-loading"
+  ></span>
+  } @else if (signedIn(); as me) {
+  <button
+    type="button"
+    class="account-menu__trigger"
+    [class.account-menu__trigger--open]="open()"
+    (click)="toggle()"
+    [attr.aria-expanded]="open()"
+    aria-haspopup="menu"
+    [attr.aria-label]="'HEADER.ACCOUNT_ARIA' | translate: { name: me.name }"
+    data-testid="account-menu-trigger"
+  >
+    <span class="account-menu__badge" aria-hidden="true">{{ initial() }}</span>
+    <span class="account-menu__name">{{ me.name }}</span>
+    @if (!me.verified) {
+    <span class="account-menu__dot" aria-hidden="true"></span>
+    }
+  </button>
+  } @else {
+  <button
+    type="button"
+    class="account-menu__cta"
+    (click)="toggle()"
+    [attr.aria-expanded]="open()"
+    aria-haspopup="menu"
+    data-testid="account-menu-sign-in"
+  >
+    {{ 'HEADER.SIGN_IN' | translate }}
+  </button>
+  } @if (open()) {
+  <div
+    class="account-menu__backdrop"
+    (click)="close()"
+    aria-hidden="true"
+  ></div>
+  <div class="account-menu__panel" role="menu" data-testid="account-menu-panel">
+    <ng-container [ngTemplateOutlet]="choices" />
+  </div>
+  }
+</div>
+} }
