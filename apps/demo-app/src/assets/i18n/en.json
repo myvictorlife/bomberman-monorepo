@@ -787,6 +787,8 @@
       "COUNT": "{{n}}",
       "OUTSIDERS": "Outside the wall",
       "OUTSIDERS_DESC": "How many of the queue stand on the wall throwing bombs in. 0 turns it off.",
+      "FALLEN_OUTSIDE": "Fallen fight back from the wall",
+      "FALLEN_OUTSIDE_DESC": "Whoever falls goes to the wall (when the line leaves room) and is back in the arena on a kill. Off, the fallen just watch.",
       "MIN_PLAYERS": "Minimum players",
       "MIN_PLAYERS_DESC": "The countdown starts with this many in line.",
       "MAX_PLAYERS": "Maximum players",

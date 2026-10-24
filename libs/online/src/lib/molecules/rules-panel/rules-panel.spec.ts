@@ -18,7 +18,10 @@ describe('RulesPanelComponent', () => {
   });
 
   it('reads the rules out to everyone, one row per rule', () => {
-    expect(spectator.queryAll('.rules__row')).toHaveLength(13);
+    expect(spectator.queryAll('.rules__row')).toHaveLength(14);
+    expect(spectator.query('[data-testid="rules-fallenOutside"]')).toHaveText(
+      'ONLINE.RULES.ON',
+    );
     expect(spectator.query('[data-testid="rules-outsiders"]')).toHaveText(
       'ONLINE.RULES.COUNT',
     );
@@ -95,7 +98,7 @@ describe('RulesPanelComponent', () => {
     spectator.setInput('admin', true);
 
     expect(spectator.queryAll('lib-segmented-control')).toHaveLength(11);
-    expect(spectator.queryAll('lib-switch')).toHaveLength(2);
+    expect(spectator.queryAll('lib-switch')).toHaveLength(3);
     const outsiders = spectator.component.options({
       key: 'outsiders',
       kind: 'number',

@@ -74,6 +74,11 @@ export interface RoomRules {
    * `0` keeps the queue waiting quietly.
    */
   outsiders: number;
+  /**
+   * Whoever falls in a round goes to the border too, in the places the queue
+   * leaves free, and is back in on a kill. Off, the fallen just watch.
+   */
+  fallenOutside: boolean;
   /** How long a round lasts before the clock runs out; `0` is no clock. */
   roundTimerMs: number;
   /** When the clock runs out: walls fall in a spiral until one is left; off, time-up is a draw. */
@@ -144,6 +149,7 @@ export const RULE_FIELDS: readonly RuleField[] = [
     options: range(0, MAX_PLAYERS),
     unit: 'count',
   },
+  { key: 'fallenOutside', kind: 'boolean' },
   {
     key: 'minPlayers',
     kind: 'number',
@@ -250,6 +256,7 @@ export const PUBLIC_ROOM_RULES: RoomRules = {
   resultsMs: 5_000,
   outsiders: 5,
   roundTimerMs: 180_000,
+  fallenOutside: true,
   closingWalls: true,
   dropItems: true,
   winnerStays: 5,
@@ -276,6 +283,7 @@ export const STAGES_ROOM_RULES: RoomRules = {
   outsiders: 0,
   // The stage's own clock applies; see `createGame` with a `stageId`.
   roundTimerMs: 0,
+  fallenOutside: false,
   closingWalls: true,
   dropItems: false,
   winnerStays: 0,

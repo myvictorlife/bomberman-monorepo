@@ -787,6 +787,8 @@
       "COUNT": "{{n}}",
       "OUTSIDERS": "De fora",
       "OUTSIDERS_DESC": "Quantos da fila ficam no muro jogando bombas para dentro. 0 desliga.",
+      "FALLEN_OUTSIDE": "Quem morre volta pela borda",
+      "FALLEN_OUTSIDE_DESC": "Quem cai vai para o muro (se a fila deixar vaga) e volta para a arena se acertar alguém. Desligado, quem cai só assiste.",
       "MIN_PLAYERS": "Mínimo de jogadores",
       "MIN_PLAYERS_DESC": "A contagem começa com esta quantidade na fila.",
       "MAX_PLAYERS": "Máximo de jogadores",

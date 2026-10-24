@@ -113,7 +113,10 @@ on `/online` draws itself from the schema; `parseRules` validates a change.
   fell — someone joining the line bumps whoever fell last. A kill brings them
   back in their own slot and colour (`enterArena` reuses their record), and
   they may fall and come back again. Bots stay down; never in a stage. Every
-  room built on the lobby gets this, private ones included.
+  room built on the lobby gets this, private ones included. The room rule
+  `fallenOutside` (on in the public room, off in the stages room) switches
+  it off: the fallen just watch. The step builds each person's input once —
+  a fallen outsider is in `game.players` and `game.outsiders` both.
   The rules of throwing and entering live in `libs/game/core/src/lib/outsiders.ts`
   (the flight and the landing, shared with the glove and the kick, in `throw.ts`)
   and `game.ts`; who stands there is the lobby's call.

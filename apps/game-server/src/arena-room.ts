@@ -650,7 +650,12 @@ export function createArenaRoom(deps: ArenaRoomDeps) {
       this.kickIdle(game);
 
       const inputs: Record<string, PlayerInput> = {};
-      for (const { id } of [...game.players, ...game.outsiders]) {
+      // Once per person: one who fell is in both lists — a fallen player and
+      // an outsider — and the second pass would find their presses spent.
+      const ids = new Set(
+        [...game.players, ...game.outsiders].map(({ id }) => id),
+      );
+      for (const id of ids) {
         const held = this.heldInputs.get(id);
         inputs[id] = {
           direction:

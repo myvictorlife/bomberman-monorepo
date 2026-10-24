@@ -8,6 +8,7 @@ const RULES: RoomRules = {
   countdownMs: 15_000,
   resultsMs: 5_000,
   outsiders: 2,
+  fallenOutside: true,
   roundTimerMs: 180_000,
   closingWalls: true,
   dropItems: true,
@@ -292,6 +293,15 @@ describe('Lobby outsiders, people who fell', () => {
     lobby.finishRound('c', 1_000);
     lobby.update(1_000 + RULES.resultsMs);
     lobby.update(1_000 + RULES.resultsMs + RULES.countdownMs);
+    expect(lobby.outsiders()).toEqual([]);
+  });
+
+  it('just watch when the room says so', () => {
+    const lobby = new Lobby({ ...RULES, fallenOutside: false });
+    ['a', 'b', 'c'].forEach((id) => lobby.join(seat(id)));
+    lobby.update(0);
+    lobby.update(RULES.countdownMs);
+    expect(lobby.fell('a')).toBe(false);
     expect(lobby.outsiders()).toEqual([]);
   });
 

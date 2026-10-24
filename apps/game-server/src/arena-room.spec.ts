@@ -36,6 +36,7 @@ const RULES: RoomRules = {
   countdownMs: 300,
   resultsMs: 300,
   outsiders: 2,
+  fallenOutside: true,
   roundTimerMs: 0,
   closingWalls: true,
   dropItems: true,
@@ -694,8 +695,19 @@ describe('ArenaRoom', () => {
       ['tom', true],
       ['uma', true],
     ]);
-    // Nobody left in line: Sam, who fell, takes the border to win his way back.
+    // Nobody left in line: Sam, who fell, takes the border to win his way back,
+    // and his bomb key throws from there.
     expect(entered.state.outsiders.map((o) => o.id)).toEqual(['sam']);
+    sam.room.send(CLIENT_MESSAGE.input, { direction: null, bomb: true });
+    const thrown = await tom.next<FrameMessage>(
+      SERVER_MESSAGE.frame,
+      (f) =>
+        f.events.some((e) => e.type === 'bomb-thrown' && e.playerId === 'sam'),
+      8_000,
+    );
+    expect(thrown.state.thrownBombs.some((b) => b.ownerId === 'sam')).toBe(
+      true,
+    );
     uma.room.send(CLIENT_MESSAGE.joinQueue, {});
     await uma.next(
       SERVER_MESSAGE.error,

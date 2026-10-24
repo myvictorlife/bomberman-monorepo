@@ -227,7 +227,11 @@ export class Lobby {
    * back in. Bots stay down — they do not play from the border.
    */
   fell(id: string): boolean {
-    if (this.phaseValue !== 'playing' || this.rulesValue.mode === 'stages')
+    if (
+      this.phaseValue !== 'playing' ||
+      this.rulesValue.mode === 'stages' ||
+      !this.rulesValue.fallenOutside
+    )
       return false;
     const seat = this.players.find((s) => s.id === id);
     if (!seat || seat.bot || this.gone.has(id) || this.fallenIds.includes(id))

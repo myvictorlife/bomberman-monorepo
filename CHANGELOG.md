@@ -34,9 +34,12 @@ config file. Ordinary app-level additions are minor.
   who falls goes to the border wall when the line leaves a place free, and a
   kill from there brings them back into the round in their own slot and
   colour — as often as they manage. The line keeps priority: someone joining
-  it takes the place of whoever fell last. Bots stay down. `Lobby.fell` in
-  `game-lobby`; `addOutsider`/`enterArena` in `game-core` accept a fallen
-  player. A game-core and server change: the server and the site ship
+  it takes the place of whoever fell last. Bots stay down. A room rule,
+  **`fallenOutside`** ("Fallen fight back from the wall", on by default in
+  the public room), switches it off. `Lobby.fell` in `game-lobby`;
+  `addOutsider`/`enterArena` in `game-core` accept a fallen player. The
+  server builds each person's input once a tick, so a fallen player's bomb
+  key throws from the wall. A game-core and server change: the server and the site ship
   together.
 
 ### Security
