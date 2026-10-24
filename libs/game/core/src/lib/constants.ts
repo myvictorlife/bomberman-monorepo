@@ -9,6 +9,8 @@ export const TICK_RATE = 60;
 /** The classic battle arena: 15 × 13 including the outer wall. */
 export const ARENA_COLS = 15;
 export const ARENA_ROWS = 13;
+/** How many columns of a longer stage are in play at once: the classic arena's width. */
+export const VIEW_COLS = ARENA_COLS;
 
 /** Chance that a free cell (outside the spawn zones) starts as a soft block. */
 export const BLOCK_DENSITY = 0.8;

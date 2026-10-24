@@ -1,4 +1,4 @@
-import { DEFAULT_CHARACTER_ID, MAX_PLAYERS } from '@libs/game-core';
+import { createGame, DEFAULT_CHARACTER_ID, MAX_PLAYERS } from '@libs/game-core';
 import {
   botsFor,
   CHAT_MAX_LENGTH,
@@ -26,6 +26,7 @@ import {
   secondsLeft,
   serverOffset,
   STAGES_ROOM_RULES,
+  publicState,
 } from './protocol';
 
 describe('PUBLIC_ROOM_RULES', () => {
@@ -378,5 +379,18 @@ describe('bot level', () => {
     expect(parseRules({ botLevel: 3 }, PUBLIC_ROOM_RULES)?.botLevel).toBe(3);
     expect(parseRules({ botLevel: 4 }, PUBLIC_ROOM_RULES)).toBeNull();
     expect(parseRules({ botLevel: 'hard' }, PUBLIC_ROOM_RULES)).toBeNull();
+  });
+});
+
+describe('publicState', () => {
+  it('keeps what every block hides on the server, and the rest as it is', () => {
+    const state = createGame({ seed: 3, players: [{ id: 'a', name: 'A' }] });
+    const hidden = [...state.hiddenPowerUps];
+    const sent = publicState(state);
+
+    expect(hidden.some((p) => p !== null)).toBe(true);
+    expect(sent.hiddenPowerUps).toEqual([]);
+    expect({ ...sent, hiddenPowerUps: hidden }).toEqual(state);
+    expect(state.hiddenPowerUps).toEqual(hidden);
   });
 });

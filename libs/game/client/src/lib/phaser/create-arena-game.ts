@@ -1,3 +1,4 @@
+import { screenCols } from '@libs/game-core';
 import * as Phaser from 'phaser';
 import type { ArenaHandle, ArenaOptions } from '../mount-arena';
 import { Music } from '../audio/music';
@@ -43,7 +44,8 @@ export function createArenaGame(
   const game = new Phaser.Game({
     type: Phaser.AUTO,
     parent: host,
-    width: session.state.cols * skin.tileSize,
+    // A long stage shows a screen of it at a time; the scene's camera follows the view.
+    width: screenCols(session.state) * skin.tileSize,
     height: session.state.rows * skin.tileSize,
     pixelArt: skin.pixelArt,
     roundPixels: skin.pixelArt,

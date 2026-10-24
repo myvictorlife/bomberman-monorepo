@@ -13,6 +13,29 @@ config file. Ordinary app-level additions are minor.
 
 ### Added
 
+- **Área 2 — Subestação.** Five stages: four long ones (31 or 61 columns,
+  seen 15 at a time through a camera that follows the team forward only)
+  split into parts, each behind a gate that opens on a goal — clear the
+  critters, grab the key a critter carries, blow up the breakers of the arc
+  lines, blow up the generators, or survive a screen that runs on by itself
+  with a burning edge — and the boss, the **Gato de Fios** (a charged zap
+  along its row and column that crates block, a pounce, two generators, a
+  drained window after each zap, blackouts from half health, 7/10/14 hits
+  by team size). A live arc line and the Gato's zap set off any bomb in
+  their way, like a flame. New critters: faísca, gambá (plays dead), marimbondo (flies
+  over crates) and curto (bursts when it falls). On a long stage a fall
+  spends a campaign life and respawns on the screen's edge; with none left a
+  helmet waits for a teammate to pick it up. New modules in `game-core`:
+  `view.ts`, `parts.ts`, `fixtures.ts`, `gato.ts`; `Stage.layout`,
+  `Stage.parts`, `ArenaLayout`, `PlayerSetup.lives`. A game-core change: the
+  server and the site ship together.
+
+### Security
+
+- **Frames no longer carry what every block hides.** `publicState` (in
+  `game-protocol`) drops `hiddenPowerUps` from every frame the server sends;
+  only the server needs it.
+
 - **Bot level in the online room.** A new room rule, "Bot level"
   (`botLevel`: 1 easy, 2 medium, 3 hard; medium by default, the level the
   room's bots already played at), on the admin panel with the other rules.

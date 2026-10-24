@@ -9,7 +9,9 @@ import {
   playerColor,
   isExitOpen,
   secondsUntilClosing,
+  PartGoal,
   StageResult,
+  StageRun,
   TICK_RATE,
 } from '@libs/game-core';
 import { colorSlot } from './characters/cartoon/ink';
@@ -68,6 +70,8 @@ export interface HudStage {
   /** Extra lives picked up in this stage, everyone together. */
   livesGained: number;
   bonus: boolean;
+  /** On a stage in parts: which one is played, of how many, and what opens its gate. */
+  part?: { n: number; total: number; goal: PartGoal } | null;
 }
 
 /** `m:ss`, the way the round's clock reads. */
@@ -102,6 +106,7 @@ export function toHud(state: GameState): HudSnapshot {
           score: sum(state.stage.score),
           livesGained: sum(state.stage.livesGained),
           bonus: state.stage.bonus,
+          part: partOf(state.stage),
         }
       : null,
     players: state.players.map((p) => ({
@@ -137,6 +142,13 @@ export function toHud(state: GameState): HudSnapshot {
   };
 }
 
+function partOf(run: StageRun): HudStage['part'] {
+  const part = run.parts[run.part];
+  return part
+    ? { n: run.part + 1, total: run.parts.length, goal: part.goal }
+    : null;
+}
+
 export function sameHud(a: HudSnapshot | null, b: HudSnapshot): boolean {
   if (!a || a.phase !== b.phase || a.winnerId !== b.winnerId) return false;
   if (a.secondsLeft !== b.secondsLeft || a.closing !== b.closing) return false;
@@ -147,7 +159,8 @@ export function sameHud(a: HudSnapshot | null, b: HudSnapshot): boolean {
     a.stage?.result !== b.stage?.result ||
     a.stage?.boss?.hp !== b.stage?.boss?.hp ||
     a.stage?.score !== b.stage?.score ||
-    a.stage?.livesGained !== b.stage?.livesGained
+    a.stage?.livesGained !== b.stage?.livesGained ||
+    a.stage?.part?.n !== b.stage?.part?.n
   )
     return false;
   if (a.players.length !== b.players.length) return false;

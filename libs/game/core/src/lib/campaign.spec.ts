@@ -21,6 +21,8 @@ import {
   stageCode,
   stagesInOrder,
   stageStatus,
+  findStage,
+  foesOf,
 } from './campaign';
 import { START_KIT } from './kit';
 import { isMapId } from './maps';
@@ -90,7 +92,30 @@ describe('campaign catalogue', () => {
       'caramujo',
       'queroquero',
     ]);
-    expect(creaturesOfArea('subestacao')).toEqual([]);
+    // A long stage's creatures are its parts'.
+    expect(bossOfArea('subestacao')).toBe('gato');
+    expect(creaturesOfArea('subestacao')).toEqual([
+      'faisca',
+      'gamba',
+      'marimbondo',
+      'curto',
+    ]);
+    expect(creaturesOfArea('autodromo')).toEqual([]);
+  });
+
+  it('adds up the creatures of a stage, its parts and its boss', () => {
+    const stage = (id: string) => {
+      const found = findStage(id);
+      if (!found) throw new Error(`no stage ${id}`);
+      return found;
+    };
+    expect(foesOf(stage('subestacao-1'))).toEqual([
+      { creature: 'faisca', count: 4 },
+      { creature: 'gamba', count: 3 },
+    ]);
+    expect(foesOf(stage('subestacao-5'))).toEqual([
+      { creature: 'faisca', count: 0 },
+    ]);
   });
 });
 
@@ -111,7 +136,7 @@ describe('campaign progress', () => {
 
   it('opens the first area and announces the ones without stages', () => {
     expect(areaStatus(EMPTY_PROGRESS, 'gramado')).toBe('open');
-    expect(areaStatus(EMPTY_PROGRESS, 'subestacao')).toBe('soon');
+    expect(areaStatus(EMPTY_PROGRESS, 'autodromo')).toBe('soon');
   });
 
   it('keeps an area with stages locked until the previous one is cleared', () => {

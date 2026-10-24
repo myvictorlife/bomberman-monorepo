@@ -34,6 +34,13 @@
       <li class="stage__pill">
         {{ 'STAGE_PLAY.TIME' | translate }} <strong>{{ time }}</strong>
       </li>
+      } @if (part(); as p) {
+      <li class="stage__pill" data-testid="stage-part">
+        {{ 'STAGE_PLAY.PART' | translate: { n: p.n, total: p.total } }}
+        <strong
+          >{{ 'STAGE_PLAY.GOAL.' + p.goal.toUpperCase() | translate }}</strong
+        >
+      </li>
       } @if (!bonus()) {
       <li class="stage__pill" data-testid="stage-creatures">
         {{ 'STAGE_PLAY.CREATURES' | translate }}

@@ -341,7 +341,7 @@
       "STORY": "O Dev Cansado está acordado há 36 horas por causa de um bug que, no fim, era um ponto e vírgula. Entrou na arena porque \"é tipo um deploy em produção, só que com menos explosões\". A Dra. Lia já mandou ele dormir três vezes; ele respondeu \"só mais um café\"."
     },
     "GESTORA": {
-      "NAME": "Gestora Cansada",
+      "NAME": "Gestora Estressada",
       "JOB": "Engenheira de software e gestora",
       "STORY": "A Gestora não sofre com as reuniões: é ela quem marca todas. Daily às 9h, alinhamento às 10h, \"pré-alinhamento do alinhamento\" às 11h e um 1:1 surpresa com o Dev Cansado logo depois do almoço. Se o calendário de alguém mostra 15 minutos livres, o convite já chegou. Foi ela quem acordou o Dev às 3h da manhã por causa do bug do ponto e vírgula, e quem prometeu ao cliente que \"sai até sexta\". Entrou na arena para \"desbloquear o time\" e descobriu que uma bomba desbloqueia tudo bem mais rápido que um card no Jira. Também não dorme: depois das 18h ela finalmente abre o editor para escrever o próprio código."
     },
@@ -1100,6 +1100,26 @@
       "NAME": "Formigueiro Real",
       "DESC": "A mãe das saúvas cava por baixo da arena e racha o chão para sair. Vença para abrir a Subestação."
     },
+    "SUBESTACAO_1": {
+      "NAME": "Portaria",
+      "DESC": "Duas telas para aprender a andar com a tela: na primeira derrube os bichos, na segunda ache a chave que o gambá carrega."
+    },
+    "SUBESTACAO_2": {
+      "NAME": "Linhas de Arco",
+      "DESC": "Chegam os marimbondos, que voam por cima das caixas. Duas telas para atravessar sem se deixar cercar."
+    },
+    "SUBESTACAO_3": {
+      "NAME": "Sala dos Geradores",
+      "DESC": "As faíscas não param de chegar e o curto explode quando cai: use a explosão dele a seu favor."
+    },
+    "SUBESTACAO_4": {
+      "NAME": "A Fuga",
+      "DESC": "Três telas com tudo o que a Subestação tem. No fim, o chão cede e leva vocês para o porão."
+    },
+    "SUBESTACAO_5": {
+      "NAME": "Porão dos Cabos",
+      "DESC": "O Gato de Fios espera no escuro. Use as caixas como escudo contra o choque e bata quando ele apagar."
+    },
     "GRAMADO_BONUS": {
       "NAME": "Bônus do Lago",
       "DESC": "Sem bichos, um item embaixo de cada bloco e 30 segundos para pegar o que puder. Tem até vida extra escondida."
@@ -1125,15 +1145,47 @@
       "NAME": "Quero-quero",
       "KIND": "O dono do campo",
       "DESC": "Patrulha devagar e dispara em quem aparece na mesma linha ou coluna, até bater em algo."
+    },
+    "FAISCA": {
+      "NAME": "Faísca",
+      "KIND": "A centelha que fugiu",
+      "DESC": "Rápida e sem rumo: em todo cruzamento escolhe um caminho novo. É o que os geradores fabricam."
+    },
+    "GAMBA": {
+      "NAME": "Gambá",
+      "KIND": "O que finge de morto",
+      "DESC": "Na primeira explosão cai de barriga para cima e fica 3 s quieto, sem machucar. Depois levanta e sai correndo."
+    },
+    "MARIMBONDO": {
+      "NAME": "Marimbondo",
+      "KIND": "O do ninho no poste",
+      "DESC": "Voa por cima das caixas e vem atrás do jogador mais perto. Caixa não protege: só o fogo pega."
+    },
+    "CURTO": {
+      "NAME": "Curto",
+      "KIND": "A bola de curto-circuito",
+      "DESC": "Anda reto e, quando cai, explode em cruz: quebra caixas, pega outros bichos e quem estiver do lado."
     }
   },
   "BOSSES": {
     "RAINHA": {
       "NAME": "Rainha Saúva",
       "DESC": "A mãe de todas as saúvas do parque. Cava por baixo da arena, racha o chão para sair e fica tonta por 2 s — a hora de bater."
+    },
+    "GATO": {
+      "NAME": "Gato de Fios",
+      "DESC": "A gambiarra do porão que ganhou vida. Para, brilha e solta um choque em cruz que as caixas seguram; depois de cada choque fica 2 s descarregado — a hora de bater."
     }
   },
   "STAGE_PLAY": {
+    "PART": "Parte {{n}}/{{total}}",
+    "GOAL": {
+      "CREATURES": "derrube os bichos",
+      "KEY": "pegue a chave",
+      "BREAKERS": "exploda os disjuntores",
+      "GENERATORS": "exploda os geradores",
+      "SURVIVE": "sobreviva até o fim"
+    },
     "TITLE": "Fase",
     "BACK": "Mapa das fases",
     "TIME": "Tempo",

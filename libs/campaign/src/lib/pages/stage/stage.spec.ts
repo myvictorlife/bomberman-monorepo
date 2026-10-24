@@ -144,7 +144,7 @@ describe('Stage', () => {
     expect(launched[0]).toEqual(
       expect.objectContaining({
         stageId: 'gramado-1',
-        players: [{ id: 'p1', name: 'P1', characterId: 'lia' }],
+        players: [{ id: 'p1', name: 'P1', characterId: 'lia', lives: 3 }],
       }),
     );
     expect(launched[0]?.controls.map((c) => c.playerId)).toEqual(['p1', 'p1']);

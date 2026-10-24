@@ -43,7 +43,10 @@ describe('stage access', () => {
   it('knows the stage that comes next', () => {
     expect(nextStageId('gramado-1')).toBe('gramado-2');
     expect(nextStageId('gramado-4')).toBe('gramado-bonus');
-    expect(nextStageId('gramado-5')).toBeNull();
+    // The last of an area leads into the next one.
+    expect(nextStageId('gramado-5')).toBe('subestacao-1');
+    expect(nextStageId('subestacao-1')).toBe('subestacao-2');
+    expect(nextStageId('subestacao-5')).toBeNull();
     expect(nextStageId('nope')).toBeNull();
   });
 });

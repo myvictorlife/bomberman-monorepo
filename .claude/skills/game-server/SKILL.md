@@ -195,7 +195,8 @@ token the route provides; the store keeps a reconnection token per room
 - **Campaign.** `queue:join` may carry the browser's `campaign`. The room
   merges it with the account's record (`mergeProgress`: the record's lives,
   kit and points, every stage either side cleared); a guest's lives only in
-  memory. Each seat starts the stage with its campaign's kit.
+  memory. Each seat starts the stage with its campaign's kit and lives
+  (`PlayerSetup.lives`: a long stage spends them on falls).
 - **End of a stage.** `Lobby.finishStage` moves every player's campaign on
   (`progressAfterStage`): cleared counts for everyone who played it — one
   who fell goes on with the starting kit — and a loss costs each a life. The
@@ -213,6 +214,17 @@ token the route provides; the store keeps a reconnection token per room
   gate stays open `EXIT_GRACE_TICKS` (5 s) after the first one through, then
   shuts: whoever is still inside is left behind (`player-left-behind`) and
   loses their kit.
+- **Long stages** (Área 2, `Stage.layout` + `Stage.parts`): the arena is
+  wider than the screen. `StageRun.view` is the first column in play; only
+  `VIEW_COLS` (15) exist for anyone, past them `tileAt` reads wall
+  (`view.ts`). The view follows the team forward only, pulls a straggler
+  after 3 s, and on a `survive` part runs on by itself with a burning edge.
+  Each part's gate is the view's limit until its goal is met (`parts.ts`);
+  arcs, breakers, cables and generators live in `fixtures.ts`. A fall spends
+  a life and respawns on the left edge; with none left a helmet waits for a
+  teammate. The whole `GameState` still goes out every frame, so the camera
+  is the same for everyone — but `publicState` keeps `hiddenPowerUps` (what
+  every block hides) on the server.
 
 ## Chat and reactions
 

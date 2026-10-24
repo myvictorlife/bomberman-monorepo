@@ -208,6 +208,7 @@ describe('hud', () => {
       score: 0,
       livesGained: 0,
       bonus: false,
+      part: null,
     });
 
     const first = state.stage?.creatures[0];

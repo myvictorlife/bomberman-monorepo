@@ -1,10 +1,17 @@
 import { BossId, CreatureId } from '@libs/game-core';
-import { ART_INK, BOSS_ART, CREATURE_ART, CreatureArt } from './creature-art';
+import {
+  ART_INK,
+  BOSS_ART,
+  BOSS_POSES,
+  BossPose,
+  CREATURE_ART,
+  CreatureArt,
+} from './creature-art';
 
-/** What to paint: a creature or a boss, by id. */
+/** What to paint: a creature or a boss, by id — a boss in one of its poses. */
 export type CreatureSubject =
   | { readonly creature: CreatureId }
-  | { readonly boss: BossId };
+  | { readonly boss: BossId; readonly pose?: BossPose };
 
 export interface CreatureFrame {
   readonly subject: CreatureSubject;
@@ -20,9 +27,9 @@ export type CreaturePainter = (
 ) => HTMLCanvasElement;
 
 export function artFor(subject: CreatureSubject): CreatureArt {
-  return 'creature' in subject
-    ? CREATURE_ART[subject.creature]
-    : BOSS_ART[subject.boss];
+  if ('creature' in subject) return CREATURE_ART[subject.creature];
+  const pose = subject.pose && BOSS_POSES[subject.boss]?.[subject.pose];
+  return pose ?? BOSS_ART[subject.boss];
 }
 
 /**

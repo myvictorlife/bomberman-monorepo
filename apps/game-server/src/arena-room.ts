@@ -7,6 +7,7 @@ import {
   GameEvent,
   GameState,
   kitsAfterStage,
+  livesOf,
   MAPS,
   PlayerInput,
   removeOutsider,
@@ -51,6 +52,7 @@ import {
   parsePickStage,
   parseReaction,
   parseRules,
+  publicState,
   ROOM_BOT_LEVELS,
   RECONNECT_GRACE_MS,
   RoomRules,
@@ -799,13 +801,15 @@ export function createArenaRoom(deps: ArenaRoomDeps) {
         seed,
         stageId,
         players: seats.map(({ id, name, characterId, color }) => {
-          const kit = this.lobby.progressOf(id)?.kit;
+          const progress = this.lobby.progressOf(id);
+          const kit = progress?.kit;
           return {
             id,
             name,
             characterId,
             ...(color ? { color } : {}),
             ...(kit ? { kit } : {}),
+            ...(progress ? { lives: livesOf(progress) } : {}),
           };
         }),
       });
@@ -924,7 +928,11 @@ export function createArenaRoom(deps: ArenaRoomDeps) {
     }
 
     private frame(events: GameEvent[]): FrameMessage {
-      return { round: this.round, state: this.game as GameState, events };
+      return {
+        round: this.round,
+        state: publicState(this.game as GameState),
+        events,
+      };
     }
 
     private sendFrame(): void {

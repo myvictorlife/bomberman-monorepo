@@ -4,6 +4,7 @@ import {
   BLOCK_DENSITY,
   POWER_UP_COUNTS,
   SPAWN_CELLS,
+  VIEW_COLS,
 } from './constants';
 import { DEFAULT_MAP_ID, findMap, isExtraWall, MapDefinition } from './maps';
 import { createRng, shuffle } from './rng';
@@ -16,13 +17,35 @@ export interface Arena {
   hiddenPowerUps: (PowerUpKind | null)[];
 }
 
+/**
+ * The shape of an arena: its size and where each player slot starts. A round
+ * is played on {@link CLASSIC_LAYOUT}; a stage may bring its own — a longer
+ * one, players starting elsewhere — with the same grid of pillars.
+ */
+export interface ArenaLayout {
+  readonly cols: number;
+  readonly rows: number;
+  /** One per player slot, as `[col, row]`; the most players it takes. */
+  readonly spawns: readonly (readonly [number, number])[];
+}
+
+export const CLASSIC_LAYOUT: ArenaLayout = {
+  cols: ARENA_COLS,
+  rows: ARENA_ROWS,
+  spawns: SPAWN_CELLS,
+};
+
 /** Hard walls: the border, plus a pillar on every even column of every even row. */
-export function isPillar(col: number, row: number): boolean {
+export function isPillar(
+  col: number,
+  row: number,
+  layout: Pick<ArenaLayout, 'cols' | 'rows'> = CLASSIC_LAYOUT,
+): boolean {
   return (
     col === 0 ||
     row === 0 ||
-    col === ARENA_COLS - 1 ||
-    row === ARENA_ROWS - 1 ||
+    col === layout.cols - 1 ||
+    row === layout.rows - 1 ||
     (col % 2 === 0 && row % 2 === 0)
   );
 }
@@ -33,29 +56,37 @@ export function isPillar(col: number, row: number): boolean {
  * middle, where the sideways neighbours are pillars, it also frees the cells
  * above and below on both sides — room to drop a bomb and turn out of its line.
  */
-export function isSpawnZone(col: number, row: number): boolean {
-  return SPAWN_CELLS.some(
+export function isSpawnZone(
+  col: number,
+  row: number,
+  spawns: ArenaLayout['spawns'] = SPAWN_CELLS,
+): boolean {
+  return spawns.some(
     ([sc, sr]) => Math.abs(sc - col) <= 1 && Math.abs(sr - row) <= 1,
   );
 }
 
 /**
- * Builds the battle arena: the classic grid plus the map's extra walls. The
- * same seed and map always give the same arena.
+ * Builds the battle arena: the grid of the layout plus the map's extra walls.
+ * The same seed, map and layout always give the same arena.
  */
 export function generateArena(
   seed: number,
   map: MapDefinition = findMap(DEFAULT_MAP_ID),
+  layout: ArenaLayout = CLASSIC_LAYOUT,
 ): Arena {
   const rng = createRng(seed);
   const tiles: Tile[] = [];
   const blockCells: number[] = [];
 
-  for (let row = 0; row < ARENA_ROWS; row++) {
-    for (let col = 0; col < ARENA_COLS; col++) {
-      if (isPillar(col, row) || isExtraWall(map, col, row)) {
+  for (let row = 0; row < layout.rows; row++) {
+    for (let col = 0; col < layout.cols; col++) {
+      if (isPillar(col, row, layout) || isExtraWall(map, col, row)) {
         tiles.push('wall');
-      } else if (!isSpawnZone(col, row) && rng() < BLOCK_DENSITY) {
+      } else if (
+        !isSpawnZone(col, row, layout.spawns) &&
+        rng() < BLOCK_DENSITY
+      ) {
         blockCells.push(tiles.length);
         tiles.push('block');
       } else {
@@ -72,7 +103,7 @@ export function generateArena(
     .slice(0, kinds.length)
     .forEach((cell, i) => (hiddenPowerUps[cell] = kinds[i] ?? null));
 
-  return { cols: ARENA_COLS, rows: ARENA_ROWS, tiles, hiddenPowerUps };
+  return { cols: layout.cols, rows: layout.rows, tiles, hiddenPowerUps };
 }
 
 export function cellIndex(
@@ -92,7 +123,19 @@ export function inBounds(
 }
 
 export function tileAt(state: GameState, col: number, row: number): Tile {
-  return inBounds(state, col, row)
+  return inBounds(state, col, row) && !isOutOfView(state, col)
     ? (state.tiles[cellIndex(state, col, row)] ?? 'wall')
     : 'wall';
+}
+
+/**
+ * Whether column `col` is outside the part of a long stage in play. Out there
+ * everything — players, creatures, flames, a thrown bomb — meets a wall.
+ */
+export function isOutOfView(
+  state: Pick<GameState, 'stage'>,
+  col: number,
+): boolean {
+  const view = state.stage?.view ?? null;
+  return view !== null && (col < view || col >= view + VIEW_COLS);
 }

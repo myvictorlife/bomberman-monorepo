@@ -197,13 +197,253 @@ const RAINHA: CreatureArt = {
   ],
 };
 
+const FAISCA: CreatureArt = {
+  box: 120,
+  parts: [
+    { d: ellipse(60, 108, 30, 6), fill: 'rgba(0,0,0,0.35)', stroke: 'none' },
+    { d: circle(60, 58, 40), fill: 'rgba(95,211,255,0.18)', stroke: 'none' },
+    { d: 'M44 86 l-6 14 l8 -4 M74 86 l6 14 l-8 -4', width: 4.5 },
+    {
+      d: 'M44 86 l-6 14 l8 -4 M74 86 l6 14 l-8 -4',
+      stroke: '#ffd36e',
+      width: 2,
+    },
+    {
+      d: 'M60 14 l9 18 l20 -8 l-8 20 l18 10 l-20 6 l4 22 l-20 -12 l-20 12 l4 -22 l-20 -6 l18 -10 l-8 -20 l20 8z',
+      fill: '#ffe680',
+      width: 4.5,
+    },
+    {
+      d: 'M60 28 l6 12 l13 -5 l-5 13 l11 6 l-13 4 l3 14 l-15 -9 l-15 9 l3 -14 l-13 -4 l11 -6 l-5 -13 l13 5z',
+      fill: '#fff8d6',
+      stroke: 'none',
+    },
+    { d: 'M42 38 q6 -8 14 -10', stroke: '#ffffff', width: 3.5 },
+    { d: ellipse(51, 58, 7, 8), fill: '#ffffff', width: 2.5 },
+    { d: ellipse(69, 58, 7, 8), fill: '#ffffff', width: 2.5 },
+    { d: circle(53, 59, 3.5), fill: ART_INK, stroke: 'none' },
+    { d: circle(71, 59, 3.5), fill: ART_INK, stroke: 'none' },
+    { d: 'M53 70 q7 6 14 0', width: 3 },
+    {
+      d: 'M100 30 l8 -6 M104 44 l10 0 M14 40 l-8 -4 M18 26 l-6 -8',
+      stroke: '#5fd3ff',
+      width: 3,
+    },
+  ],
+};
+
+const GAMBA: CreatureArt = {
+  box: 120,
+  parts: [
+    { d: ellipse(58, 108, 44, 6), fill: 'rgba(0,0,0,0.35)', stroke: 'none' },
+    { d: 'M18 80 q-16 -2 -14 -22 q2 -10 10 -12', width: 7 },
+    {
+      d: 'M18 80 q-16 -2 -14 -22 q2 -10 10 -12',
+      stroke: '#f0a8b4',
+      width: 3.5,
+    },
+    { d: 'M36 94 l-4 12 M50 96 l0 11 M70 96 l2 11 M84 94 l4 11', width: 5 },
+    {
+      d: 'M36 94 l-4 12 M50 96 l0 11 M70 96 l2 11 M84 94 l4 11',
+      stroke: '#f0a8b4',
+      width: 2,
+    },
+    {
+      d: 'M16 82 q0 -34 40 -36 q34 0 42 26 q-4 26 -42 26 q-36 0 -40 -16z',
+      fill: '#8f939c',
+      width: 4.5,
+    },
+    { d: 'M24 78 q14 14 50 8', stroke: '#d9dce2', width: 7 },
+    { d: 'M30 56 q12 -8 28 -8', stroke: '#b6bac2', width: 4 },
+    {
+      d: 'M78 52 q14 -6 26 6 l12 10 q-10 8 -24 6 q-12 -2 -16 -12z',
+      fill: '#f3f0e8',
+      width: 4.5,
+    },
+    { d: circle(114, 68, 4), fill: '#f0a8b4', width: 2.5 },
+    { d: 'M80 50 l-4 -16 l14 10z', fill: ART_INK, stroke: 'none' },
+    { d: 'M80 48 l-2 -10 l7 6z', fill: '#f0a8b4', stroke: 'none' },
+    { d: circle(96, 58, 5), fill: ART_INK, stroke: 'none' },
+    { d: circle(97.5, 56.5, 1.6), fill: '#ffffff', stroke: 'none' },
+    { d: 'M100 72 l10 4 M100 74 l8 8', width: 1.8 },
+  ],
+};
+
+const MARIMBONDO: CreatureArt = {
+  box: 120,
+  parts: [
+    { d: ellipse(60, 112, 22, 4), fill: 'rgba(0,0,0,0.3)', stroke: 'none' },
+    {
+      d: 'M52 44 q-30 -34 -44 -14 q4 20 44 20z',
+      fill: 'rgba(214,236,255,0.6)',
+      width: 3.5,
+    },
+    {
+      d: 'M62 44 q14 -40 34 -26 q2 22 -34 30z',
+      fill: 'rgba(214,236,255,0.5)',
+      width: 3.5,
+    },
+    { d: 'M40 64 l-10 14 M50 70 l-6 14 M66 72 l2 14', width: 3.5 },
+    { d: 'M20 80 q-6 -2 -10 8 l6 -2', width: 3.5 },
+    {
+      d: 'M12 70 a22 16 -16 1 0 44 0 a22 16 -16 1 0 -44 0z',
+      fill: '#f2c230',
+      width: 4.5,
+    },
+    { d: 'M22 60 q-2 14 4 24 M34 56 q-2 16 2 28', width: 5 },
+    { d: 'M14 80 l-6 6', width: 4 },
+    { d: ellipse(62, 58, 12, 10), fill: '#e9b83a', width: 4.5 },
+    { d: circle(84, 50, 17), fill: '#f2c230', width: 4.5 },
+    { d: 'M70 46 q14 -10 28 0', width: 4 },
+    { d: ellipse(90, 50, 7, 8), fill: '#3a1a10', width: 2.5 },
+    { d: circle(92, 47, 2), fill: '#ffffff', stroke: 'none' },
+    { d: 'M80 34 q-4 -14 -12 -16 M90 34 q2 -14 10 -18', width: 3 },
+    { d: 'M94 62 l6 6 M88 64 l2 8', width: 3 },
+    { d: 'M24 46 q4 -6 10 -8', stroke: '#fff3b8', width: 3 },
+  ],
+};
+
+const CURTO: CreatureArt = {
+  box: 120,
+  parts: [
+    { d: ellipse(60, 108, 34, 6), fill: 'rgba(0,0,0,0.4)', stroke: 'none' },
+    { d: 'M40 94 l-6 12 M80 94 l6 12', width: 6 },
+    { d: 'M60 24 q-6 -10 2 -16 q6 -4 4 -10', width: 6 },
+    { d: 'M60 24 q-6 -10 2 -16 q6 -4 4 -10', stroke: '#ff4a3d', width: 2.5 },
+    { d: circle(60, 62, 36), fill: '#2b2f3a', width: 5 },
+    {
+      d: 'M34 46 l12 8 l-4 10 l12 6 M86 50 l-12 6 l6 10 l-10 8 M50 92 l6 -12 l10 4',
+      stroke: '#ff8a3d',
+      width: 4,
+    },
+    { d: 'M38 40 q8 -10 20 -12', stroke: '#4b5160', width: 5 },
+    { d: 'M42 54 l14 4 M78 54 l-14 4', width: 4 },
+    { d: ellipse(50, 64, 6, 5), fill: '#ffd36e', width: 2 },
+    { d: ellipse(70, 64, 6, 5), fill: '#ffd36e', width: 2 },
+    { d: circle(51, 65, 2.4), fill: ART_INK, stroke: 'none' },
+    { d: circle(69, 65, 2.4), fill: ART_INK, stroke: 'none' },
+    { d: 'M50 78 l5 -3 l5 3 l5 -3 l5 3', width: 3 },
+    {
+      d: 'M98 40 l10 -6 M100 58 l12 2 M20 40 l-10 -6 M18 60 l-12 2',
+      stroke: '#ffb43a',
+      width: 3,
+    },
+  ],
+};
+
+interface GatoLook {
+  readonly wires: readonly [string, string, string];
+  readonly head: string;
+  readonly eye: string;
+  readonly eyeHeight: number;
+  readonly slit: number;
+}
+
+/** The Gato de Fios, in one of its looks: the colour of its wires tells its mood. */
+function gatoArt(look: GatoLook, extra: readonly ArtPart[] = []): CreatureArt {
+  const [w1, w2, w3] = look.wires;
+  return {
+    box: 100,
+    parts: [
+      { d: ellipse(50, 94, 34, 5), fill: 'rgba(0,0,0,0.45)', stroke: 'none' },
+      { d: 'M84 70 q14 -6 10 -22 q-3 -10 4 -16', stroke: '#1b1d24', width: 7 },
+      { d: 'M84 70 q14 -6 10 -22 q-3 -10 4 -16', stroke: w2, width: 3 },
+      { d: 'M94 24 h7 v10 h-7z', fill: '#7a8296', width: 2 },
+      {
+        d: 'M18 88 q-6 -30 14 -40 q20 -8 38 0 q22 10 14 40z',
+        fill: '#2b2f3a',
+        width: 4,
+      },
+      { d: 'M22 80 q14 -20 30 -6 q16 12 28 -8', stroke: w1, width: 4 },
+      { d: 'M24 66 q18 10 32 -4 q12 -10 24 2', stroke: w2, width: 4 },
+      { d: 'M30 86 q8 -14 20 -10 q14 4 22 -6', stroke: w3, width: 3 },
+      {
+        d: 'M24 30 l-4 -22 l16 14z M76 30 l4 -22 l-16 14z',
+        fill: '#7a8296',
+        width: 4,
+      },
+      { d: circle(50, 36, 24), fill: look.head, width: 4 },
+      { d: 'M30 30 q20 -8 40 0', stroke: w1, width: 3 },
+      { d: 'M28 42 q22 8 44 0', stroke: w2, width: 3 },
+      { d: ellipse(40, 36, 6, look.eyeHeight), fill: look.eye, stroke: 'none' },
+      { d: ellipse(60, 36, 6, look.eyeHeight), fill: look.eye, stroke: 'none' },
+      {
+        d: `M38.5 ${36 - look.slit / 2} h3 v${look.slit} h-3z M58.5 ${36 - look.slit / 2} h3 v${look.slit} h-3z`,
+        fill: '#0b1420',
+        stroke: 'none',
+      },
+      { d: 'M44 48 l6 4 l6 -4', width: 3 },
+      {
+        d: 'M30 46 l-14 -2 M30 50 l-14 4 M70 46 l14 -2 M70 50 l14 4',
+        stroke: w3,
+        width: 2.5,
+      },
+      ...extra,
+    ],
+  };
+}
+
+const GATO_LIVE: GatoLook = {
+  wires: ['#ff4a3d', '#e9b83a', '#5fd3ff'],
+  head: '#3a3f4c',
+  eye: '#9be4ff',
+  eyeHeight: 7,
+  slit: 10,
+};
+
+const GATO = gatoArt(GATO_LIVE);
+
+/** Charging: white eyes, sparks all round — the zap comes in a second. */
+const GATO_CHARGE = gatoArt(
+  { ...GATO_LIVE, eye: '#ffffff', eyeHeight: 8, slit: 4 },
+  [
+    {
+      d: 'M10 20 l8 6 l-4 4 l8 6 M90 18 l-8 6 l4 4 l-8 6 M6 60 l10 0 l-4 6 l10 0 M94 62 l-10 0 l4 6 l-10 0',
+      stroke: '#9be4ff',
+      width: 3,
+    },
+  ],
+);
+
+/** Drained after a zap: grey wires, eyes half shut — the time to strike. */
+const GATO_DRAINED = gatoArt(
+  {
+    wires: ['#5a6070', '#5a6070', '#4b5160'],
+    head: '#353a45',
+    eye: '#4b5160',
+    eyeHeight: 2,
+    slit: 1,
+  },
+  [
+    {
+      d: 'M30 2 l2 5 l5 0 l-4 3 l2 5 l-5 -3 l-5 3 l2 -5 l-4 -3 l5 0z M66 0 l2 5 l5 0 l-4 3 l2 5 l-5 -3 l-5 3 l2 -5 l-4 -3 l5 0z',
+      fill: '#ffd36e',
+      width: 1.5,
+    },
+  ],
+);
+
+/** A boss's other looks, where it has them; anything else wears its art. */
+export type BossPose = 'charge' | 'drained';
+
+export const BOSS_POSES: Partial<
+  Record<BossId, Partial<Record<BossPose, CreatureArt>>>
+> = {
+  gato: { charge: GATO_CHARGE, drained: GATO_DRAINED },
+};
+
 export const CREATURE_ART: Record<CreatureId, CreatureArt> = {
   sauva: SAUVA,
   pombo: POMBO,
   caramujo: CARAMUJO,
   queroquero: QUEROQUERO,
+  faisca: FAISCA,
+  gamba: GAMBA,
+  marimbondo: MARIMBONDO,
+  curto: CURTO,
 };
 
 export const BOSS_ART: Record<BossId, CreatureArt> = {
   rainha: RAINHA,
+  gato: GATO,
 };

@@ -1,4 +1,4 @@
-import type { BossId, CreatureId } from './campaign';
+import type { BossId, CreatureId, PartGoal } from './campaign';
 import type { CharacterId, MountId } from './characters';
 import type { PlayerKit } from './kit';
 import type { PlayerColorId } from './colors';
@@ -177,6 +177,8 @@ export interface Bomb {
   pierce: boolean;
   /** No fuse: waits for the owner's detonate button, or for another flame. */
   remote: boolean;
+  /** Brought by a spark along a cable: it bursts where it arrived, not back again. */
+  fromCable?: boolean;
 }
 
 export interface Flame {
@@ -296,6 +298,14 @@ export type GameEvent =
   | { type: 'player-exited'; playerId: string }
   /** The gate shut with this player still inside: out of the stage, nothing kept. */
   | { type: 'player-left-behind'; playerId: string }
+  | { type: 'player-pulled'; playerId: string }
+  | { type: 'gate-opened'; col: number }
+  | { type: 'arc-off'; row: number }
+  | { type: 'cable-spark'; col: number; row: number }
+  | { type: 'key-dropped'; col: number; row: number }
+  | { type: 'key-taken'; playerId: string }
+  | { type: 'player-respawned'; playerId: string }
+  | { type: 'player-rescued'; playerId: string; byId: string }
   | { type: 'stage-over'; result: StageResult }
   /** The boss went underground; then the ground cracked where it will come up. */
   /** The skull: a curse fell on a player, or passed from one to another. */
@@ -318,6 +328,8 @@ export type GameEvent =
   | { type: 'boss-crack'; col: number; row: number }
   | { type: 'boss-emerged'; col: number; row: number }
   | { type: 'boss-hurt'; col: number; row: number }
+  | { type: 'boss-charge'; col: number; row: number }
+  | { type: 'boss-zap'; col: number; row: number }
   | { type: 'boss-died'; col: number; row: number; killerId: string | null }
   | { type: 'mound-hurt'; col: number; row: number }
   | { type: 'mound-destroyed'; col: number; row: number };
@@ -327,7 +339,19 @@ export type GameEvent =
  * ground, `under` it, the ground `cracking` where it will come up, and
  * `stunned` once it is out — the only time, with `up`, a flame hurts it.
  */
-export type BossPhase = 'up' | 'sinking' | 'under' | 'crack' | 'stunned';
+export type BossPhase =
+  | 'up'
+  | 'sinking'
+  | 'under'
+  | 'crack'
+  | 'stunned'
+  // The Gato de Fios (see `gato.ts`).
+  | 'walk'
+  | 'charge'
+  | 'zap'
+  | 'drained'
+  | 'crouch'
+  | 'pounce';
 
 export interface BossBody {
   bossId: BossId;
@@ -345,6 +369,14 @@ export interface BossBody {
   target: { col: number; row: number };
   /** Cracks that come to nothing: a feint, from half health on. */
   fakes: { col: number; row: number }[];
+  /** The Gato's charge and zap: the cells of its row and column the shock reaches. */
+  zap?: { col: number; row: number }[];
+  /** The Gato's zap reached one of its generators: dizzy after it, not just drained. */
+  fried?: boolean;
+  /** The Gato's cycles so far: every third one it may pounce instead. */
+  cycles?: number;
+  /** From half health on, the Gato's blackouts are counted from here. */
+  blackoutSinceTick?: number | null;
   hurtUntilTick: number;
   alive: boolean;
   diedAtTick: number | null;
@@ -359,6 +391,33 @@ export interface Mound {
   hurtUntilTick: number;
   alive: boolean;
   nextSpawnTick: number;
+  /**
+   * What it is: a boss's lair (absent), or on a long stage a `generator`
+   * sending out faíscas, or a `breaker` holding an arc line on.
+   */
+  kind?: 'generator' | 'breaker';
+}
+
+/** An arc line of a long stage: shocks on and off until its breaker is blown up. */
+export interface ArcRun {
+  row: number;
+  from: number;
+  to: number;
+  /** The breaker's id among the stage's mounds. */
+  breakerId: number;
+  /** Ticks into its on-off cycle it starts at: neighbouring lines take turns. */
+  offset: number;
+}
+
+/** A spark running along a cable, from a bomb set on it to the far end. */
+export interface Spark {
+  x: number;
+  row: number;
+  /** The cable's far end, where the bomb goes off. */
+  to: number;
+  ownerId: string;
+  range: number;
+  pierce: boolean;
 }
 
 /** A creature of the campaign walking the arena; see `stage.ts`. */
@@ -376,6 +435,10 @@ export interface CreatureBody {
   diedAtTick: number | null;
   /** A quero-quero dashing at a player it saw, until something stops it. */
   charging?: boolean;
+  /** A gambá playing dead after its first flame: still and harmless until this tick. */
+  downUntilTick?: number;
+  /** Up again after playing dead: it runs faster from then on. */
+  rushing?: boolean;
 }
 
 export type StageResult = 'cleared' | 'failed';
@@ -411,6 +474,57 @@ export interface StageRun {
    * stage, kit lost — and the stage is decided. `null` until someone is through.
    */
   exitClosesAtTick: number | null;
+  /**
+   * On a stage longer than the screen, the first column in play: only
+   * `VIEW_COLS` from here on exist for anyone, and past either edge is a
+   * wall. It only moves forward, following the team (see `view.ts`).
+   * `null` on a stage that fits the screen.
+   */
+  view: number | null;
+  /** Since when someone on the left edge has been holding the team back; `null` when nobody is. */
+  heldSinceTick: number | null;
+  /** A long stage's parts, in order (see `parts.ts`); empty on any other. */
+  parts: PartRun[];
+  /** The part being played: the first whose goal is not met yet. */
+  part: number;
+  /** A `key` part's key: carried by a creature, or on the floor once it fell. */
+  key: StageKey | null;
+  /**
+   * On a stage in parts, the lives each player has left, by id: a fall
+   * spends one and they come back on the screen's left edge.
+   */
+  lives: Record<string, number>;
+  /** Where players with no life left fell: a teammate who reaches one brings them back. */
+  helmets: Helmet[];
+  /** A long stage's arc lines, cables and the sparks running along them. */
+  arcs: ArcRun[];
+  cables: { row: number; from: number; to: number }[];
+  sparks: Spark[];
+  /** A `survive` part: when the screen last moved on by itself. */
+  scrolledAtTick: number;
+}
+
+export interface PartRun {
+  /** The column its gate stands in, past its last; the last part's is its far wall. */
+  gate: number;
+  goal: PartGoal;
+  /** Its goal is met: the gate is open. */
+  done: boolean;
+  /** How long it is played for, once the gate before it opens. */
+  ticks: number;
+}
+
+export interface StageKey {
+  col: number;
+  row: number;
+  /** The creature that carries it; `null` once it is on the floor. */
+  carrierId: number | null;
+}
+
+export interface Helmet {
+  playerId: string;
+  col: number;
+  row: number;
 }
 
 export type GamePhase = 'playing' | 'over';
@@ -461,6 +575,8 @@ export interface PlayerSetup {
   color?: PlayerColorId;
   /** Stage mode: what they bring from the last stage, instead of the starting kit. */
   kit?: PlayerKit;
+  /** Stage mode: the campaign lives they bring — spent, on a stage in parts, by falling. */
+  lives?: number;
 }
 
 export interface GameOptions {

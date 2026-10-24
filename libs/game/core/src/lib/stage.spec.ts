@@ -19,10 +19,14 @@ import {
   SLIME_TICKS,
   TIME_BONUS_PER_SECOND,
   stageMapId,
+  BURST_OWNER,
+  BURST_RANGE,
+  isPlayingDead,
+  PLAYDEAD_TICKS,
 } from './stage';
 import { stageCode } from './campaign';
 import { START_KIT } from './kit';
-import { run } from './testing.spec-helper';
+import { LONG_SPAWNS, run, withLongStage } from './testing.spec-helper';
 import { CreatureBody, GameState, StageRun } from './types';
 
 const solo = (seed = 7, stageId = 'gramado-1'): GameState =>
@@ -41,6 +45,38 @@ function lone(state: GameState, col: number, row: number): CreatureBody {
 }
 
 describe('setting up a stage', () => {
+  it('plays a stage on its own layout: longer, with the players starting on its spawns', () => {
+    withLongStage(() => {
+      const players = LONG_SPAWNS.map((_, i) => ({
+        id: `p${i}`,
+        name: `P${i}`,
+      }));
+      const state = createGame({ seed: 3, stageId: 'subestacao-1', players });
+
+      expect([state.cols, state.rows]).toEqual([61, 13]);
+      expect(state.players.map((p) => [p.x, p.y])).toEqual(
+        LONG_SPAWNS.map(([c, r]) => [c, r]),
+      );
+      expect(stageOf(state).creatures).toHaveLength(12);
+      for (const c of stageOf(state).creatures) {
+        const nearest = Math.min(
+          ...LONG_SPAWNS.map(
+            ([sc, sr]) => Math.abs(c.x - sc) + Math.abs(c.y - sr),
+          ),
+        );
+        expect(nearest).toBeGreaterThanOrEqual(CREATURE_SPAWN_DISTANCE);
+      }
+      // As many players as it has spawns, and no more.
+      expect(() =>
+        createGame({
+          seed: 3,
+          stageId: 'subestacao-1',
+          players: [...players, { id: 'p9', name: 'P9' }],
+        }),
+      ).toThrow('1–4 players');
+    });
+  });
+
   it('plays on the area map, against the clock even alone', () => {
     const state = solo();
 
@@ -708,5 +744,80 @@ describe('stage extras', () => {
   it('hides the stage items under blocks', () => {
     const state = solo(7, 'gramado-3');
     expect(state.hiddenPowerUps).toContain('oneup');
+  });
+});
+
+describe('the substation creatures', () => {
+  /** A stage with one creature of `kind` at `col, row`, and p1 parked out of the way. */
+  function oneOf(kind: CreatureBody['creatureId'], col: number, row: number) {
+    const state = solo();
+    const creature = lone(state, col, row);
+    Object.assign(creature, {
+      creatureId: kind,
+      hp: kind === 'gamba' ? 2 : 1,
+    });
+    return { state, creature, p1: state.players[0] as GameState['players'][0] };
+  }
+
+  const burn = (state: GameState, col: number, row: number) =>
+    state.flames.push({
+      col,
+      row,
+      shape: 'center',
+      ticksLeft: FLAME_TICKS,
+      ownerId: 'p1',
+    });
+
+  it('a gambá plays dead after its first flame — still and harmless — then runs', () => {
+    const { state, creature, p1 } = oneOf('gamba', 7, 7);
+    burn(state, 7, 7);
+    run(state, 1);
+    expect(creature.alive).toBe(true);
+    expect(isPlayingDead(state, creature)).toBe(true);
+
+    state.flames = [];
+    Object.assign(p1, { x: 7, y: 7 });
+    run(state, PLAYDEAD_TICKS - 5);
+    expect([creature.x, creature.y]).toEqual([7, 7]);
+    expect(p1.alive).toBe(true);
+
+    Object.assign(p1, { x: 1, y: 1 });
+    run(state, 10);
+    expect(creature.rushing).toBe(true);
+    burn(state, Math.round(creature.x), Math.round(creature.y));
+    run(state, 1);
+    expect(creature.alive).toBe(false);
+  });
+
+  it('a marimbondo flies over the crates, towards the nearest player', () => {
+    const { state, creature, p1 } = oneOf('marimbondo', 7, 1);
+    Object.assign(p1, { x: 1, y: 1 });
+    p1.shieldedUntilTick = Infinity;
+    for (let col = 2; col <= 6; col++)
+      state.tiles[cellIndex(state, col, 1)] = 'block';
+    run(state, 60 * 3);
+
+    expect(creature.x).toBeLessThan(4);
+    expect(creature.y).toBe(1);
+  });
+
+  it('a curto bursts when it falls, and the burst burns anyone near', () => {
+    const { state, creature, p1 } = oneOf('curto', 7, 7);
+    Object.assign(p1, { x: 7, y: 9 });
+    burn(state, 7, 7);
+    run(state, 1);
+    expect(creature.alive).toBe(false);
+    expect(state.bombs).toContainEqual(
+      expect.objectContaining({
+        col: 7,
+        row: 7,
+        ownerId: BURST_OWNER,
+        range: BURST_RANGE,
+      }),
+    );
+
+    run(state, 3);
+    expect(state.flames.some((f) => f.col === 7 && f.row === 9)).toBe(true);
+    expect(p1.alive).toBe(false);
   });
 });

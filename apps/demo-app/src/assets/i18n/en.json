@@ -341,7 +341,7 @@
       "STORY": "Tired Dev has been awake for 36 hours over a bug that turned out to be a semicolon. He joined the arena because \"it's like a production deploy, just with fewer explosions\". Dr. Lia has told him to sleep three times; he answered \"one more coffee\"."
     },
     "GESTORA": {
-      "NAME": "Tired Manager",
+      "NAME": "Stressed Manager",
       "JOB": "Software engineer and manager",
       "STORY": "The Manager does not suffer through meetings: she books every one of them. Daily at 9, alignment at 10, \"pre-alignment for the alignment\" at 11 and a surprise one-on-one with Tired Dev right after lunch. If anyone's calendar shows fifteen free minutes, the invite has already landed. She is the one who woke Tired Dev at 3 a.m. over the semicolon bug, and the one who promised the client \"it ships by Friday\". She joined the arena to \"unblock the team\" and found that a bomb unblocks things far faster than a Jira ticket. She does not sleep either: after 6 p.m. she finally opens the editor to write her own code."
     },
@@ -1100,6 +1100,26 @@
       "NAME": "Royal Anthill",
       "DESC": "The mother of the leafcutters digs under the arena and cracks the ground to come out. Beat her to open the Substation."
     },
+    "SUBESTACAO_1": {
+      "NAME": "Gatehouse",
+      "DESC": "Two screens to learn the moving screen: clear the critters on the first, find the key the possum carries on the second."
+    },
+    "SUBESTACAO_2": {
+      "NAME": "Arc Lines",
+      "DESC": "Here come the wasps, flying over the crates. Two screens to cross without getting cornered."
+    },
+    "SUBESTACAO_3": {
+      "NAME": "Generator Room",
+      "DESC": "The sparks keep coming and the short bursts when it falls: make its blast work for you."
+    },
+    "SUBESTACAO_4": {
+      "NAME": "The Escape",
+      "DESC": "Three screens with everything the Substation has. At the end the floor gives way and drops you into the cellar."
+    },
+    "SUBESTACAO_5": {
+      "NAME": "Cable Cellar",
+      "DESC": "The Wire Cat waits in the dark. Use the crates as a shield from its zap and strike when it goes dark."
+    },
     "GRAMADO_BONUS": {
       "NAME": "Lake Bonus",
       "DESC": "No critters, an item under every block and 30 seconds to grab what you can. There is even an extra life hidden."
@@ -1125,15 +1145,47 @@
       "NAME": "Lapwing",
       "KIND": "Owner of the field",
       "DESC": "Patrols slowly and dashes at anyone in the same row or column, until it hits something."
+    },
+    "FAISCA": {
+      "NAME": "Spark",
+      "KIND": "The one that got away",
+      "DESC": "Fast and aimless: it takes a new way at every crossing. The generators churn them out."
+    },
+    "GAMBA": {
+      "NAME": "Possum",
+      "KIND": "The one that plays dead",
+      "DESC": "The first blast flips it on its back for 3 s, harmless. Then it is up and running faster."
+    },
+    "MARIMBONDO": {
+      "NAME": "Wasp",
+      "KIND": "From the nest on the pole",
+      "DESC": "Flies over the crates towards the nearest player. Crates are no cover: only fire gets it."
+    },
+    "CURTO": {
+      "NAME": "Short",
+      "KIND": "The short-circuit ball",
+      "DESC": "Walks straight on and, when it falls, bursts in a cross: crates, other critters and anyone beside it."
     }
   },
   "BOSSES": {
     "RAINHA": {
       "NAME": "Leafcutter Queen",
       "DESC": "The mother of every leafcutter in the park. Digs under the arena, cracks the ground to come out and is dizzy for 2 s — the time to strike."
+    },
+    "GATO": {
+      "NAME": "Wire Cat",
+      "DESC": "The cellar’s tangle of wires come to life. It stops, glows and zaps its row and column — crates block it; after every zap it is drained for 2 s: the time to strike."
     }
   },
   "STAGE_PLAY": {
+    "PART": "Part {{n}}/{{total}}",
+    "GOAL": {
+      "CREATURES": "clear the critters",
+      "KEY": "grab the key",
+      "BREAKERS": "blow up the breakers",
+      "GENERATORS": "blow up the generators",
+      "SURVIVE": "survive to the end"
+    },
     "TITLE": "Stage",
     "BACK": "Stage map",
     "TIME": "Time",

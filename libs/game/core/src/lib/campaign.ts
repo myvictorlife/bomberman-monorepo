@@ -10,20 +10,41 @@
  * An area with no stages yet is announced but not playable ("soon"); adding
  * its stages and boss here is what opens it.
  */
+import type { ArenaLayout } from './arena';
+import { ARENA_ROWS } from './constants';
 import { PlayerKit, sanitizeKit } from './kit';
 import { MapId } from './maps';
 import type { PowerUpKind } from './types';
 
-export type CreatureId = 'sauva' | 'pombo' | 'caramujo' | 'queroquero';
-export type BossId = 'rainha';
+export type CreatureId =
+  | 'sauva'
+  | 'pombo'
+  | 'caramujo'
+  | 'queroquero'
+  | 'faisca'
+  | 'gamba'
+  | 'marimbondo'
+  | 'curto';
+export type BossId = 'rainha' | 'gato';
 export type AreaId = 'gramado' | 'subestacao' | 'autodromo';
 
 /**
  * How a creature walks. `wander`: straight on, turns at random when blocked.
  * `roam`: picks a new way at every crossing. `crawl`: slow and leaves slime.
  * `charge`: patrols, and dashes at a player in line of sight.
+ * `playdead`: walks like `wander`; the first flame lays it on its back,
+ * harmless, for a while — then it is up and running faster.
+ * `fly`: over the crates (not the pillars), always towards the nearest player.
+ * `volatile`: walks like `wander`, and bursts like a bomb when it falls.
  */
-export type CreatureMove = 'wander' | 'roam' | 'crawl' | 'charge';
+export type CreatureMove =
+  | 'wander'
+  | 'roam'
+  | 'crawl'
+  | 'charge'
+  | 'playdead'
+  | 'fly'
+  | 'volatile';
 
 export interface Creature {
   readonly id: CreatureId;
@@ -41,6 +62,10 @@ export interface Boss {
   readonly hp: number;
   /** The creature it brings along. */
   readonly minion: CreatureId;
+  /** Its hits by the size of the team, 1 player first; `hp` beyond the list. */
+  readonly hpByTeam?: readonly number[];
+  /** How many lairs it brings — anthills, generators — that send its creatures out. */
+  readonly lairs?: number;
 }
 
 export interface StageFoe {
@@ -63,6 +88,62 @@ export interface Stage {
   readonly bonus?: boolean;
   /** Its clock, when not the usual one. */
   readonly seconds?: number;
+  /**
+   * The arena's shape, when not the classic 15 × 13 with a player in each
+   * corner — a long stage the team crosses from one end to the other.
+   */
+  readonly layout?: ArenaLayout;
+  /**
+   * A long stage split into parts, one screen each, crossed in order. Its
+   * creatures are the parts' (`foes` stays empty); a fallen player comes back
+   * on the screen's left edge for a life (see `parts.ts`).
+   */
+  readonly parts?: readonly StagePart[];
+}
+
+/**
+ * What opens a part's gate. `creatures`: none of the part's creatures is
+ * left. `key`: one of them carries the key; it drops where that one falls,
+ * and the gate opens when a player picks it up. `breakers`: every breaker
+ * of the part blown up — each switches its arc line off. `generators`: every
+ * generator blown up. `survive`: the screen runs on by itself, its left edge
+ * burning, and the part is over when it reaches the end.
+ */
+export type PartGoal =
+  | 'creatures'
+  | 'key'
+  | 'breakers'
+  | 'generators'
+  | 'survive';
+
+/**
+ * A screen of a long stage. The team crosses them in order: each part's gate
+ * — the column just past its last one — is a wall until its goal is met; the
+ * last part ends at the stage's gate, which opens when it is met.
+ */
+export interface StagePart {
+  /** Its last column; the next part starts past its gate, one further. */
+  readonly until: number;
+  readonly goal: PartGoal;
+  readonly foes: readonly StageFoe[];
+  /** Its clock, started when the gate before it opens. Run out, the stage is lost. */
+  readonly seconds: number;
+  /**
+   * Arc lines: a stretch of a row that shocks on and off, `from` to `to`, its
+   * breaker standing just past `to`. Blowing up the breaker switches it off.
+   */
+  readonly arcs?: readonly StageLine[];
+  /** Conductor cables: a bomb on one goes off at the cable's other end. */
+  readonly cables?: readonly StageLine[];
+  /** Generators, as `[col, row]`: they send out a creature every few seconds. */
+  readonly generators?: readonly (readonly [number, number])[];
+}
+
+/** A stretch of a row, `from` to `to`. */
+export interface StageLine {
+  readonly row: number;
+  readonly from: number;
+  readonly to: number;
 }
 
 export interface Area {
@@ -77,11 +158,42 @@ export const CREATURES: readonly Creature[] = [
   { id: 'pombo', speed: 3.4, hp: 1, points: 200, move: 'roam' },
   { id: 'caramujo', speed: 1.2, hp: 2, points: 300, move: 'crawl' },
   { id: 'queroquero', speed: 2.6, hp: 1, points: 400, move: 'charge' },
+  { id: 'faisca', speed: 3.4, hp: 1, points: 100, move: 'roam' },
+  { id: 'gamba', speed: 1.8, hp: 2, points: 200, move: 'playdead' },
+  { id: 'marimbondo', speed: 1.6, hp: 1, points: 300, move: 'fly' },
+  { id: 'curto', speed: 2.6, hp: 1, points: 400, move: 'volatile' },
 ];
 
 export const BOSSES: readonly Boss[] = [
   { id: 'rainha', hp: 8, minion: 'sauva' },
+  { id: 'gato', hp: 10, minion: 'faisca', hpByTeam: [7, 10, 14, 14], lairs: 2 },
 ];
+
+/** A long stage's shape: `cols` wide, the players down the left edge. */
+function longLayout(cols: number): ArenaLayout {
+  return {
+    cols,
+    rows: ARENA_ROWS,
+    spawns: [
+      [1, 1],
+      [1, ARENA_ROWS - 2],
+      [1, 5],
+      [1, 7],
+    ],
+  };
+}
+
+/** A screen of a long stage, on the usual clock. */
+function part(
+  until: number,
+  goal: PartGoal,
+  foes: readonly StageFoe[],
+): StagePart {
+  return { until, goal, foes, seconds: PART_SECONDS };
+}
+
+/** A part's clock. */
+export const PART_SECONDS = 90;
 
 /** In the order they open: an area opens when the one before it is cleared. */
 export const AREAS: readonly Area[] = [
@@ -130,7 +242,108 @@ export const AREAS: readonly Area[] = [
       { id: 'gramado-5', foes: [], boss: 'rainha' },
     ],
   },
-  { id: 'subestacao', mapId: 'subestacao', stages: [] },
+  {
+    id: 'subestacao',
+    mapId: 'subestacao',
+    // Long stages: a few screens each, crossed left to right (see `parts.ts`).
+    stages: [
+      {
+        id: 'subestacao-1',
+        foes: [],
+        boss: null,
+        items: ['oneup'],
+        layout: longLayout(31),
+        parts: [
+          part(14, 'creatures', [
+            { creature: 'faisca', count: 2 },
+            { creature: 'gamba', count: 1 },
+          ]),
+          part(29, 'key', [
+            { creature: 'gamba', count: 2 },
+            { creature: 'faisca', count: 2 },
+          ]),
+        ],
+      },
+      {
+        // Arc lines: blow up their breakers to switch them off. A cable on the
+        // first screen teaches what one does with a bomb.
+        id: 'subestacao-2',
+        foes: [],
+        boss: null,
+        items: ['clock', 'wallpass'],
+        layout: longLayout(31),
+        parts: [
+          {
+            ...part(14, 'creatures', [
+              { creature: 'gamba', count: 2 },
+              { creature: 'marimbondo', count: 1 },
+            ]),
+            cables: [{ row: 7, from: 3, to: 13 }],
+          },
+          {
+            ...part(29, 'breakers', [
+              { creature: 'marimbondo', count: 2 },
+              { creature: 'faisca', count: 2 },
+            ]),
+            arcs: [
+              { row: 3, from: 17, to: 26 },
+              { row: 9, from: 17, to: 26 },
+            ],
+          },
+        ],
+      },
+      {
+        // Generators: they keep the faíscas coming until they are blown up.
+        id: 'subestacao-3',
+        foes: [],
+        boss: null,
+        items: ['fullfire', 'oneup'],
+        layout: longLayout(31),
+        parts: [
+          part(14, 'creatures', [
+            { creature: 'faisca', count: 3 },
+            { creature: 'curto', count: 1 },
+          ]),
+          {
+            ...part(29, 'generators', [{ creature: 'curto', count: 2 }]),
+            generators: [
+              [21, 3],
+              [25, 9],
+              [23, 7],
+            ],
+          },
+        ],
+      },
+      {
+        // The escape: the last part's screen runs on by itself, its edge
+        // burning, to the floor that gives way into the boss's cellar.
+        id: 'subestacao-4',
+        foes: [],
+        boss: null,
+        items: ['clock', 'powerbomb', 'oneup'],
+        layout: longLayout(61),
+        parts: [
+          part(14, 'creatures', [
+            { creature: 'marimbondo', count: 2 },
+            { creature: 'curto', count: 1 },
+          ]),
+          part(29, 'key', [
+            { creature: 'gamba', count: 2 },
+            { creature: 'faisca', count: 2 },
+          ]),
+          {
+            ...part(59, 'survive', [
+              { creature: 'marimbondo', count: 2 },
+              { creature: 'curto', count: 2 },
+              { creature: 'faisca', count: 2 },
+            ]),
+            cables: [{ row: 5, from: 33, to: 44 }],
+          },
+        ],
+      },
+      { id: 'subestacao-5', foes: [], boss: 'gato' },
+    ],
+  },
   { id: 'autodromo', mapId: 'autodromo', stages: [] },
 ];
 
@@ -304,11 +517,33 @@ export function bossOfArea(areaId: AreaId): BossId | null {
   return findArea(areaId).stages.find((s) => s.boss)?.boss ?? null;
 }
 
+/**
+ * Every creature a stage brings, each kind once with its total: its own
+ * foes, its parts' on a long stage, and its boss's minion on a boss stage.
+ */
+export function foesOf(stage: Stage): readonly StageFoe[] {
+  const all = [
+    ...stage.foes,
+    ...(stage.parts ?? []).flatMap((p) => p.foes),
+    ...(stage.boss
+      ? [{ creature: findBoss(stage.boss).minion, count: 0 }]
+      : []),
+  ];
+  const foes: StageFoe[] = [];
+  for (const foe of all) {
+    const i = foes.findIndex((f) => f.creature === foe.creature);
+    const known = foes[i];
+    if (known) foes[i] = { ...known, count: known.count + foe.count };
+    else foes.push(foe);
+  }
+  return foes;
+}
+
 /** The creatures an area's stages bring, each once, in order of appearance. */
 export function creaturesOfArea(areaId: AreaId): readonly CreatureId[] {
   const seen: CreatureId[] = [];
   for (const stage of findArea(areaId).stages) {
-    for (const foe of stage.foes) {
+    for (const foe of foesOf(stage)) {
       if (!seen.includes(foe.creature)) seen.push(foe.creature);
     }
   }

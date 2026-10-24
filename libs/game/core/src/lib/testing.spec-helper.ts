@@ -1,4 +1,5 @@
 import { cellIndex } from './arena';
+import { AREAS, findArea, Stage, StageFoe, StagePart } from './campaign';
 import { createGame, tick } from './game';
 import { Direction, GameState, PlayerInput } from './types';
 
@@ -42,3 +43,72 @@ export function player(state: GameState, id: string) {
   if (!found) throw new Error(`no player ${id}`);
   return found;
 }
+
+/** Where the four players start on {@link withLongStage}: down the left edge. */
+export const LONG_SPAWNS = [
+  [1, 1],
+  [1, 11],
+  [1, 5],
+  [1, 7],
+] as const;
+
+/**
+ * Puts one long stage in Área 2, `subestacao-1`: 61 × 13, the players
+ * starting on {@link LONG_SPAWNS}. Returns what puts the catalogue back.
+ */
+export function installLongStage(
+  foes: readonly StageFoe[] = [{ creature: 'sauva', count: 12 }],
+  parts?: readonly StagePart[],
+): () => void {
+  const original = AREAS[1];
+  const stage: Stage = {
+    id: 'subestacao-1',
+    foes: parts ? [] : foes,
+    boss: null,
+    layout: { cols: 61, rows: 13, spawns: LONG_SPAWNS },
+    ...(parts ? { parts } : {}),
+  };
+  (AREAS as unknown as unknown[])[1] = {
+    ...findArea('subestacao'),
+    stages: [stage],
+  };
+  return () => ((AREAS as unknown as unknown[])[1] = original);
+}
+
+/** Runs `fn` with {@link installLongStage}'s long stage in the catalogue. */
+export function withLongStage<T>(fn: () => T): T {
+  const restore = installLongStage();
+  try {
+    return fn();
+  } finally {
+    restore();
+  }
+}
+
+/** Four screens, three saúvas each: the second one's gate opens with a key. */
+export const TEST_PARTS: readonly StagePart[] = [
+  {
+    until: 14,
+    goal: 'creatures',
+    seconds: 90,
+    foes: [{ creature: 'sauva', count: 3 }],
+  },
+  {
+    until: 29,
+    goal: 'key',
+    seconds: 90,
+    foes: [{ creature: 'sauva', count: 3 }],
+  },
+  {
+    until: 44,
+    goal: 'creatures',
+    seconds: 90,
+    foes: [{ creature: 'sauva', count: 3 }],
+  },
+  {
+    until: 59,
+    goal: 'creatures',
+    seconds: 90,
+    foes: [{ creature: 'sauva', count: 3 }],
+  },
+];

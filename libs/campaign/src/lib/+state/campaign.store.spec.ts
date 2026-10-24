@@ -21,7 +21,7 @@ describe('CampaignStore', () => {
 
     expect(store.areas()).toEqual([
       { id: 'gramado', number: 1, status: 'open', cleared: 2, total: 6 },
-      { id: 'subestacao', number: 2, status: 'soon', cleared: 0, total: 0 },
+      { id: 'subestacao', number: 2, status: 'locked', cleared: 0, total: 5 },
       { id: 'autodromo', number: 3, status: 'soon', cleared: 0, total: 0 },
     ]);
     expect(store.area().id).toBe('gramado');
@@ -57,7 +57,7 @@ describe('CampaignStore', () => {
     const { store } = createStore();
     store.selectStage('gramado-3');
 
-    store.selectArea('subestacao');
+    store.selectArea('autodromo');
 
     expect(store.stages()).toEqual([]);
     expect(store.stage()).toBeNull();
@@ -70,7 +70,7 @@ describe('CampaignStore', () => {
 
     expect(store.bosses()).toEqual([
       { areaId: 'gramado', areaNumber: 1, bossId: 'rainha', status: 'known' },
-      { areaId: 'subestacao', areaNumber: 2, bossId: null, status: 'soon' },
+      { areaId: 'subestacao', areaNumber: 2, bossId: 'gato', status: 'locked' },
       { areaId: 'autodromo', areaNumber: 3, bossId: null, status: 'soon' },
     ]);
     expect(store.bossesKnown()).toBe(1);
@@ -88,7 +88,9 @@ describe('CampaignStore', () => {
     });
 
     expect(store.bosses()[0]?.status).toBe('defeated');
-    expect(store.bossesKnown()).toBe(1);
+    // Beating it opens the next area: its boss is known now, not yet beaten.
+    expect(store.bosses()[1]?.status).toBe('known');
+    expect(store.bossesKnown()).toBe(2);
   });
 
   it('shows the creatures of open areas and one silhouette per hidden area', () => {

@@ -468,6 +468,15 @@ export interface FrameMessage {
   events: GameEvent[];
 }
 
+/**
+ * The round as a frame carries it: what every block hides stays on the
+ * server. Sent, it would tell a player which crate to break, and on a long
+ * stage it is a good part of every frame.
+ */
+export function publicState(state: GameState): GameState {
+  return { ...state, hiddenPowerUps: [] };
+}
+
 export type ServerErrorCode =
   | 'auth-required'
   | 'email-not-verified'

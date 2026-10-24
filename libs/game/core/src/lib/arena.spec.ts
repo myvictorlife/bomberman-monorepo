@@ -1,4 +1,11 @@
-import { cellIndex, generateArena, inBounds, isPillar, tileAt } from './arena';
+import {
+  ArenaLayout,
+  cellIndex,
+  generateArena,
+  inBounds,
+  isPillar,
+  tileAt,
+} from './arena';
 import {
   ARENA_COLS,
   ARENA_ROWS,
@@ -75,6 +82,40 @@ describe('generateArena', () => {
       POWER_UP_COUNTS.speed,
     );
     expect(hidden.filter((p) => p === 'egg')).toHaveLength(POWER_UP_COUNTS.egg);
+  });
+
+  it('builds a longer layout, with its own spawns kept clear', () => {
+    const layout: ArenaLayout = {
+      cols: 61,
+      rows: ARENA_ROWS,
+      spawns: [
+        [1, 1],
+        [1, 11],
+        [1, 5],
+        [1, 7],
+      ],
+    };
+    const arena = generateArena(42, findMap(DEFAULT_MAP_ID), layout);
+
+    expect([arena.cols, arena.rows]).toEqual([61, ARENA_ROWS]);
+    expect(arena.tiles).toHaveLength(61 * ARENA_ROWS);
+    for (let row = 0; row < ARENA_ROWS; row++) {
+      for (let col = 0; col < 61; col++) {
+        expect(arena.tiles[row * 61 + col] === 'wall').toBe(
+          isPillar(col, row, layout),
+        );
+      }
+    }
+    // The far border is a wall, where the classic one would be open floor.
+    expect(arena.tiles[5 * 61 + 60]).toBe('wall');
+    expect(arena.tiles[5 * 61 + 14]).not.toBe('wall');
+    for (const [col, row] of layout.spawns) {
+      for (let dr = -1; dr <= 1; dr++) {
+        for (let dc = -1; dc <= 1; dc++) {
+          expect(arena.tiles[(row + dr) * 61 + col + dc]).not.toBe('block');
+        }
+      }
+    }
   });
 
   it('is deterministic for a seed and varies between seeds', () => {

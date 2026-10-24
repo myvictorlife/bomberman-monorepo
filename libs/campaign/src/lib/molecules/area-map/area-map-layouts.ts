@@ -20,4 +20,11 @@ export const AREA_MAP_SPOTS: Partial<Record<AreaId, readonly MapSpot[]>> = {
     { x: 88, y: 58 },
     { x: 85.5, y: 77 },
   ],
+  subestacao: [
+    { x: 16, y: 62 },
+    { x: 32, y: 51 },
+    { x: 50, y: 47 },
+    { x: 67, y: 51 },
+    { x: 84, y: 39 },
+  ],
 };

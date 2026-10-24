@@ -111,8 +111,10 @@
               [size]="40"
             />
             <span
-              >{{ creatureKey(foe.creature, 'NAME') | translate }}
-              <strong>×{{ foe.count }}</strong></span
+              >{{ creatureKey(foe.creature, 'NAME') | translate }} @if
+              (foe.count > 0) {
+              <strong>×{{ foe.count }}</strong>
+              }</span
             >
           </li>
           }

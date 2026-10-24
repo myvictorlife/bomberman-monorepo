@@ -17,14 +17,24 @@ import {
   CreatureMove,
   findCreature,
   findStage,
+  foesOf,
 } from './campaign';
 import {
   FLAME_TICKS,
   ROUND_END_DELAY_TICKS,
-  SPAWN_CELLS,
   TICK_RATE,
+  VIEW_COLS,
 } from './constants';
 import { advanceBoss, isMoundAt, setUpBoss } from './boss';
+import { advanceView } from './view';
+import { advanceGato } from './gato';
+import {
+  advanceParts,
+  arePartsDone,
+  isAnyoneComingBack,
+  partRuns,
+  setUpParts,
+} from './parts';
 import { kitOf, PlayerKit, START_KIT } from './kit';
 import { award } from './score';
 import { DIRECTION_DELTA } from './movement';
@@ -70,6 +80,13 @@ export const EXIT_GRACE_TICKS = 5 * TICK_RATE;
 /** How long a snail's slime stays on the floor, and slows whoever steps in it. */
 export const SLIME_TICKS = 5 * TICK_RATE;
 export const SLIMED_TICKS = Math.round(1.5 * TICK_RATE);
+/** How long a gambá plays dead after its first flame, and how much faster it runs after. */
+export const PLAYDEAD_TICKS = 3 * TICK_RATE;
+export const RUSH_SPEEDUP = 1.45;
+/** A curto's burst when it falls: a bomb's cross of this reach, that burns anyone. */
+export const BURST_RANGE = 2;
+/** Who a curto's burst belongs to: no player — it hurts everyone, and scores for nobody. */
+export const BURST_OWNER = 'curto';
 /** How far a quero-quero sees down a line, and how fast it dashes. */
 export const CHARGE_SIGHT = 5;
 export const CHARGE_SPEED = 5;
@@ -106,7 +123,11 @@ export function setUpStage(
   const stage = area?.stages.find((s) => s.id === stageId);
   if (!area || !stage) throw new Error(`Unknown stage: ${stageId}`);
   const rng = createRng(seed ^ 0x5eed);
-  const spawns = SPAWN_CELLS.slice(0, state.players.length);
+  // Where the players start: on a fresh round, every one is still on their spawn.
+  const spawns = state.players.map((p): [number, number] => [
+    Math.round(p.x),
+    Math.round(p.y),
+  ]);
   const distance = (col: number, row: number) =>
     Math.min(...spawns.map(([c, r]) => Math.abs(c - col) + Math.abs(r - row)));
 
@@ -194,7 +215,19 @@ export function setUpStage(
     slime: [],
     exitHurtUntilTick: 0,
     exitClosesAtTick: null,
+    view: state.cols > VIEW_COLS ? 0 : null,
+    heldSinceTick: null,
+    parts: partRuns(stage.parts ?? []),
+    part: 0,
+    key: null,
+    lives: {},
+    helmets: [],
+    arcs: [],
+    cables: [],
+    sparks: [],
+    scrolledAtTick: 0,
   };
+  if (stage.parts) setUpParts(state, run, stage, open, rng);
   // The boss's anthills take the next open cells, away from the middle where it stands.
   if (stage.boss) {
     const middle = [Math.floor(state.cols / 2), Math.floor(state.rows / 2)];
@@ -211,6 +244,7 @@ export function setUpStage(
 
 /** Whether every creature of the stage, and its boss, has fallen — the gate is open. */
 export function isExitOpen(run: StageRun): boolean {
+  if (run.parts.length > 0) return arePartsDone(run);
   return run.creatures.every((c) => !c.alive) && !run.boss?.alive;
 }
 
@@ -221,7 +255,12 @@ export function isExitRevealed(state: GameState, run: StageRun): boolean {
 
 /** How many creatures are still standing. */
 export function creaturesLeft(run: StageRun): number {
-  return run.creatures.filter((c) => c.alive).length;
+  // On a stage in parts, the part being played: the others are still ahead.
+  const part = run.parts[run.part];
+  const from = run.part === 0 ? 0 : (run.parts[run.part - 1]?.gate ?? 0);
+  return run.creatures.filter(
+    (c) => c.alive && (!part || (c.x > from && c.x < part.gate)),
+  ).length;
 }
 
 function isFreeForCreature(
@@ -236,10 +275,26 @@ function isFreeForCreature(
   return !state.burningBlocks.some((b) => b.col === col && b.row === row);
 }
 
-function freeWays(state: GameState, col: number, row: number): Direction[] {
+/** A marimbondo flies over the crates, bombs and all: only a hard wall stops it. */
+function isFreeForFlyer(state: GameState, col: number, row: number): boolean {
+  return inBounds(state, col, row) && tileAt(state, col, row) !== 'wall';
+}
+
+type Free = (state: GameState, col: number, row: number) => boolean;
+
+function freeFor(move: CreatureMove): Free {
+  return move === 'fly' ? isFreeForFlyer : isFreeForCreature;
+}
+
+function freeWays(
+  state: GameState,
+  col: number,
+  row: number,
+  free: Free = isFreeForCreature,
+): Direction[] {
   return DIRECTIONS.filter((d) => {
     const [dx, dy] = DIRECTION_DELTA[d];
-    return isFreeForCreature(state, col + dx, row + dy);
+    return free(state, col + dx, row + dy);
   });
 }
 
@@ -268,8 +323,9 @@ function chooseWay(
 ): Direction | null {
   const col = Math.round(creature.x);
   const row = Math.round(creature.y);
-  const ways = freeWays(state, col, row);
+  const ways = freeWays(state, col, row, freeFor(move));
   if (ways.length === 0) return null;
+  if (move === 'fly') return homeIn(state, creature, col, row, ways);
   const ahead = ways.includes(creature.facing);
   if (move === 'roam' && ways.length > 2) {
     const onward = ways.filter((w) => w !== REVERSE[creature.facing]);
@@ -278,6 +334,37 @@ function chooseWay(
   if (ahead) return creature.facing;
   const turns = ways.filter((w) => w !== REVERSE[creature.facing]);
   return pick(state, creature, turns.length > 0 ? turns : ways) ?? null;
+}
+
+/**
+ * A flyer's way: the one that brings it closest to the nearest player,
+ * straight on when that is as good, never straight back unless it must.
+ */
+function homeIn(
+  state: GameState,
+  creature: CreatureBody,
+  col: number,
+  row: number,
+  ways: Direction[],
+): Direction {
+  const targets = state.players.filter((p) => p.alive);
+  if (targets.length === 0) return ways[0] as Direction;
+  const onward = ways.filter((w) => w !== REVERSE[creature.facing]);
+  const options = onward.length > 0 ? onward : ways;
+  const distance = (way: Direction) => {
+    const [dx, dy] = DIRECTION_DELTA[way];
+    return Math.min(
+      ...targets.map(
+        (p) => Math.abs(p.x - (col + dx)) + Math.abs(p.y - (row + dy)),
+      ),
+    );
+  };
+  return options.reduce((best, way) =>
+    distance(way) < distance(best) - EPS ||
+    (Math.abs(distance(way) - distance(best)) < EPS && way === creature.facing)
+      ? way
+      : best,
+  );
 }
 
 /**
@@ -321,6 +408,8 @@ function dropSlime(
 
 function moveCreature(state: GameState, creature: CreatureBody): void {
   const info = findCreature(creature.creatureId);
+  if (isPlayingDead(state, creature)) return;
+  const free = freeFor(info.move);
   if (info.move === 'charge' && !creature.charging) {
     const atCentre =
       Math.abs(creature.x - Math.round(creature.x)) < EPS &&
@@ -331,7 +420,10 @@ function moveCreature(state: GameState, creature: CreatureBody): void {
       creature.charging = true;
     }
   }
-  let budget = (creature.charging ? CHARGE_SPEED : info.speed) / TICK_RATE;
+  const speed = creature.charging
+    ? CHARGE_SPEED
+    : info.speed * (creature.rushing ? RUSH_SPEEDUP : 1);
+  let budget = speed / TICK_RATE;
   // At most two centres a tick: enough for any speed the game uses.
   for (let step = 0; step < 2 && budget > EPS; step++) {
     const col = Math.round(creature.x);
@@ -343,7 +435,7 @@ function moveCreature(state: GameState, creature: CreatureBody): void {
         dropSlime(state, state.stage as StageRun, col, row);
       // Charging, it keeps its line until it is blocked.
       const [cx, cy] = DIRECTION_DELTA[creature.facing];
-      if (creature.charging && !isFreeForCreature(state, col + cx, row + cy))
+      if (creature.charging && !free(state, col + cx, row + cy))
         creature.charging = false;
       const way = creature.charging
         ? creature.facing
@@ -368,7 +460,7 @@ function moveCreature(state: GameState, creature: CreatureBody): void {
           ? Math.floor(creature.y + EPS)
           : creature.y;
     // A bomb dropped in its path since it set off: it turns back.
-    if (!isFreeForCreature(state, Math.round(targetX), Math.round(targetY))) {
+    if (!free(state, Math.round(targetX), Math.round(targetY))) {
       creature.facing = REVERSE[creature.facing];
       creature.charging = false;
       return;
@@ -392,15 +484,23 @@ function hurtCreatures(state: GameState, run: StageRun): void {
     if (!creature.alive) continue;
     const col = Math.round(creature.x);
     const row = Math.round(creature.y);
-    const crushed = tileAt(state, col, row) === 'wall';
+    // A wall that dropped on it — the real one: past the edge of a long
+    // stage's screen everything reads as wall, and the creatures there wait.
+    const crushed = state.tiles[cellIndex(state, col, row)] === 'wall';
     const flame = state.flames.find((f) => f.col === col && f.row === row);
     if (!crushed && (!flame || state.tick < creature.hurtUntilTick)) continue;
     creature.hp = crushed ? 0 : creature.hp - 1;
     creature.hurtUntilTick = state.tick + FLAME_TICKS;
+    const move = findCreature(creature.creatureId).move;
     if (creature.hp > 0) {
+      if (move === 'playdead') {
+        creature.downUntilTick = state.tick + PLAYDEAD_TICKS;
+        creature.rushing = true;
+      }
       state.events.push({ type: 'creature-hurt', col, row });
       continue;
     }
+    if (move === 'volatile') burst(state, col, row);
     creature.alive = false;
     creature.diedAtTick = state.tick;
     state.events.push({
@@ -421,6 +521,33 @@ function hurtCreatures(state: GameState, run: StageRun): void {
   }
 }
 
+/** Lying on its back after its first flame: it neither moves nor hurts. */
+export function isPlayingDead(
+  state: GameState,
+  creature: CreatureBody,
+): boolean {
+  return state.tick < (creature.downUntilTick ?? 0);
+}
+
+/**
+ * A curto falls and bursts: a bomb with no fuse on its cell, of nobody's —
+ * the cross burns crates, creatures and players alike.
+ */
+function burst(state: GameState, col: number, row: number): void {
+  if (state.bombs.some((b) => b.col === col && b.row === row)) return;
+  state.bombs.push({
+    id: state.nextBombId++,
+    col,
+    row,
+    ownerId: BURST_OWNER,
+    fuse: 0,
+    range: BURST_RANGE,
+    passThrough: [],
+    pierce: false,
+    remote: false,
+  });
+}
+
 /**
  * A flame on the gate once it is in the open — the classic mistake: more
  * creatures come out of it, of the stage's first kind, and shut it again.
@@ -431,7 +558,8 @@ function bombedGate(state: GameState, run: StageRun): void {
   const { col, row } = run.exit;
   if (!state.flames.some((f) => f.col === col && f.row === row)) return;
   run.exitHurtUntilTick = state.tick + FLAME_TICKS;
-  const kind: CreatureId = findStage(run.stageId)?.foes[0]?.creature ?? 'sauva';
+  const stage = findStage(run.stageId);
+  const kind: CreatureId = (stage && foesOf(stage)[0]?.creature) ?? 'sauva';
   let id = run.creatures.reduce((max, c) => Math.max(max, c.id), 0);
   for (let i = 0; i < EXIT_BOMB_SPAWN; i++) {
     run.creatures.push({
@@ -472,9 +600,14 @@ export function advanceStage(state: GameState): Player[] {
   const run = state.stage;
   if (!run || run.result) return [];
   const wasOpen = isExitOpen(run);
-  const caught = advanceBoss(state, run);
+  advanceView(state, run);
+  const caught =
+    run.boss?.bossId === 'gato'
+      ? advanceGato(state, run)
+      : advanceBoss(state, run);
   bombedGate(state, run);
   hurtCreatures(state, run);
+  caught.push(...advanceParts(state, run));
   slimePlayers(state, run);
   for (const creature of run.creatures) {
     if (creature.alive) moveCreature(state, creature);
@@ -494,6 +627,7 @@ export function advanceStage(state: GameState): Player[] {
     const touched = run.creatures.some(
       (c) =>
         c.alive &&
+        !isPlayingDead(state, c) &&
         Math.abs(c.x - player.x) < CREATURE_REACH &&
         Math.abs(c.y - player.y) < CREATURE_REACH,
     );
@@ -559,7 +693,8 @@ export function updateStageEnd(state: GameState): void {
       run.exited.push(player.id);
     }
   }
-  if (state.players.some((p) => p.alive)) return;
+  if (state.players.some((p) => p.alive) || isAnyoneComingBack(state, run))
+    return;
   run.result = run.exited.length > 0 ? 'cleared' : 'failed';
   state.endsAtTick = state.tick + ROUND_END_DELAY_TICKS;
   if (run.result === 'cleared' && !run.bonus) {

@@ -10,6 +10,9 @@ import {
   isExitRevealed,
   DEATH_TICKS,
   Direction,
+  findCreature,
+  isArcLive,
+  isBlackout,
   flightPosition,
   GameEvent,
   GameState,
@@ -28,6 +31,7 @@ import { HudSnapshot, sameHud, toHud } from '../hud';
 import { flameFrame } from '../skins/flame-frame';
 import { ARENA_THEMES } from '../skins/hd/themes';
 import { ArenaMoment, blackoutAt } from '../skins/hd/themes/moments';
+import type { BossPose } from '../creatures/creature-art';
 import { ArenaSession } from '../session/arena-session';
 import {
   FRAME_CHEER,
@@ -82,6 +86,8 @@ const FIDGET = [1, 1, 0, 0, 0, 0, 0, 2, 2, 0, 0, 0, 0, 0, 0];
 const PLACE_TICKS = 14;
 /** The hit-stop: how long the arena freezes on an explosion, in ms (two frames). */
 const FREEZE_MS = 34;
+/** Share of the way to the view the camera covers each frame: a column takes a few frames. */
+const VIEW_GLIDE = 0.18;
 /** A bomb this close, with this much fuse left, is worth a scare. */
 const SCARE_FUSE = Math.round(BOMB_FUSE_TICKS * 0.55);
 
@@ -119,9 +125,16 @@ export class ArenaScene extends Phaser.Scene {
   /** A boss stage: the boss (or the mound of earth it moves under), its cracks, its anthills. */
   private readonly bosses = new Map<string, Image>();
   private readonly cracks = new Map<string, Image>();
+  private readonly shocks = new Map<string, Image>();
+  private readonly lines = new Map<string, Image>();
+  private readonly sparks = new Map<number, Image>();
+  private readonly eyes = new Map<string, Image>();
   private readonly mounds = new Map<number, Image>();
   /** Snail slime on the floor, and the skull over a cursed player's head. */
   private readonly slime = new Map<string, Image>();
+  private readonly gates = new Map<string, Image>();
+  private readonly keys = new Map<string, Image>();
+  private readonly helmets = new Map<string, Image>();
   private readonly skulls = new Map<string, Image>();
   /** Bombs held overhead with the glove, by holder. */
   private readonly held = new Map<string, Image>();
@@ -294,10 +307,13 @@ export class ArenaScene extends Phaser.Scene {
     const state = this.config.session.state;
     if (state !== this.renderedState) this.resetArena(state);
 
+    this.renderView(state);
     this.renderMoment(state);
     this.renderTiles(state);
     this.renderBurningBlocks(state);
     this.renderExit(state);
+    this.renderParts(state);
+    this.renderFixtures(state);
     this.renderSlime(state);
     this.renderPowerUps(state);
     this.renderBombs(state);
@@ -337,6 +353,13 @@ export class ArenaScene extends Phaser.Scene {
       this.mounds,
       this.slime,
       this.skulls,
+      this.gates,
+      this.keys,
+      this.helmets,
+      this.shocks,
+      this.eyes,
+      this.lines,
+      this.sparks,
     ]) {
       for (const image of pool.values()) image.destroy();
       pool.clear();
@@ -352,6 +375,11 @@ export class ArenaScene extends Phaser.Scene {
     );
     this.tileKeys = state.tiles.map(() => '');
     this.renderedState = state;
+    // The world is the whole arena; on a long stage the camera shows a screen of it.
+    const size = this.config.skin.tileSize;
+    this.cameras.main
+      .setBounds(0, 0, state.cols * size, state.rows * size)
+      .setScroll(this.viewX(state), 0);
     if (!this.vignette && !this.config.skin.pixelArt)
       this.vignette = this.addVignette();
     if (this.moment?.kind === 'rain' && !this.rain) this.rain = this.addRain();
@@ -359,14 +387,32 @@ export class ArenaScene extends Phaser.Scene {
       this.darkness = this.add
         .rectangle(0, 0, this.scale.width, this.scale.height, 0x02030a)
         .setOrigin(0, 0)
+        .setScrollFactor(0)
         .setDepth(DEPTH.dark)
         .setAlpha(0);
     }
   }
 
+  /** Where the camera's left edge belongs: the first column in play, in pixels. */
+  private viewX(state: GameState): number {
+    return (state.stage?.view ?? 0) * this.config.skin.tileSize;
+  }
+
+  /** Glides the camera to the view: the rules move it a column at a time, the eye follows smoothly. */
+  private renderView(state: GameState): void {
+    const camera = this.cameras.main;
+    const gap = this.viewX(state) - camera.scrollX;
+    camera.scrollX += Math.abs(gap) < 1 ? gap : gap * VIEW_GLIDE;
+  }
+
   /** The blackout, from the tick: a dark sheet over the arena, bombs and flames above it. */
   private renderMoment(state: GameState): void {
-    this.dark = blackoutAt(this.moment, state.tick);
+    // The Gato's blackouts come on top of the theme's own.
+    const boss = state.stage?.boss ?? null;
+    this.dark = Math.max(
+      blackoutAt(this.moment, state.tick),
+      isBlackout(state, boss) ? 1 : 0,
+    );
     this.darkness?.setAlpha(0.86 * this.dark);
   }
 
@@ -403,11 +449,12 @@ export class ArenaScene extends Phaser.Scene {
       frequency: 24,
       blendMode: Phaser.BlendModes.ADD,
     });
-    emitter.setDepth(DEPTH.fx);
+    emitter.setDepth(DEPTH.fx).setScrollFactor(0);
     // A wet sheen over the asphalt: the floor catches the sky.
     this.add
       .rectangle(0, 0, width, height, 0x9ac7ff)
       .setOrigin(0, 0)
+      .setScrollFactor(0)
       .setAlpha(0.06)
       .setDepth(DEPTH.dark);
     return emitter;
@@ -436,6 +483,7 @@ export class ArenaScene extends Phaser.Scene {
     texture.refresh();
     return this.add
       .image(width / 2, height / 2, 'vignette')
+      .setScrollFactor(0)
       .setDepth(DEPTH.fx - 1);
   }
 
@@ -707,6 +755,17 @@ export class ArenaScene extends Phaser.Scene {
           .image(...this.cellToPixel(e.col, e.row), this.exitTexture(false))
           .setDepth(DEPTH.exit),
       (image) => {
+        // The escape ends on a floor that gives way: a cracked grate, not a gate.
+        if (run?.parts.at(-1)?.goal === 'survive') {
+          image.setTexture(
+            this.paintedTexture(
+              open ? 'stage-collapse-open' : 'stage-collapse',
+              open ? paintCollapseOpen : paintCollapse,
+            ),
+          );
+          image.setScale(open ? 1 + Math.sin(state.tick * 0.3) * 0.04 : 1);
+          return;
+        }
         image.setTexture(this.exitTexture(open));
         image.setScale(open ? 1 + Math.sin(state.tick * 0.15) * 0.05 : 1);
       },
@@ -787,12 +846,28 @@ export class ArenaScene extends Phaser.Scene {
         .setTint(0xff9050);
       return;
     }
-    // A little hop on every step, out of phase from one creature to the next.
-    const hop = Math.abs(Math.sin((tick + c.id * 7) * 0.35)) * this.tile * 0.06;
+    // Playing dead: on its back, still, with a twitch now and then.
+    if (tick < (c.downUntilTick ?? 0)) {
+      const twitch = Math.floor(tick / 20) % 5 === 0 ? 3 : 0;
+      image
+        .setPosition(x, y)
+        .setAngle(180 + twitch)
+        .setFlipX(c.facing === 'left')
+        .setDepth(DEPTH.player + c.y);
+      return;
+    }
+    // A little hop on every step, out of phase from one creature to the next;
+    // a flyer bobs higher, its shadow left on the floor in its art.
+    const fly = findCreature(c.creatureId).move === 'fly';
+    const hop =
+      Math.abs(Math.sin((tick + c.id * 7) * (fly ? 0.12 : 0.35))) *
+      this.tile *
+      (fly ? 0.12 : 0.06);
     image
-      .setPosition(x, y - this.tile * 0.1 - hop)
+      .setPosition(x, y - this.tile * (fly ? 0.25 : 0.1) - hop)
+      .setAngle(0)
       .setFlipX(c.facing === 'left')
-      .setDepth(DEPTH.player + c.y);
+      .setDepth(DEPTH.player + c.y + (fly ? 1 : 0));
     if (tick < c.hurtUntilTick && Math.floor(tick / 4) % 2 === 0)
       image.setTint(0xff6b57);
     else if (this.dark > 0.5) image.setTint(DARK_TINT);
@@ -815,7 +890,11 @@ export class ArenaScene extends Phaser.Scene {
         this.add
           .image(
             ...this.cellToPixel(m.col, m.row),
-            this.paintedTexture('stage-mound', paintMound),
+            m.kind === 'breaker'
+              ? this.paintedTexture('stage-breaker', paintBreaker)
+              : m.kind === 'generator' || boss?.bossId === 'gato'
+                ? this.paintedTexture('stage-generator', paintGenerator)
+                : this.paintedTexture('stage-mound', paintMound),
           )
           .setDepth(DEPTH.player + m.row - 0.2),
       (image, m) => {
@@ -844,6 +923,50 @@ export class ArenaScene extends Phaser.Scene {
       (image) => image.setAlpha(Math.floor(state.tick / 6) % 2 ? 1 : 0.45),
     );
 
+    // The Gato's shock: its row and column blink while it charges, burn while it zaps.
+    const shock =
+      boss?.alive && (boss.phase === 'charge' || boss.phase === 'zap')
+        ? (boss.zap ?? []).map((c) => ({ ...c, live: boss.phase === 'zap' }))
+        : [];
+    this.sync(
+      this.shocks,
+      shock,
+      (c) => `${c.col},${c.row}`,
+      (c) =>
+        this.add
+          .image(...this.cellToPixel(c.col, c.row), TEXTURE.floor)
+          .setDepth(DEPTH.flame),
+      (image, c) => {
+        image.setTexture(
+          c.live
+            ? this.paintedTexture('gato-zap', paintZap)
+            : this.paintedTexture('gato-warn', paintZapWarning),
+        );
+        image.setAlpha(
+          c.live
+            ? 0.8 + 0.2 * Math.sin(state.tick * 1.7 + c.col)
+            : Math.floor(state.tick / 6) % 2
+              ? 0.9
+              : 0.35,
+        );
+      },
+    );
+    // In the dark only its eyes show, above the dark sheet.
+    const lookout = boss?.alive && this.dark > 0.5 ? [boss] : [];
+    this.sync(
+      this.eyes,
+      lookout,
+      (b) => b.bossId,
+      () =>
+        this.add
+          .image(0, 0, this.paintedTexture('gato-eyes', paintEyes))
+          .setDepth(DEPTH.dark + 0.5),
+      (image, b) => {
+        const [x, y] = this.cellToPixel(b.x, b.y);
+        image.setPosition(x, y - this.tile * 0.55);
+      },
+    );
+
     const shown: BossBody[] =
       boss &&
       (boss.alive ||
@@ -860,11 +983,11 @@ export class ArenaScene extends Phaser.Scene {
     );
   }
 
-  private bossTexture(boss: BossBody): string {
-    const key = `boss:${boss.bossId}`;
+  private bossTexture(boss: BossBody, pose?: BossPose): string {
+    const key = `boss:${boss.bossId}${pose ? `:${pose}` : ''}`;
     if (!this.textures.exists(key)) {
       const canvas = paintCreatureFrame(document, {
-        subject: { boss: boss.bossId },
+        subject: { boss: boss.bossId, ...(pose ? { pose } : {}) },
         size: Math.round(this.tile * 1.7),
       });
       this.textures.addCanvas(key, canvas);
@@ -891,6 +1014,10 @@ export class ArenaScene extends Phaser.Scene {
         .setAngle(-90 * t)
         .setAlpha(1 - t)
         .setTint(0xff9050);
+      return;
+    }
+    if (b.bossId === 'gato') {
+      this.updateGato(image, b, tick, x, y - lift);
       return;
     }
     if (b.phase === 'under' || b.phase === 'crack') {
@@ -922,6 +1049,176 @@ export class ArenaScene extends Phaser.Scene {
       image.setTint(0xff6b57);
     else if (this.dark > 0.5) image.setTint(DARK_TINT);
     else image.clearTint();
+  }
+
+  /**
+   * A long stage's floor: cables, and arc lines — crackling while live, a dead
+   * wire once their breaker is gone; sparks running along the cables.
+   */
+  private renderFixtures(state: GameState): void {
+    const run = state.stage;
+    const cells: { key: string; col: number; row: number; texture: string }[] =
+      [];
+    for (const cable of run?.cables ?? [])
+      for (let col = cable.from; col <= cable.to; col++)
+        cells.push({
+          key: `c${col},${cable.row}`,
+          col,
+          row: cable.row,
+          texture: this.paintedTexture('stage-cable', paintCable),
+        });
+    for (const arc of run?.arcs ?? []) {
+      const live = !!run && isArcLive(state, run, arc);
+      const alive = run?.mounds.find((m) => m.id === arc.breakerId)?.alive;
+      for (let col = arc.from; col <= arc.to; col++)
+        cells.push({
+          key: `a${col},${arc.row}`,
+          col,
+          row: arc.row,
+          texture: live
+            ? this.paintedTexture('stage-arc-live', paintArcLive)
+            : alive
+              ? this.paintedTexture('stage-arc-idle', paintArcIdle)
+              : this.paintedTexture('stage-arc-dead', paintArcDead),
+        });
+    }
+    this.sync(
+      this.lines,
+      cells,
+      (c) => c.key,
+      (c) =>
+        this.add
+          .image(...this.cellToPixel(c.col, c.row), c.texture)
+          .setDepth(DEPTH.exit - 0.1),
+      (image, c) => {
+        image.setTexture(c.texture);
+        image.setAlpha(
+          c.key.startsWith('a') && c.texture === 'stage-arc-live'
+            ? 0.75 + 0.25 * Math.sin(state.tick * 1.3 + c.col)
+            : 1,
+        );
+      },
+    );
+    this.sync(
+      this.sparks,
+      (run?.sparks ?? []).map((s, i) => ({ ...s, i })),
+      (s) => s.i,
+      () =>
+        this.add
+          .image(0, 0, this.paintedTexture('gato-zap', paintZap))
+          .setDepth(DEPTH.flame),
+      (image, s) =>
+        image
+          .setPosition(...this.cellToPixel(s.x, s.row))
+          .setScale(0.6 + 0.15 * Math.sin(state.tick * 0.9)),
+    );
+  }
+
+  /** The Gato de Fios: its pose tells its mood — glowing to zap, grey and still when drained. */
+  private updateGato(
+    image: Image,
+    b: BossBody,
+    tick: number,
+    x: number,
+    y: number,
+  ): void {
+    const pose: BossPose | undefined =
+      b.phase === 'charge'
+        ? 'charge'
+        : b.phase === 'drained' || b.phase === 'stunned'
+          ? 'drained'
+          : undefined;
+    image.setTexture(this.bossTexture(b, pose)).setPosition(x, y);
+    const span = Math.max(1, b.phaseEndsAtTick - b.phaseStartedAtTick);
+    const t = Math.min(1, (tick - b.phaseStartedAtTick) / span);
+    if (b.phase === 'charge')
+      image.setPosition(x + Math.sin(tick * 2.3) * this.tile * 0.04, y);
+    else if (b.phase === 'crouch')
+      image.setScale(1.2, 0.8).setY(y + this.tile * 0.15);
+    else if (b.phase === 'pounce')
+      image.setY(y - Math.sin(Math.PI * t) * this.tile * 0.7);
+    else if (b.phase === 'stunned') image.setAngle(Math.sin(tick * 0.25) * 8);
+    else if (b.phase === 'walk')
+      image.setY(y - Math.abs(Math.sin(tick * 0.3)) * this.tile * 0.05);
+    if (tick < b.hurtUntilTick && Math.floor(tick / 4) % 2 === 0)
+      image.setTint(0xff6b57);
+    else if (this.dark > 0.5) image.setTint(DARK_TINT);
+    else image.clearTint();
+  }
+
+  /**
+   * A stage in parts: the gate of the part being played, a charged barrier
+   * along the screen's right edge; the key, on its carrier or on the floor;
+   * the helmets of whoever is waiting for a teammate.
+   */
+  private renderParts(state: GameState): void {
+    const run = state.stage;
+    const part = run?.parts[run.part];
+    // The last part has no gate: the far wall ends it.
+    const last = !!run && run.part === run.parts.length - 1;
+    const bars =
+      run && part && !part.done && !last
+        ? Array.from({ length: state.rows - 2 }, (_, i) => ({
+            col: part.gate - 1,
+            row: i + 1,
+          }))
+        : [];
+    this.sync(
+      this.gates,
+      bars,
+      (b) => `${b.col},${b.row}`,
+      (b) =>
+        this.add
+          .image(
+            ...this.cellToPixel(b.col, b.row),
+            this.paintedTexture('stage-gate-bar', paintGateBar),
+          )
+          .setDepth(DEPTH.exit),
+      (image, b) =>
+        image.setAlpha(0.75 + 0.25 * Math.sin(state.tick * 0.2 + b.row)),
+    );
+
+    const key = run?.key;
+    const carrier =
+      key?.carrierId != null
+        ? run?.creatures.find((c) => c.id === key.carrierId)
+        : undefined;
+    this.sync(
+      this.keys,
+      key ? [key] : [],
+      () => 'key',
+      () =>
+        this.add
+          .image(0, 0, this.paintedTexture('stage-key', paintKey))
+          .setDepth(DEPTH.fx - 2),
+      (image, k) => {
+        const [x, y] = carrier
+          ? this.cellToPixel(carrier.x, carrier.y - 0.55)
+          : this.cellToPixel(k.col, k.row);
+        image.setPosition(
+          x,
+          y + Math.sin(state.tick * 0.12) * this.tile * 0.04,
+        );
+        image.setScale(carrier ? 0.6 : 1);
+      },
+    );
+
+    this.sync(
+      this.helmets,
+      run?.helmets ?? [],
+      (h) => h.playerId,
+      (h) =>
+        this.add
+          .image(
+            ...this.cellToPixel(h.col, h.row),
+            this.paintedTexture('stage-helmet', paintHelmet),
+          )
+          .setDepth(DEPTH.exit),
+      (image, h) => {
+        image.setPosition(...this.cellToPixel(h.col, h.row));
+        image.setScale(1 + Math.sin(state.tick * 0.1) * 0.06);
+      },
+    );
   }
 
   /** Snail slime: a glossy green smear that fades as it dries. */
@@ -1288,7 +1585,13 @@ export class ArenaScene extends Phaser.Scene {
           this.burst(event.col, event.row, TEXTURE.debris, 10, false);
           break;
         case 'boss-crack':
+        case 'boss-charge':
           sfx.play('alarm');
+          break;
+        case 'boss-zap':
+          sfx.play('explode', 0.8);
+          this.cameras.main.shake(140, 0.005);
+          this.burst(event.col, event.row, TEXTURE.spark, 18, true);
           break;
         case 'boss-emerged':
           sfx.play('wall');
@@ -1781,4 +2084,270 @@ function paintSlime(ctx: CanvasRenderingContext2D, size: number): void {
     Math.PI * 2,
   );
   ctx.fill();
+}
+
+/** A part's gate: a charged barrier hugging the right side of the cell. */
+function paintGateBar(ctx: CanvasRenderingContext2D, size: number): void {
+  const x = size * 0.72;
+  const glow = ctx.createLinearGradient(x - size * 0.2, 0, size, 0);
+  glow.addColorStop(0, 'rgba(255, 74, 61, 0)');
+  glow.addColorStop(1, 'rgba(255, 74, 61, 0.45)');
+  ctx.fillStyle = glow;
+  ctx.fillRect(x - size * 0.2, 0, size * 0.48, size);
+  for (let y = 0; y < size; y += size / 4) {
+    ctx.fillStyle = '#ff4a3d';
+    ctx.fillRect(x, y, size * 0.28, size / 8);
+    ctx.fillStyle = '#1b1d24';
+    ctx.fillRect(x, y + size / 8, size * 0.28, size / 8);
+  }
+}
+
+/** The key of a `key` part: brass, a round bow and two teeth. */
+function paintKey(ctx: CanvasRenderingContext2D, size: number): void {
+  const s = size / 64;
+  ctx.save();
+  ctx.translate(size / 2, size / 2);
+  ctx.rotate(-0.6);
+  ctx.lineWidth = 3 * s;
+  ctx.strokeStyle = '#1d1a17';
+  ctx.fillStyle = '#ffcf4a';
+  ctx.beginPath();
+  ctx.arc(-12 * s, 0, 10 * s, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.rect(-3 * s, -3.5 * s, 26 * s, 7 * s);
+  ctx.rect(14 * s, 3 * s, 4 * s, 7 * s);
+  ctx.rect(20 * s, 3 * s, 4 * s, 5 * s);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = '#1d1a17';
+  ctx.beginPath();
+  ctx.arc(-12 * s, 0, 3.5 * s, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,0.6)';
+  ctx.fillRect(0, -2 * s, 16 * s, 2 * s);
+  ctx.restore();
+}
+
+/** Left by a player with no life to spend: a hard hat a teammate can pick up. */
+function paintHelmet(ctx: CanvasRenderingContext2D, size: number): void {
+  const s = size / 64;
+  const c = size / 2;
+  ctx.fillStyle = 'rgba(0,0,0,0.3)';
+  ctx.beginPath();
+  ctx.ellipse(c, c + 16 * s, 22 * s, 5 * s, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.lineWidth = 3 * s;
+  ctx.strokeStyle = '#1d1a17';
+  ctx.fillStyle = '#f2c230';
+  ctx.beginPath();
+  ctx.arc(c, c + 8 * s, 18 * s, Math.PI, 0);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.rect(c - 24 * s, c + 7 * s, 48 * s, 6 * s);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = 'rgba(255,255,255,0.55)';
+  ctx.fillRect(c - 10 * s, c - 6 * s, 6 * s, 10 * s);
+  ctx.fillStyle = '#d99a1c';
+  ctx.fillRect(c - 2 * s, c - 10 * s, 4 * s, 18 * s);
+}
+
+/** One of the Gato's generators: a squat box with a humming violet core. */
+function paintGenerator(ctx: CanvasRenderingContext2D, size: number): void {
+  const s = size / 64;
+  ctx.lineWidth = 3 * s;
+  ctx.strokeStyle = '#0b0d12';
+  ctx.fillStyle = '#4b5160';
+  ctx.beginPath();
+  ctx.roundRect(8 * s, 12 * s, 48 * s, 44 * s, 6 * s);
+  ctx.fill();
+  ctx.stroke();
+  const core = ctx.createRadialGradient(
+    32 * s,
+    34 * s,
+    2 * s,
+    32 * s,
+    34 * s,
+    16 * s,
+  );
+  core.addColorStop(0, '#f1dcff');
+  core.addColorStop(0.5, '#c78bff');
+  core.addColorStop(1, '#6b3fa8');
+  ctx.fillStyle = core;
+  ctx.beginPath();
+  ctx.arc(32 * s, 34 * s, 13 * s, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = '#e9b83a';
+  ctx.fillRect(12 * s, 14 * s, 40 * s, 4 * s);
+}
+
+/** A cell of the Gato's line while it charges: a cyan warning on the floor. */
+function paintZapWarning(ctx: CanvasRenderingContext2D, size: number): void {
+  ctx.fillStyle = 'rgba(155, 228, 255, 0.28)';
+  ctx.fillRect(0, 0, size, size);
+  ctx.strokeStyle = 'rgba(155, 228, 255, 0.85)';
+  ctx.lineWidth = size * 0.05;
+  ctx.strokeRect(size * 0.06, size * 0.06, size * 0.88, size * 0.88);
+}
+
+/** A cell of the zap itself: a crackling bolt across a white-hot glow. */
+function paintZap(ctx: CanvasRenderingContext2D, size: number): void {
+  const glow = ctx.createRadialGradient(
+    size / 2,
+    size / 2,
+    0,
+    size / 2,
+    size / 2,
+    size * 0.7,
+  );
+  glow.addColorStop(0, 'rgba(255, 255, 255, 0.95)');
+  glow.addColorStop(0.4, 'rgba(155, 228, 255, 0.8)');
+  glow.addColorStop(1, 'rgba(95, 211, 255, 0)');
+  ctx.fillStyle = glow;
+  ctx.fillRect(0, 0, size, size);
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = size * 0.06;
+  ctx.beginPath();
+  ctx.moveTo(0, size * 0.5);
+  ctx.lineTo(size * 0.3, size * 0.35);
+  ctx.lineTo(size * 0.5, size * 0.62);
+  ctx.lineTo(size * 0.72, size * 0.4);
+  ctx.lineTo(size, size * 0.52);
+  ctx.stroke();
+}
+
+/** The Gato in the dark: two cyan slits, all that shows. */
+function paintEyes(ctx: CanvasRenderingContext2D, size: number): void {
+  const s = size / 64;
+  for (const cx of [22, 42]) {
+    ctx.fillStyle = 'rgba(155, 228, 255, 0.35)';
+    ctx.beginPath();
+    ctx.ellipse(cx * s, 32 * s, 9 * s, 10 * s, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#9be4ff';
+    ctx.beginPath();
+    ctx.ellipse(cx * s, 32 * s, 5 * s, 6 * s, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#0b1420';
+    ctx.fillRect((cx - 1) * s, 27 * s, 2 * s, 10 * s);
+  }
+}
+
+/** A breaker: a red switch box that holds an arc line on. */
+function paintBreaker(ctx: CanvasRenderingContext2D, size: number): void {
+  const s = size / 64;
+  ctx.lineWidth = 3 * s;
+  ctx.strokeStyle = '#0b0d12';
+  ctx.fillStyle = '#c4382e';
+  ctx.beginPath();
+  ctx.roundRect(12 * s, 8 * s, 40 * s, 48 * s, 6 * s);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = '#1b1d24';
+  ctx.fillRect(22 * s, 16 * s, 20 * s, 24 * s);
+  ctx.fillStyle = '#ffd36e';
+  ctx.fillRect(28 * s, 18 * s, 8 * s, 12 * s);
+  ctx.fillStyle = 'rgba(255,255,255,0.4)';
+  ctx.fillRect(15 * s, 11 * s, 4 * s, 40 * s);
+  ctx.fillStyle = '#ffd36e';
+  ctx.beginPath();
+  ctx.moveTo(34 * s, 44 * s);
+  ctx.lineTo(28 * s, 52 * s);
+  ctx.lineTo(33 * s, 52 * s);
+  ctx.lineTo(29 * s, 60 * s);
+  ctx.lineTo(38 * s, 50 * s);
+  ctx.lineTo(33 * s, 50 * s);
+  ctx.closePath();
+  ctx.fill();
+}
+
+/** A conductor cable across the floor: dark, rimmed in hazard yellow. */
+function paintCable(ctx: CanvasRenderingContext2D, size: number): void {
+  ctx.fillStyle = '#e9b83a';
+  ctx.fillRect(0, size * 0.42, size, size * 0.16);
+  ctx.fillStyle = '#1b1d24';
+  ctx.fillRect(0, size * 0.45, size, size * 0.1);
+}
+
+function arcWire(
+  ctx: CanvasRenderingContext2D,
+  size: number,
+  colour: string,
+): void {
+  ctx.fillStyle = '#2f3a4a';
+  ctx.fillRect(0, size * 0.44, size, size * 0.12);
+  ctx.fillStyle = colour;
+  ctx.fillRect(0, size * 0.47, size, size * 0.06);
+}
+
+/** An arc line between shocks: the wire hums, faintly lit. */
+function paintArcIdle(ctx: CanvasRenderingContext2D, size: number): void {
+  arcWire(ctx, size, '#3c6f86');
+}
+
+/** An arc line switched off for good: a dead grey wire. */
+function paintArcDead(ctx: CanvasRenderingContext2D, size: number): void {
+  arcWire(ctx, size, '#4b5160');
+}
+
+/** An arc line shocking: a white-hot crackle with a cyan glow. */
+function paintArcLive(ctx: CanvasRenderingContext2D, size: number): void {
+  const glow = ctx.createLinearGradient(0, 0, 0, size);
+  glow.addColorStop(0.2, 'rgba(95, 211, 255, 0)');
+  glow.addColorStop(0.5, 'rgba(155, 228, 255, 0.75)');
+  glow.addColorStop(0.8, 'rgba(95, 211, 255, 0)');
+  ctx.fillStyle = glow;
+  ctx.fillRect(0, 0, size, size);
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = size * 0.06;
+  ctx.beginPath();
+  ctx.moveTo(0, size * 0.5);
+  ctx.lineTo(size * 0.25, size * 0.38);
+  ctx.lineTo(size * 0.5, size * 0.6);
+  ctx.lineTo(size * 0.75, size * 0.4);
+  ctx.lineTo(size, size * 0.5);
+  ctx.stroke();
+}
+
+/** The escape's last cell: an inspection grate, cracked. */
+function paintCollapse(ctx: CanvasRenderingContext2D, size: number): void {
+  ctx.fillStyle = '#1b1d24';
+  ctx.fillRect(size * 0.08, size * 0.08, size * 0.84, size * 0.84);
+  ctx.strokeStyle = '#4b5160';
+  ctx.lineWidth = size * 0.05;
+  for (let x = size * 0.2; x < size * 0.9; x += size * 0.16) {
+    ctx.beginPath();
+    ctx.moveTo(x, size * 0.12);
+    ctx.lineTo(x, size * 0.88);
+    ctx.stroke();
+  }
+  ctx.strokeStyle = '#ff8a3d';
+  ctx.lineWidth = size * 0.035;
+  ctx.beginPath();
+  ctx.moveTo(size * 0.15, size * 0.3);
+  ctx.lineTo(size * 0.45, size * 0.52);
+  ctx.lineTo(size * 0.38, size * 0.7);
+  ctx.lineTo(size * 0.82, size * 0.86);
+  ctx.stroke();
+}
+
+/** The grate gone: a hole down into the cellar, lit from below. */
+function paintCollapseOpen(ctx: CanvasRenderingContext2D, size: number): void {
+  const c = size / 2;
+  const glow = ctx.createRadialGradient(c, c, size * 0.05, c, c, size * 0.5);
+  glow.addColorStop(0, 'rgba(155, 228, 255, 0.9)');
+  glow.addColorStop(0.35, 'rgba(11, 20, 32, 1)');
+  glow.addColorStop(1, 'rgba(11, 20, 32, 0)');
+  ctx.fillStyle = glow;
+  ctx.beginPath();
+  ctx.ellipse(c, c, size * 0.42, size * 0.36, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = '#ff8a3d';
+  ctx.lineWidth = size * 0.04;
+  ctx.stroke();
 }

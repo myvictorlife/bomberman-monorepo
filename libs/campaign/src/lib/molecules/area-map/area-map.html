@@ -75,6 +75,88 @@
     />
     <rect width="760" height="560" fill="url(#area-map-vignette)" />
   </svg>
+  } @case ('subestacao') {
+  <svg
+    class="area-map__art"
+    viewBox="0 0 760 560"
+    preserveAspectRatio="xMidYMid slice"
+    aria-hidden="true"
+  >
+    <defs>
+      <pattern
+        id="area-map-slab"
+        width="96"
+        height="96"
+        patternUnits="userSpaceOnUse"
+      >
+        <rect width="96" height="96" fill="#3a3d46" />
+        <rect width="48" height="48" fill="#35383f" />
+        <rect x="48" y="48" width="48" height="48" fill="#35383f" />
+      </pattern>
+      <pattern
+        id="area-map-hazard"
+        width="28"
+        height="28"
+        patternUnits="userSpaceOnUse"
+        patternTransform="rotate(45)"
+      >
+        <rect width="14" height="28" fill="#e9b83a" />
+        <rect x="14" width="14" height="28" fill="#1b1d24" />
+      </pattern>
+      <radialGradient id="area-map-vignette-sub" cx="50%" cy="50%" r="75%">
+        <stop offset="55%" stop-color="#000" stop-opacity="0" />
+        <stop offset="100%" stop-color="#000" stop-opacity="0.55" />
+      </radialGradient>
+    </defs>
+    <rect width="760" height="560" fill="url(#area-map-slab)" />
+    <rect width="760" height="26" fill="url(#area-map-hazard)" />
+    <rect y="534" width="760" height="26" fill="url(#area-map-hazard)" />
+    <g stroke="#0b0d12" stroke-width="4">
+      <rect x="60" y="90" width="90" height="80" rx="10" fill="#4b5160" />
+      <rect x="250" y="400" width="90" height="80" rx="10" fill="#4b5160" />
+      <rect x="430" y="80" width="90" height="80" rx="10" fill="#4b5160" />
+      <rect x="580" y="380" width="110" height="96" rx="12" fill="#2b2f3a" />
+    </g>
+    <g fill="#5fd3ff">
+      <circle cx="105" cy="118" r="8" />
+      <circle cx="295" cy="428" r="8" />
+      <circle cx="475" cy="108" r="8" />
+    </g>
+    <path
+      d="M150 130 C 250 130, 300 300, 430 120 M340 440 C 440 470, 520 300, 580 420"
+      fill="none"
+      stroke="#e9b83a"
+      stroke-width="5"
+      stroke-linecap="round"
+      opacity="0.7"
+    />
+    <path
+      d="M640 400 l-14 26 h18 l-12 26"
+      fill="none"
+      stroke="#9be4ff"
+      stroke-width="5"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+    <path
+      class="area-map__trail"
+      d="M120 350 C 220 330, 280 250, 380 270 S 540 300, 640 225"
+      fill="none"
+      stroke="#7a8296"
+      stroke-width="30"
+      stroke-linecap="round"
+    />
+    <path
+      class="area-map__steps"
+      d="M120 350 C 220 330, 280 250, 380 270 S 540 300, 640 225"
+      fill="none"
+      stroke="#e9b83a"
+      stroke-width="3"
+      stroke-dasharray="4 16"
+      stroke-linecap="round"
+    />
+    <rect width="760" height="560" fill="url(#area-map-vignette-sub)" />
+  </svg>
   } @default {
   <div class="area-map__soon" data-testid="area-map-soon">
     <svg viewBox="0 0 24 24" width="40" height="40" aria-hidden="true">

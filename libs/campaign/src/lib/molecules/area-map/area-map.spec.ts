@@ -70,7 +70,7 @@ describe('AreaMap', () => {
   });
 
   it('shows the placeholder for an area without a map', () => {
-    spectator.setInput({ areaId: 'subestacao', stages: [] });
+    spectator.setInput({ areaId: 'autodromo', stages: [] });
 
     expect(spectator.query('[data-testid="area-map-soon"]')).toExist();
     expect(spectator.queryAll('[data-testid="area-map-stop"]')).toHaveLength(0);

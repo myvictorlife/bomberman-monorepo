@@ -37,7 +37,7 @@ describe('Collection', () => {
 
     expect(cards.map((c) => c.getAttribute('data-status'))).toEqual([
       'known',
-      'soon',
+      'locked',
       'soon',
     ]);
     expect(cards[0]?.querySelector('lib-creature-sprite')).toExist();

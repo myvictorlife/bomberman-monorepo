@@ -1,5 +1,11 @@
 import { DEFAULT_CHARACTER_ID, findMount, hatchMount } from './characters';
-import { cellIndex, generateArena, inBounds, tileAt } from './arena';
+import {
+  cellIndex,
+  CLASSIC_LAYOUT,
+  generateArena,
+  inBounds,
+  tileAt,
+} from './arena';
 import {
   BLOCK_BURN_TICKS,
   BOMB_FUSE_TICKS,
@@ -16,7 +22,6 @@ import {
   MOUNT_SHIELD_TICKS,
   ROUND_END_DELAY_TICKS,
   ROUND_TIME_TICKS,
-  SPAWN_CELLS,
   START_BOMBS,
   START_FIRE,
   TICK_RATE,
@@ -26,6 +31,8 @@ import { findStage } from './campaign';
 import { applyKit } from './kit';
 import { DEFAULT_MAP_ID, findMap } from './maps';
 import { advanceStage, setUpStage, stageMapId, updateStageEnd } from './stage';
+import { startLives } from './parts';
+import { divertAlongCable } from './fixtures';
 import {
   DIRECTION_DELTA,
   movePlayer,
@@ -68,15 +75,19 @@ import {
 } from './types';
 
 export function createGame(options: GameOptions): GameState {
-  if (options.players.length < 1 || options.players.length > MAX_PLAYERS) {
-    throw new Error(`A round needs 1–${MAX_PLAYERS} players.`);
-  }
   const stageMap = options.stageId ? stageMapId(options.stageId) : undefined;
+  const layout =
+    (options.stageId ? findStage(options.stageId)?.layout : undefined) ??
+    CLASSIC_LAYOUT;
+  const most = Math.min(MAX_PLAYERS, layout.spawns.length);
+  if (options.players.length < 1 || options.players.length > most) {
+    throw new Error(`A round needs 1–${most} players.`);
+  }
   const map = findMap(stageMap ?? options.mapId ?? DEFAULT_MAP_ID);
-  const arena = generateArena(options.seed, map);
+  const arena = generateArena(options.seed, map, layout);
   const colors = assignColors(options.players.map((p) => p.color));
   const players: Player[] = options.players.map((setup, slot) => {
-    const [x, y] = SPAWN_CELLS[slot] as readonly [number, number];
+    const [x, y] = layout.spawns[slot] as readonly [number, number];
     const player = newPlayer(setup, slot, x, y, colors[slot]);
     if (setup.kit) applyKit(player, setup.kit);
     return player;
@@ -114,13 +125,15 @@ export function createGame(options: GameOptions): GameState {
     setUpStage(state, options.stageId, options.seed);
     // A stage runs against the clock even alone: the walls close in on whoever
     // is left. A bonus stage has its own, short one.
-    const seconds = findStage(options.stageId)?.seconds;
+    const stage = findStage(options.stageId);
+    const seconds = stage?.parts?.[0]?.seconds ?? stage?.seconds;
     state.closesAtTick =
       options.roundTicks !== undefined
         ? options.roundTicks
         : seconds
           ? seconds * TICK_RATE
           : ROUND_TIME_TICKS;
+    if (state.stage) startLives(state.stage, options.players);
   }
   return state;
 }
@@ -615,6 +628,8 @@ function collectPowerUps(state: GameState): void {
       if (state.stage) {
         const gained = state.stage.livesGained;
         gained[player.id] = (gained[player.id] ?? 0) + 1;
+        const lives = state.stage.lives[player.id];
+        if (lives !== undefined) state.stage.lives[player.id] = lives + 1;
         state.events.push({ type: 'life-gained', playerId: player.id });
       }
     } else {
@@ -714,6 +729,8 @@ function detonateBombs(state: GameState): void {
   while (queue.length > 0) {
     const bomb = queue.shift() as Bomb;
     if (!state.bombs.includes(bomb)) continue;
+    // On a long stage's cable the blast is carried off to the far end.
+    if (state.stage && divertAlongCable(state, bomb)) continue;
     explode(state, bomb, queue);
   }
 }

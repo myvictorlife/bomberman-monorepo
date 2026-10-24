@@ -11,6 +11,7 @@
 import { cellIndex, inBounds, tileAt } from './arena';
 import { BossId, findBoss, findCreature } from './campaign';
 import { FLAME_TICKS, TICK_RATE } from './constants';
+import { GENERATOR_TICKS, mayGenerate } from './fixtures';
 import { DIRECTION_DELTA } from './movement';
 import { createRng } from './rng';
 import { award, BOSS_POINTS, MOUND_POINTS } from './score';
@@ -49,6 +50,8 @@ export const BOSS_REACH = 0.7;
 export const MOUND_HP = 2;
 export const MOUND_COUNT = 3;
 export const MOUND_SPAWN_TICKS = seconds(6);
+/** The Gato's generators send out a faísca this often. */
+export const GENERATOR_SPAWN_TICKS = seconds(10);
 /** The anthills stop sending ants out while this many are about. */
 export const MAX_MINIONS = 6;
 
@@ -63,10 +66,11 @@ export function setUpBoss(
   const col = Math.floor(state.cols / 2);
   const row = Math.floor(state.rows / 2);
   clearCell(state, col, row);
+  const hp = boss.hpByTeam?.[state.players.length - 1] ?? boss.hp;
   run.boss = {
     bossId,
-    hp: boss.hp,
-    maxHp: boss.hp,
+    hp,
+    maxHp: hp,
     phase: 'up',
     phaseStartedAtTick: 0,
     phaseEndsAtTick: BOSS_TICKS.firstUp,
@@ -79,7 +83,7 @@ export function setUpBoss(
     alive: true,
     diedAtTick: null,
   };
-  run.mounds = cells.slice(0, MOUND_COUNT).map(([c, r], i) => {
+  run.mounds = cells.slice(0, boss.lairs ?? MOUND_COUNT).map(([c, r], i) => {
     clearCell(state, c, r);
     return {
       id: i + 1,
@@ -104,16 +108,22 @@ export function isMoundAt(run: StageRun, col: number, row: number): boolean {
   return run.mounds.some((m) => m.alive && m.col === col && m.row === row);
 }
 
-/** Above ground: where flames hurt it and touching it is deadly. */
+/**
+ * When flames hurt it: the Rainha above ground, the Gato drained after a zap
+ * or dizzy. Touching the Rainha then is deadly; the Gato, the other way round.
+ */
 export function isBossExposed(boss: BossBody): boolean {
-  return boss.alive && (boss.phase === 'up' || boss.phase === 'stunned');
+  if (!boss.alive) return false;
+  if (boss.bossId === 'gato')
+    return boss.phase === 'drained' || boss.phase === 'stunned';
+  return boss.phase === 'up' || boss.phase === 'stunned';
 }
 
-function flameAt(state: GameState, col: number, row: number) {
+export function flameAt(state: GameState, col: number, row: number) {
   return state.flames.find((f) => f.col === col && f.row === row);
 }
 
-function freeFloor(
+export function freeFloor(
   state: GameState,
   run: StageRun,
   col: number,
@@ -131,20 +141,21 @@ function nextCreatureId(run: StageRun): number {
   return run.creatures.reduce((max, c) => Math.max(max, c.id), 0) + 1;
 }
 
-/** A leafcutter out of the ground at `col, row`, facing `facing`. */
+/** One of the boss's creatures — a generator's faísca — out at `col, row`, facing `facing`. */
 function spawnAnt(
   run: StageRun,
   col: number,
   row: number,
   facing: Direction,
 ): void {
+  const creatureId = run.boss ? findBoss(run.boss.bossId).minion : 'faisca';
   const ant: CreatureBody = {
     id: nextCreatureId(run),
-    creatureId: 'sauva',
+    creatureId,
     x: col,
     y: row,
     facing,
-    hp: findCreature('sauva').hp,
+    hp: findCreature(creatureId).hp,
     hurtUntilTick: 0,
     alive: true,
     diedAtTick: null,
@@ -175,7 +186,7 @@ function minionsAbout(run: StageRun): number {
 }
 
 /** The anthills take flames, and send out an ant now and then while the boss lives. */
-function advanceMounds(
+export function advanceMounds(
   state: GameState,
   run: StageRun,
   bossAlive: boolean,
@@ -198,15 +209,28 @@ function advanceMounds(
       }
       state.events.push({ type: 'mound-hurt', col: mound.col, row: mound.row });
     }
+    if (mound.kind === 'breaker') continue;
     if (!bossAlive || state.tick < mound.nextSpawnTick) continue;
-    mound.nextSpawnTick = state.tick + MOUND_SPAWN_TICKS;
+    // A long stage's generators: their own pace, and only on the screen.
+    if (mound.kind === 'generator') {
+      mound.nextSpawnTick = state.tick + GENERATOR_TICKS;
+      if (mayGenerate(state, run, mound))
+        spawnAround(state, run, mound.col, mound.row, 1);
+      continue;
+    }
+    mound.nextSpawnTick =
+      state.tick +
+      (run.boss?.bossId === 'gato' ? GENERATOR_SPAWN_TICKS : MOUND_SPAWN_TICKS);
     if (minionsAbout(run) < MAX_MINIONS)
       spawnAround(state, run, mound.col, mound.row, 1);
   }
 }
 
 /** The nearest player still in the arena, as a cell — where the boss heads for. */
-function quarry(state: GameState, boss: BossBody): [number, number] | null {
+export function quarry(
+  state: GameState,
+  boss: BossBody,
+): [number, number] | null {
   let best: [number, number] | null = null;
   let bestDistance = Infinity;
   for (const p of state.players) {
@@ -221,7 +245,7 @@ function quarry(state: GameState, boss: BossBody): [number, number] | null {
   return best;
 }
 
-function setPhase(
+export function setPhase(
   state: GameState,
   boss: BossBody,
   phase: BossBody['phase'],
@@ -305,7 +329,11 @@ function emerge(state: GameState, run: StageRun, boss: BossBody): Player[] {
 }
 
 /** One flame, one hit — only while it is out of the ground. Its fall takes its creatures with it. */
-function hurtBoss(state: GameState, run: StageRun, boss: BossBody): void {
+export function hurtBoss(
+  state: GameState,
+  run: StageRun,
+  boss: BossBody,
+): void {
   if (!isBossExposed(boss) || state.tick < boss.hurtUntilTick) return;
   const col = Math.round(boss.x);
   const row = Math.round(boss.y);

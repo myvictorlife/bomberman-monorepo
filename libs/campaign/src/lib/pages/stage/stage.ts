@@ -117,6 +117,8 @@ export class Stage {
     () => this.hud()?.stage?.creaturesLeft ?? 0,
   );
   readonly exitOpen = computed(() => this.hud()?.stage?.exitOpen ?? false);
+  /** On a long stage: the part being played and what opens its gate. */
+  readonly part = computed(() => this.hud()?.stage?.part ?? null);
   /** The boss's health, one segment per hit, on a boss stage. */
   readonly boss = computed(() => {
     const boss = this.hud()?.stage?.boss;
@@ -347,6 +349,7 @@ export class Stage {
     this.outcome.set(null);
     this.status.set('loading');
     const kit = this.progress.progress().kit;
+    const lives = livesOf(this.progress.progress());
     try {
       const handle = await this.launch(this.arena().nativeElement, {
         stageId,
@@ -357,6 +360,8 @@ export class Stage {
             characterId: this.selection.selectedId(),
             // What the last cleared stage left them with; nothing after a loss.
             ...(kit ? { kit } : {}),
+            // A stage in parts spends them on falls; any other just counts them.
+            lives,
           },
         ],
         // Alone at the keyboard: either hand plays.

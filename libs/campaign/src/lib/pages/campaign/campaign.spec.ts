@@ -37,7 +37,7 @@ describe('Campaign', () => {
 
     expect(areas.map((a) => a.getAttribute('data-status'))).toEqual([
       'open',
-      'soon',
+      'locked',
       'soon',
     ]);
     expect(areas[0]).toHaveAttribute('aria-pressed', 'true');
@@ -101,7 +101,7 @@ describe('Campaign', () => {
 
   it('switches to an area that is not ready yet', () => {
     spectator.click(
-      spectator.queryAll('[data-testid="campaign-area"]')[1] as Element,
+      spectator.queryAll('[data-testid="campaign-area"]')[2] as Element,
     );
 
     expect(spectator.query('[data-testid="campaign-stage-none"]')).toExist();
