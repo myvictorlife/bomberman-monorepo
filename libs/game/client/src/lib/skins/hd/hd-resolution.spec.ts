@@ -1,3 +1,4 @@
+import type * as Phaser from 'phaser';
 import { TEXTURE } from '../texture-keys';
 import {
   paintCharacterTextures,
@@ -101,6 +102,36 @@ describe('HD skin resolution', () => {
     expect(
       themeTextures(doc, 'subestacao', 1).get(TEXTURE.floor),
     ).toMatchObject({ width: 64 });
+  });
+
+  it('repaints a slot in plain pixels, whatever the first paint left on its context', () => {
+    // Someone back from the border repaints their slot over the texture in use.
+    const { doc } = fakeDocument();
+    const create = vi
+      .spyOn(document, 'createElement')
+      .mockImplementation((tag) => doc.createElement(tag));
+    const calls: string[] = [];
+    const existing = {
+      context: {
+        canvas: { width: 64, height: 78 },
+        setTransform: (...m: number[]) =>
+          calls.push(`setTransform ${m.join(',')}`),
+        clearRect: (...r: number[]) => calls.push(`clearRect ${r.join(',')}`),
+        drawImage: () => calls.push('drawImage'),
+      },
+      refresh: () => calls.push('refresh'),
+    };
+    const scene = {
+      textures: { exists: () => true, get: () => existing },
+    } as unknown as Phaser.Scene;
+    hdSkin.loadCharacter?.(scene, 'novato', 0, undefined);
+    create.mockRestore();
+    expect(calls.slice(0, 4)).toEqual([
+      'setTransform 1,0,0,1,0,0',
+      'clearRect 0,0,64,78',
+      'drawImage',
+      'refresh',
+    ]);
   });
 
   it('sizes the skin by the screen: whole pixels per CSS pixel, 1 to 2', () => {

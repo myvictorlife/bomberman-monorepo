@@ -71,6 +71,10 @@ config file. Ordinary app-level additions are minor.
 
 ### Fixed
 
+- **Back from the border with the right look.** Whoever re-entered the
+  round had their slot repainted through the transform the first paint left
+  on the canvas: a strip of the old head floated above them and the new
+  sprite slid down, feet cut off. The repaint now draws in plain pixels.
 - **A bomb set beside someone passing now blocks them.** Whoever merely
   brushed the bomb's cell when it was set could turn back and walk through
   it, because everyone overlapping the cell was let through. Now only whoever

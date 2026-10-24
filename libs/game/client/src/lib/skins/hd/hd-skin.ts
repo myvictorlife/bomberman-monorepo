@@ -110,9 +110,14 @@ function addOrRepaint(
     const existing = scene.textures.get(
       key,
     ) as Partial<Phaser.Textures.CanvasTexture>;
-    if (!existing.context || !existing.refresh) continue;
-    existing.context.clearRect(0, 0, canvas.width, canvas.height);
-    existing.context.drawImage(canvas, 0, 0);
+    const ctx = existing.context;
+    if (!ctx || !existing.refresh) continue;
+    // The first paint left its scale and headroom shift on this context: drawn
+    // through them, the old top stayed (a cap floating over the head) and the
+    // new look slid down, feet cut off. Repaint in plain pixels.
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    ctx.drawImage(canvas, 0, 0);
     existing.refresh();
   }
 }
