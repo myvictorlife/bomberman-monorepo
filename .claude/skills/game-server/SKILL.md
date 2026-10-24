@@ -213,7 +213,7 @@ token the route provides; the store keeps a reconnection token per room
   room saves accounts' campaigns on their record (`recordStage`, sent back
   in `profile.campaign`), announces `stage-cleared` / `stage-failed`, and the
   team goes back to the front of the line, host first, on a short
-  countdown (`STAGE_CONTINUE_MS`, 10 s). The next stage is the host's next
+  countdown (`STAGE_CONTINUE_MS`, 5 s). The next stage is the host's next
   one (`nextStageFor`): the same after a loss, the area's first after the
   host's game over. The page writes my campaign back to this browser's
   `campaign-progress`, so the campaign map agrees.

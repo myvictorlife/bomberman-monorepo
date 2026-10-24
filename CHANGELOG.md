@@ -123,6 +123,8 @@ config file. Ordinary app-level additions are minor.
 
 ### Changed
 
+- **The next stage comes sooner.** In the online stages room the team's
+  countdown between two stages is 5 s instead of 10 (`STAGE_CONTINUE_MS`).
 - **A quicker start.** The HD skin paints a slot's riding frames the first
   time that slot climbs on a mount (`ArenaSkin.loadMount`), instead of
   every slot on every mount before the first frame: the skin's start-up

@@ -26,7 +26,7 @@ import {
 } from './stage-run';
 
 /** Between two stages, the team's countdown: short, since they are all there already. */
-export const STAGE_CONTINUE_MS = 10_000;
+export const STAGE_CONTINUE_MS = 5_000;
 
 /** Why the host's request was refused; `ok` when it went through. */
 export type HostResult =
