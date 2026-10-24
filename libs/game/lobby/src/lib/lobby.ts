@@ -125,6 +125,11 @@ export class Lobby {
   private players: Seat[] = [];
   /** Players of the current round who disconnected — not put back in the queue. */
   private readonly gone = new Set<string>();
+  /**
+   * People of the current round who fell, in the order they fell: they may
+   * stand on the border too, in the places the queue leaves free.
+   */
+  private fallenIds: string[] = [];
   /** Players of the current round who asked to leave when it ends. */
   private readonly leavingAfter = new Set<string>();
   private countdownEndsAt: number | null = null;
@@ -202,12 +207,33 @@ export class Lobby {
     );
   }
 
-  /** The next in line, on the border of the round in progress. Empty between rounds. */
+  /**
+   * Who stands on the border of the round in progress: the next in line
+   * first, then — in the places they leave free — the people of the round
+   * who fell, in the order they fell. Someone joining the line takes the
+   * place of whoever fell last. Empty between rounds.
+   */
   outsiders(): Seat[] {
     if (this.phaseValue !== 'playing') return [];
-    return this.queue
-      .slice(0, Math.max(0, this.rules.outsiders))
-      .map((s) => ({ ...s }));
+    const places = Math.max(0, this.rules.outsiders);
+    const fallen = this.fallenIds
+      .map((id) => this.players.find((s) => s.id === id))
+      .filter((s): s is Seat => !!s && !this.gone.has(s.id));
+    return [...this.queue, ...fallen].slice(0, places).map((s) => ({ ...s }));
+  }
+
+  /**
+   * A person of the round fell: they may go to the border and win their way
+   * back in. Bots stay down — they do not play from the border.
+   */
+  fell(id: string): boolean {
+    if (this.phaseValue !== 'playing' || this.rulesValue.mode === 'stages')
+      return false;
+    const seat = this.players.find((s) => s.id === id);
+    if (!seat || seat.bot || this.gone.has(id) || this.fallenIds.includes(id))
+      return false;
+    this.fallenIds.push(id);
+    return true;
   }
 
   isOutsider(id: string): boolean {
@@ -221,6 +247,11 @@ export class Lobby {
   enterRound(id: string): boolean {
     const seat = this.outsiders().find((s) => s.id === id);
     if (!seat) return false;
+    // One who fell is a player of the round already: they are just back.
+    if (this.fallenIds.includes(id)) {
+      this.fallenIds = this.fallenIds.filter((f) => f !== id);
+      return true;
+    }
     this.queue = this.queue.filter((s) => s.id !== id);
     this.players.push(seat);
     return true;
@@ -505,6 +536,7 @@ export class Lobby {
     this.players = [...people, ...this.bots(people)];
     this.rounds++;
     this.gone.clear();
+    this.fallenIds = [];
     this.leavingAfter.clear();
     this.phaseValue = 'playing';
     this.countdownEndsAt = null;

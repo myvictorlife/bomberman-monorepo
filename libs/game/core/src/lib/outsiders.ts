@@ -66,9 +66,10 @@ export function addOutsider(
   state: GameState,
   setup: PlayerSetup,
 ): Outsider | null {
+  // One who fell in the round may stand outside; one still in it may not.
   if (
     state.outsiders.some((o) => o.id === setup.id) ||
-    state.players.some((p) => p.id === setup.id)
+    state.players.some((p) => p.id === setup.id && p.alive)
   ) {
     return null;
   }

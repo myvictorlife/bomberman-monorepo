@@ -107,6 +107,13 @@ on `/online` draws itself from the schema; `parseRules` validates a change.
   round (`outsider-entered` event → `Lobby.enterRound`, then they go to the
   back with the players); the next in line steps out. The room keeps the
   border in step with the queue after every lobby change (`syncOutsiders`).
+  **People who fell** take the places the line leaves free: on a
+  `player-died` with the round still open the room calls `Lobby.fell`, and
+  `Lobby.outsiders()` is the line first, then the fallen in the order they
+  fell — someone joining the line bumps whoever fell last. A kill brings them
+  back in their own slot and colour (`enterArena` reuses their record), and
+  they may fall and come back again. Bots stay down; never in a stage. Every
+  room built on the lobby gets this, private ones included.
   The rules of throwing and entering live in `libs/game/core/src/lib/outsiders.ts`
   (the flight and the landing, shared with the glove and the kick, in `throw.ts`)
   and `game.ts`; who stands there is the lobby's call.

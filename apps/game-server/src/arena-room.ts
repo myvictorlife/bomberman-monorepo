@@ -6,6 +6,7 @@ import {
   eliminatePlayer,
   GameEvent,
   GameState,
+  isDecided,
   kitsAfterStage,
   livesOf,
   MAPS,
@@ -673,13 +674,23 @@ export function createArenaRoom(deps: ArenaRoomDeps) {
 
       tick(game, inputs);
       this.pendingEvents.push(...game.events);
+      let fallen = false;
       for (const event of game.events) {
+        // Someone fell with the round still open: a place on the border, if
+        // the line leaves one, to win their way back in.
+        if (
+          event.type === 'player-died' &&
+          !isDecided(game) &&
+          this.lobby.fell(event.playerId)
+        )
+          fallen = true;
         // Someone got in from the border: the queue moved, and the next in line steps out.
         if (event.type !== 'outsider-entered') continue;
         const name = game.players.find((p) => p.id === event.playerId)?.name;
         if (name) this.announce({ type: 'outsider-entered', name });
         if (this.lobby.enterRound(event.playerId)) this.refreshLobby();
       }
+      if (fallen) this.refreshLobby();
 
       const over = (game.phase as GameState['phase']) === 'over';
       if (over || ++this.ticksSinceFrame >= FRAME_EVERY_TICKS) this.sendFrame();

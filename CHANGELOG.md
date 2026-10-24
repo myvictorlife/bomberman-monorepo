@@ -30,6 +30,15 @@ config file. Ordinary app-level additions are minor.
   `Stage.parts`, `ArenaLayout`, `PlayerSetup.lives`. A game-core change: the
   server and the site ship together.
 
+- **Fallen players return from the border.** In a versus round, someone
+  who falls goes to the border wall when the line leaves a place free, and a
+  kill from there brings them back into the round in their own slot and
+  colour — as often as they manage. The line keeps priority: someone joining
+  it takes the place of whoever fell last. Bots stay down. `Lobby.fell` in
+  `game-lobby`; `addOutsider`/`enterArena` in `game-core` accept a fallen
+  player. A game-core and server change: the server and the site ship
+  together.
+
 ### Security
 
 - **Frames no longer carry what every block hides.** `publicState` (in

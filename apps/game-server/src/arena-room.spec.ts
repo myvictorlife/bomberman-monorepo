@@ -670,25 +670,32 @@ describe('ArenaRoom', () => {
     sam$.y = row;
     uma.room.send(CLIENT_MESSAGE.input, { direction: null, bomb: true });
 
-    // The queue moves first, then the frame with the entry goes out.
-    const lobby = await tom.next<LobbySnapshot>(
-      SERVER_MESSAGE.lobby,
-      (l) => l.players.length === 3,
-      8_000,
-    );
+    // The queue moves and the frame with the entry goes out — in either order:
+    // with Sam fallen the border changes too, and that frame can go first.
+    const [lobby, entered] = await Promise.all([
+      tom.next<LobbySnapshot>(
+        SERVER_MESSAGE.lobby,
+        (l) => l.players.length === 3,
+        8_000,
+      ),
+      tom.next<FrameMessage>(
+        SERVER_MESSAGE.frame,
+        (f) =>
+          f.events.some(
+            (e) => e.type === 'outsider-entered' && e.playerId === 'uma',
+          ),
+        8_000,
+      ),
+    ]);
     expect(lobby.players.map((p) => p.id)).toEqual(['sam', 'tom', 'uma']);
     expect(lobby.queue).toEqual([]);
-    const entered = await tom.next<FrameMessage>(SERVER_MESSAGE.frame, (f) =>
-      f.events.some(
-        (e) => e.type === 'outsider-entered' && e.playerId === 'uma',
-      ),
-    );
     expect(entered.state.players.map((p) => [p.id, p.alive])).toEqual([
       ['sam', false],
       ['tom', true],
       ['uma', true],
     ]);
-    expect(entered.state.outsiders).toEqual([]);
+    // Nobody left in line: Sam, who fell, takes the border to win his way back.
+    expect(entered.state.outsiders.map((o) => o.id)).toEqual(['sam']);
     uma.room.send(CLIENT_MESSAGE.joinQueue, {});
     await uma.next(
       SERVER_MESSAGE.error,

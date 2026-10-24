@@ -20,7 +20,7 @@ import {
   removeOutsider,
 } from './outsiders';
 import { input, openArena, player, run, setBlock } from './testing.spec-helper';
-import { GameState } from './types';
+import { GameState, Player } from './types';
 
 /** An open two-player arena with `ids` on the border. */
 function withOutsiders(...ids: string[]): GameState {
@@ -396,5 +396,35 @@ describe('a kill from outside', () => {
 
     expect(state.phase).toBe('over');
     expect(state.winnerId).toBe('x');
+  });
+});
+
+describe('one who fell, on the border', () => {
+  it('may stand outside, and on a kill is back in their own place and colour', () => {
+    const state = openArena(3);
+    const [p1, p2, p3] = state.players as [Player, Player, Player];
+    const look = { slot: p2.slot, color: p2.color };
+    p2.alive = false;
+    p2.diedAtTick = 0;
+    expect(addOutsider(state, { id: p1.id, name: 'P1' })).toBeNull();
+    const outsider = addOutsider(state, { id: p2.id, name: 'P2' });
+    expect(outsider).not.toBeNull();
+
+    // A thrown bomb of p2's catches p3.
+    Object.assign(p3, { x: 5, y: 5 });
+    state.flames.push({
+      col: 5,
+      row: 5,
+      shape: 'center',
+      ticksLeft: 30,
+      ownerId: p2.id,
+    });
+    run(state, 1);
+
+    expect(p3.alive).toBe(false);
+    expect(state.outsiders).toEqual([]);
+    const back = state.players.filter((p) => p.id === p2.id);
+    expect(back).toHaveLength(1);
+    expect(back[0]).toMatchObject({ alive: true, x: 5, y: 5, ...look });
   });
 });

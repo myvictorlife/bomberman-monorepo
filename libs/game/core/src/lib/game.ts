@@ -932,10 +932,17 @@ function hitPlayer(
 function enterArena(state: GameState, thrower: Outsider, victim: Player): void {
   removeOutsider(state, thrower.id);
   const [col, row] = playerCell(victim);
-  // The victim's slot and colour: the arena repaints that slot with the entrant's look.
-  const entrant = newPlayer(thrower, victim.slot, col, row, victim.color);
+  // Back from the border after falling: their own slot and colour, a fresh
+  // start where the victim stood. Anyone else from the line takes the
+  // victim's slot and colour: the arena repaints that slot with their look.
+  const fallen = state.players.findIndex((p) => p.id === thrower.id);
+  const old = state.players[fallen];
+  const entrant = old
+    ? newPlayer(thrower, old.slot, col, row, old.color)
+    : newPlayer(thrower, victim.slot, col, row, victim.color);
   entrant.shieldedUntilTick = state.tick + ENTRY_SHIELD_TICKS;
-  state.players.push(entrant);
+  if (old) state.players[fallen] = entrant;
+  else state.players.push(entrant);
   state.events.push({
     type: 'outsider-entered',
     playerId: thrower.id,

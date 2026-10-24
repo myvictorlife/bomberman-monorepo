@@ -240,6 +240,73 @@ describe('Lobby outsiders', () => {
   });
 });
 
+describe('Lobby outsiders, people who fell', () => {
+  /** A three-player round in progress, nobody else in line. */
+  function playing(...extra: string[]): Lobby {
+    const lobby = lobbyWith('a', 'b', 'c', ...extra);
+    lobby.update(0);
+    lobby.update(RULES.countdownMs);
+    return lobby;
+  }
+
+  it('stand on the border when the line leaves room, in the order they fell', () => {
+    const lobby = playing();
+    expect(lobby.phase).toBe('playing');
+    expect(lobby.outsiders()).toEqual([]);
+
+    expect(lobby.fell('b')).toBe(true);
+    expect(lobby.fell('a')).toBe(true);
+    expect(lobby.fell('b')).toBe(false);
+    expect(lobby.fell('nobody')).toBe(false);
+    expect(lobby.outsiders().map((s) => s.id)).toEqual(['b', 'a']);
+    expect(lobby.isOutsider('a')).toBe(true);
+    // Still a player of the round: their keys still count.
+    expect(lobby.isPlaying('a')).toBe(true);
+  });
+
+  it('give way to whoever joins the line: the last to fall steps off first', () => {
+    const lobby = playing();
+    lobby.fell('b');
+    lobby.fell('a');
+    lobby.join(seat('x'));
+    expect(lobby.outsiders().map((s) => s.id)).toEqual(['x', 'b']);
+  });
+
+  it('come back in on a kill, still players of the round, and may fall again', () => {
+    const lobby = playing();
+    lobby.fell('b');
+    expect(lobby.enterRound('b')).toBe(true);
+    expect(lobby.outsiders()).toEqual([]);
+    expect(lobby.snapshot(0).players.map((s) => s.id)).toEqual(['a', 'b', 'c']);
+    expect(lobby.fell('b')).toBe(true);
+    expect(lobby.outsiders().map((s) => s.id)).toEqual(['b']);
+  });
+
+  it('are nobody who left, and none in a new round', () => {
+    const lobby = playing();
+    lobby.fell('b');
+    lobby.leave('b');
+    expect(lobby.outsiders()).toEqual([]);
+
+    lobby.fell('a');
+    lobby.finishRound('c', 1_000);
+    lobby.update(1_000 + RULES.resultsMs);
+    lobby.update(1_000 + RULES.resultsMs + RULES.countdownMs);
+    expect(lobby.outsiders()).toEqual([]);
+  });
+
+  it('leave bots down', () => {
+    const lobby = new Lobby({ ...RULES, bots: 2, botsFillTo: 3 });
+    lobby.join(seat('a'));
+    lobby.update(0);
+    lobby.update(RULES.countdownMs);
+    const bot = lobby.snapshot(0).players.find((s) => s.bot);
+    if (!bot) throw new Error('a bot');
+    expect(lobby.fell(bot.id)).toBe(false);
+    expect(lobby.fell('a')).toBe(true);
+  });
+});
+
 describe('Lobby.setRules', () => {
   it('applies at once between rounds', () => {
     const lobby = lobbyWith('a');
