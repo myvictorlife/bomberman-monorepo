@@ -42,6 +42,11 @@ config file. Ordinary app-level additions are minor.
   key throws from the wall. A game-core and server change: the server and the site ship
   together.
 
+- **Outsiders show the bomb they are about to throw.** Whoever stands on
+  the border holds a lit bomb up over their head — at their side on the top
+  wall — while they may throw (no bomb of theirs out yet); it goes when they
+  throw and comes back once that one has gone off. Client only.
+
 ### Security
 
 - **Frames no longer carry what every block hides.** `publicState` (in

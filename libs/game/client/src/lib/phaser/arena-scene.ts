@@ -16,6 +16,7 @@ import {
   flightPosition,
   GameEvent,
   GameState,
+  hasBombOut,
   isDashing,
   Outsider,
   Player,
@@ -127,6 +128,7 @@ export class ArenaScene extends Phaser.Scene {
   private readonly cracks = new Map<string, Image>();
   private readonly shocks = new Map<string, Image>();
   private readonly lines = new Map<string, Image>();
+  private readonly outsiderBombs = new Map<string, Image>();
   private readonly sparks = new Map<number, Image>();
   private readonly eyes = new Map<string, Image>();
   private readonly mounds = new Map<number, Image>();
@@ -360,6 +362,7 @@ export class ArenaScene extends Phaser.Scene {
       this.eyes,
       this.lines,
       this.sparks,
+      this.outsiderBombs,
     ]) {
       for (const image of pool.values()) image.destroy();
       pool.clear();
@@ -1337,6 +1340,38 @@ export class ArenaScene extends Phaser.Scene {
         image.setPosition(x, Math.max(y - this.tile * (0.12 + bob), top));
         if (this.dark > 0.5) image.setTint(DARK_TINT);
         else image.clearTint();
+      },
+    );
+
+    // Ready to throw — no bomb of theirs out yet — they hold one up, fuse lit,
+    // the way a player holds one with the glove. It goes when they throw.
+    const ready = state.outsiders.filter((o) => !hasBombOut(state, o.id));
+    this.sync(
+      this.outsiderBombs,
+      ready,
+      (o) => o.id,
+      () => this.add.image(0, 0, TEXTURE.bomb(0)),
+      (image, o) => {
+        const [x, y] = this.cellToPixel(o.x, o.y);
+        const outsider = this.outsiders.get(o.id);
+        const head = outsider
+          ? outsider.y - outsider.displayHeight * outsider.originY
+          : y - this.tile;
+        const sway = Math.sin(state.tick * 0.15) * this.tile * 0.03;
+        // Held up over the head; on the top wall, with no room above, in hand at the side.
+        const above = head - this.tile * 0.22;
+        const [bx, by] =
+          above > this.tile * 0.3
+            ? [x + sway, above]
+            : [
+                x + this.tile * 0.42,
+                head + (outsider?.displayHeight ?? this.tile) * 0.6 + sway,
+              ];
+        image
+          .setPosition(bx, by)
+          .setScale(0.7)
+          .setDepth(DEPTH.outsider + o.y / 100 + 0.01)
+          .setTexture(TEXTURE.bomb(Math.floor(state.tick / 10) % 2));
       },
     );
   }
