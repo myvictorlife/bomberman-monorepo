@@ -31,7 +31,13 @@ import { ControlScheme, DirectionTracker, PlayerController } from '../controls';
 import { HudSnapshot, sameHud, toHud } from '../hud';
 import { flameFrame } from '../skins/flame-frame';
 import { ARENA_THEMES } from '../skins/hd/themes';
-import { ArenaMoment, blackoutAt } from '../skins/hd/themes/moments';
+import {
+  ArenaMoment,
+  blackoutAt,
+  ALARM_SUFFIX,
+  paintSweep,
+  sweepAt,
+} from '../skins/hd/themes/moments';
 import type { BossPose } from '../creatures/creature-art';
 import { ArenaSession } from '../session/arena-session';
 import {
@@ -154,6 +160,10 @@ export class ArenaScene extends Phaser.Scene {
   /** How dark it is this frame, 0–1, under a blackout. */
   private dark = 0;
   private darkness: Phaser.GameObjects.Rectangle | null = null;
+  /** The sweep's red line, under way or hidden. */
+  private sweep: Image | null = null;
+  /** Whether the eye is red this frame: a sweep is under way. */
+  private sweeping = false;
   private rain: Phaser.GameObjects.Particles.ParticleEmitter | null = null;
   private lastHud: HudSnapshot | null = null;
 
@@ -394,6 +404,8 @@ export class ArenaScene extends Phaser.Scene {
         .setDepth(DEPTH.dark)
         .setAlpha(0);
     }
+    if (this.moment?.kind === 'sweep' && !this.sweep)
+      this.sweep = this.addSweep();
   }
 
   /** Where the camera's left edge belongs: the first column in play, in pixels. */
@@ -417,6 +429,31 @@ export class ArenaScene extends Phaser.Scene {
       isBlackout(state, boss) ? 1 : 0,
     );
     this.darkness?.setAlpha(0.86 * this.dark);
+    const sweep = sweepAt(this.moment, state.tick);
+    this.sweeping = sweep !== null;
+    this.sweep
+      ?.setVisible(sweep !== null)
+      .setY((sweep ?? 0) * state.rows * this.config.skin.tileSize);
+  }
+
+  /** The sweep's band, painted once and moved down the arena while one is under way. */
+  private addSweep(): Image | null {
+    const key = 'sweep-band';
+    const tile = this.config.skin.tileSize;
+    const width = this.scale.width;
+    if (!this.textures.exists(key)) {
+      const texture = this.textures.createCanvas(key, width, 3 * tile);
+      const ctx = texture?.getContext();
+      if (!texture || !ctx) return null;
+      paintSweep(ctx, width, 2.5 * tile, tile);
+      texture.refresh();
+    }
+    return this.add
+      .image(0, 0, key)
+      .setOrigin(0, 2.5 / 3)
+      .setScrollFactor(0)
+      .setDepth(DEPTH.fx - 2)
+      .setVisible(false);
   }
 
   /** Rain over the track: thin streaks falling across, lit by what is under them. */
@@ -509,6 +546,9 @@ export class ArenaScene extends Phaser.Scene {
       );
       // A skin without theme tiles (the classic one) draws every wall alike.
       if (!this.textures.exists(key)) key = TEXTURE.wall;
+      // The eye goes red while it sweeps, on a theme that paints it so.
+      const alarm = `${key}${ALARM_SUFFIX}`;
+      if (this.sweeping && this.textures.exists(alarm)) key = alarm;
       if (this.tileKeys[i] !== key) {
         const image = this.tileImages[i];
         image?.setTexture(key);

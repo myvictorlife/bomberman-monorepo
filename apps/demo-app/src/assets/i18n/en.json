@@ -495,6 +495,19 @@
       "NOTE_2": "The well stays out of the grid: with five players, the middle is a spawn like the four corners, with the same clear space around it.",
       "NOTE_3_TITLE": "Brick blocks for crates",
       "NOTE_3": "Clay bricks and mortar, moss in one corner. They break like crates and may hide a power-up."
+    },
+    "NUCLEO": {
+      "NAME": "Núcleo",
+      "OWNER": "CIDA’s home",
+      "DESC": "The datacenter where CIDA, the AI that runs the city, lives: a circuit-board floor, server racks for pillars, glass data cubes for crates, a barrier with a light strip around the edge and a wall of screens along the top, her eye in the middle.",
+      "MOMENT": "Sweep",
+      "MOMENT_DESC": "Every 30 s the eye turns red and a laser line runs down the arena in 2 s. It only looks: it burns nobody.",
+      "NOTE_1_TITLE": "Racks for pillars",
+      "NOTE_1": "Servers with bays, vents and blinking LEDs. Indestructible.",
+      "NOTE_2_TITLE": "The eye is on the top wall",
+      "NOTE_2": "CIDA’s eye is a screen in the top wall, not a cell of the board: the centre is still the fifth spawn.",
+      "NOTE_3_TITLE": "Data cubes for crates",
+      "NOTE_3": "Glass with a lit core in a light frame, so they read as breakable. They break like crates and may hide a power-up."
     }
   },
   "ITEMS": {

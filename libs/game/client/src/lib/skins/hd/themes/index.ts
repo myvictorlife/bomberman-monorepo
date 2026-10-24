@@ -3,6 +3,7 @@ import type * as Phaser from 'phaser';
 import { TEXTURE } from '../../texture-keys';
 import { autodromoTheme } from './autodromo';
 import { gramadoTheme } from './gramado';
+import { nucleoTheme } from './nucleo';
 import { subestacaoTheme } from './subestacao';
 import { ArenaTheme } from './theme';
 
@@ -12,6 +13,7 @@ export const ARENA_THEMES: Readonly<Record<MapId, ArenaTheme>> = {
   subestacao: subestacaoTheme,
   autodromo: autodromoTheme,
   gramado: gramadoTheme,
+  nucleo: nucleoTheme,
 };
 
 const cache = new Map<string, Map<string, HTMLCanvasElement>>();

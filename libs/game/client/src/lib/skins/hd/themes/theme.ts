@@ -45,7 +45,8 @@ export function tilePainter(
     ctx.lineCap = 'round';
     ctx.scale(resolution, resolution);
     draw(ctx);
-    if (SOLID_TILES.has(key)) relief(ctx, resolution);
+    // A variant (`feature:alarm`) is lit like the tile it stands in for.
+    if (SOLID_TILES.has(key.split(':')[0] ?? key)) relief(ctx, resolution);
     textures.set(key, canvas);
   };
   return { paint, textures };

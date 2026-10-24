@@ -1,4 +1,11 @@
-import { BLACKOUT, blackoutAt, quickened, RAIN } from './moments';
+import {
+  BLACKOUT,
+  blackoutAt,
+  quickened,
+  RAIN,
+  SWEEP,
+  sweepAt,
+} from './moments';
 
 describe('blackoutAt', () => {
   it('is dark for the moment at the end of every period, lights on otherwise', () => {
@@ -32,8 +39,36 @@ describe('blackoutAt', () => {
   });
 });
 
+describe('sweepAt', () => {
+  it('runs top to bottom at the end of every period, and is off otherwise', () => {
+    const every = SWEEP.everyTicks;
+    const run = SWEEP.forTicks;
+    expect(sweepAt(SWEEP, 0)).toBeNull();
+    expect(sweepAt(SWEEP, every - run - 1)).toBeNull();
+    expect(sweepAt(SWEEP, every - run)).toBe(0);
+    expect(sweepAt(SWEEP, every - run / 2)).toBe(0.5);
+    expect(sweepAt(SWEEP, every)).toBeNull();
+    expect(sweepAt(SWEEP, 2 * every - run / 2)).toBe(0.5);
+  });
+
+  it('never sweeps without a sweep moment', () => {
+    expect(sweepAt(null, 1_799)).toBeNull();
+    expect(sweepAt(BLACKOUT, 1_799)).toBeNull();
+    expect(sweepAt(RAIN, 1_799)).toBeNull();
+  });
+
+  it('does not darken the arena', () => {
+    expect(blackoutAt(SWEEP, SWEEP.everyTicks - 1)).toBe(0);
+  });
+});
+
 describe('quickened', () => {
-  it('shortens a blackout’s wait and leaves anything else alone', () => {
+  it('shortens a blackout’s or a sweep’s wait and leaves rain alone', () => {
+    expect(quickened(SWEEP, 480)).toEqual({
+      kind: 'sweep',
+      everyTicks: 480,
+      forTicks: 120,
+    });
     expect(quickened(BLACKOUT, 480)).toEqual({
       kind: 'blackout',
       everyTicks: 480,

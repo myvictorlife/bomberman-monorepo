@@ -11,7 +11,14 @@ import {
 } from '@libs/game-core';
 import { HD_TILE } from '../skins/hd/hd-palette';
 import { ARENA_THEMES, tileTextureKey } from '../skins/hd/themes';
-import { ArenaMoment, blackoutAt, quickened } from '../skins/hd/themes/moments';
+import {
+  ALARM_SUFFIX,
+  ArenaMoment,
+  blackoutAt,
+  paintSweep,
+  quickened,
+  sweepAt,
+} from '../skins/hd/themes/moments';
 import { flameFrame } from '../skins/flame-frame';
 import { TEXTURE } from '../skins/texture-keys';
 import { previewTextures, TextureLookup } from './arena-preview';
@@ -24,12 +31,15 @@ const WALK_CYCLE = [1, 0, 2, 0];
  * to load for a card. The context's unit is the pixel at {@link HD_TILE} per
  * cell; scale it before calling for a smaller picture.
  */
+/** What shows behind the tiles, as in the game (`create-arena-game.ts`). */
+const BACKDROP = '#0b0b12';
+
 export class FramePainter {
   private readonly tex: TextureLookup;
   private readonly moment: ArenaMoment | null;
 
   /**
-   * `quickMoments`: a blackout every 8 s instead of 30, so a short preview
+   * `quickMoments`: a blackout or a sweep every 8 s instead of 30, so a short preview
    * gets to show it.
    */
   constructor(
@@ -71,6 +81,10 @@ export class FramePainter {
 
   paint(ctx: CanvasRenderingContext2D, state: GameState): void {
     const S = HD_TILE;
+    // The game's own backdrop first: a tile with see-through corners (a crate)
+    // must not show what the last frame had there — a sweep's red, say.
+    ctx.fillStyle = BACKDROP;
+    ctx.fillRect(0, 0, state.cols * S, state.rows * S);
     const draw = (
       key: string,
       x: number,
@@ -108,11 +122,15 @@ export class FramePainter {
       state.burningBlocks.map((b) => cellIndex(state, b.col, b.row)),
     );
 
+    const sweep = sweepAt(this.moment, state.tick);
     for (let row = 0; row < state.rows; row++) {
       for (let col = 0; col < state.cols; col++) {
         const index = cellIndex(state, col, row);
         const tile = state.tiles[index] ?? 'wall';
-        draw(tileTextureKey(state, col, row, tile, solid), col, row);
+        const key = tileTextureKey(state, col, row, tile, solid);
+        // The eye goes red while it sweeps, on a theme that paints it so.
+        const alarm = key + ALARM_SUFFIX;
+        draw(sweep !== null && this.tex.get(alarm) ? alarm : key, col, row);
         if (burning.has(index)) {
           // A crate going up: the floor shows through as it fades.
           ctx.save();
@@ -125,7 +143,7 @@ export class FramePainter {
 
     for (const p of state.powerUps) draw(TEXTURE.powerUp(p.kind), p.col, p.row);
 
-    // The arena's moment: the lights out (bombs and flames stay above the dark), or rain.
+    // The arena's moment: the lights out (bombs and flames stay above the dark), rain, or a sweep.
     const dark = blackoutAt(this.moment, state.tick);
     const W = state.cols * S;
     const H = state.rows * S;
@@ -258,6 +276,7 @@ export class FramePainter {
     ctx.restore();
 
     if (this.moment?.kind === 'rain') this.paintRain(ctx, W, H, state.tick);
+    if (sweep !== null) paintSweep(ctx, W, sweep * H, S);
 
     for (const b of state.thrownBombs) {
       const [col, row, arc] = flightPosition(state, b, state.tick);

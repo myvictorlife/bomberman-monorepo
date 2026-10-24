@@ -13,7 +13,16 @@ export type ArenaMoment =
       readonly forTicks: number;
     }
   /** It rains: drops streak the screen and the floor shines. */
-  | { readonly kind: 'rain' };
+  | { readonly kind: 'rain' }
+  /**
+   * The arena's eye looks the match over: for `forTicks` every `everyTicks`
+   * a red line sweeps down the arena, top to bottom.
+   */
+  | {
+      readonly kind: 'sweep';
+      readonly everyTicks: number;
+      readonly forTicks: number;
+    };
 
 /** The default blackout: every 30 s, 2 s of dark. */
 export const BLACKOUT: Extract<ArenaMoment, { kind: 'blackout' }> = {
@@ -22,6 +31,12 @@ export const BLACKOUT: Extract<ArenaMoment, { kind: 'blackout' }> = {
   forTicks: 2 * TICK_RATE,
 };
 export const RAIN: ArenaMoment = { kind: 'rain' };
+/** The default sweep: every 30 s, 2 s for the line to cross the arena. */
+export const SWEEP: Extract<ArenaMoment, { kind: 'sweep' }> = {
+  kind: 'sweep',
+  everyTicks: 30 * TICK_RATE,
+  forTicks: 2 * TICK_RATE,
+};
 
 /** How much of the fade the lights take to go out and come back, as a share of the dark time. */
 const FADE = 0.15;
@@ -43,11 +58,64 @@ export function blackoutAt(
   return Math.max(0, Math.min(1, k / FADE, (1 - k) / FADE));
 }
 
-/** A blackout with a shorter wait, for previews that cannot run half a minute. */
+/**
+ * How far a sweep has gone at `tick`, 0 (the top) to 1 (the bottom), or
+ * `null` when none is under way. Like the blackout, it ends on the period's
+ * boundary, so the first one comes a full period in.
+ */
+export function sweepAt(
+  moment: ArenaMoment | null | undefined,
+  tick: number,
+): number | null {
+  if (!moment || moment.kind !== 'sweep' || moment.everyTicks <= 0) return null;
+  const phase = tick % moment.everyTicks;
+  const start = moment.everyTicks - moment.forTicks;
+  if (phase < start) return null;
+  return (phase - start) / moment.forTicks;
+}
+
+/** A blackout or a sweep with a shorter wait, for previews that cannot run half a minute. */
 export function quickened(
   moment: ArenaMoment | null | undefined,
   everyTicks: number,
 ): ArenaMoment | null {
   if (!moment) return null;
-  return moment.kind === 'blackout' ? { ...moment, everyTicks } : moment;
+  return moment.kind === 'rain' ? moment : { ...moment, everyTicks };
+}
+
+/** The sweep's colour: CIDA looking, in red. */
+export const SWEEP_COLOR = '#ff4a6a';
+
+/**
+ * A theme may paint a tile a second time for while a sweep is under way, under
+ * its key plus this suffix — the eye that goes red.
+ */
+export const ALARM_SUFFIX = ':alarm';
+
+/**
+ * Paints the sweep at height `y` on a 2D context `width` wide: a red glow
+ * trailing above it and a bright line on it. `tile` is a cell's size, which
+ * the band is measured in.
+ */
+export function paintSweep(
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  y: number,
+  tile: number,
+): void {
+  const top = y - 2.5 * tile;
+  const band = ctx.createLinearGradient(0, top, 0, y + 0.4 * tile);
+  band.addColorStop(0, 'rgba(255,74,106,0)');
+  band.addColorStop(0.86, 'rgba(255,74,106,0.2)');
+  band.addColorStop(1, 'rgba(255,74,106,0)');
+  ctx.fillStyle = band;
+  ctx.fillRect(0, top, width, 2.9 * tile);
+  ctx.save();
+  ctx.shadowColor = SWEEP_COLOR;
+  ctx.shadowBlur = 0.4 * tile;
+  ctx.fillStyle = SWEEP_COLOR;
+  ctx.fillRect(0, y - tile * 0.025, width, tile * 0.05);
+  ctx.fillStyle = '#ffd0da';
+  ctx.fillRect(0, y - tile * 0.008, width, tile * 0.016);
+  ctx.restore();
 }

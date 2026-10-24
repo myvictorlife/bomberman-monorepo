@@ -495,6 +495,19 @@
       "NOTE_2": "O poço fica fora do tabuleiro: com cinco jogadores, o meio é um nascimento como os quatro cantos, com a mesma área livre em volta.",
       "NOTE_3_TITLE": "Blocos de tijolo no lugar dos caixotes",
       "NOTE_3": "Tijolo de barro e argamassa, musgo num canto. Quebram como caixotes e podem esconder power-up."
+    },
+    "NUCLEO": {
+      "NAME": "Núcleo",
+      "OWNER": "Casa da CIDA",
+      "DESC": "O datacenter onde mora a CIDA, a inteligência que cuida da cidade: chão de placa de circuito, racks de servidor no lugar dos pilares, cubos de dados de vidro no lugar dos caixotes, barreira com faixa de luz na borda e uma parede de telas no alto, com o olho dela no meio.",
+      "MOMENT": "Varredura",
+      "MOMENT_DESC": "A cada 30 s o olho fica vermelho e uma linha de laser desce pela arena em 2 s. Só olha: não queima ninguém.",
+      "NOTE_1_TITLE": "Racks no lugar dos pilares",
+      "NOTE_1": "Servidores com baias, respiros e LEDs piscando. Indestrutíveis.",
+      "NOTE_2_TITLE": "O olho fica no muro de cima",
+      "NOTE_2": "O olho da CIDA é uma tela do muro de cima, não uma casa do tabuleiro: o centro continua sendo o quinto nascimento.",
+      "NOTE_3_TITLE": "Cubos de dados no lugar dos caixotes",
+      "NOTE_3": "Vidro com o núcleo aceso numa moldura clara, para ler como quebrável. Quebram como caixotes e podem esconder power-up."
     }
   },
   "ITEMS": {

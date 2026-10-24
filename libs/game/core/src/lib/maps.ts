@@ -5,7 +5,7 @@
  * (`MAPS.<ID>.NAME`). A feature in the middle — the substation's generator,
  * the track's start-light gantry — is one of those extra walls.
  */
-export type MapId = 'subestacao' | 'autodromo' | 'gramado';
+export type MapId = 'subestacao' | 'autodromo' | 'gramado' | 'nucleo';
 
 export interface MapDefinition {
   readonly id: MapId;
@@ -18,13 +18,16 @@ export interface MapDefinition {
  * leads every list. A round still plays on {@link DEFAULT_MAP_ID} unless
  * another is asked for.
  *
- * No map adds walls today: the centre cell, where the generator and the
- * start-light gantry used to stand, is the fifth player's spawn.
+ * No map adds walls inside the arena: the centre cell, where the generator
+ * and the start-light gantry used to stand, is the fifth player's spawn. The
+ * Núcleo marks the middle of its top wall instead — already a wall, so the
+ * rules are the classic grid's — where its theme draws CIDA's eye.
  */
 export const MAPS: readonly MapDefinition[] = [
   { id: 'gramado', extraWalls: [] },
   { id: 'subestacao', extraWalls: [] },
   { id: 'autodromo', extraWalls: [] },
+  { id: 'nucleo', extraWalls: [[7, 0]] },
 ];
 
 export const DEFAULT_MAP_ID: MapId = 'subestacao';

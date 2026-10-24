@@ -13,6 +13,15 @@ config file. Ordinary app-level additions are minor.
 
 ### Added
 
+- **A fourth arena: the Núcleo.** The datacenter where CIDA, the city's AI,
+  lives — the arena of Área 3. A circuit-board floor, server racks for
+  pillars, glass data cubes for crates, a barrier with a light strip and a
+  wall of data screens along the top with CIDA's eye in the middle (an extra
+  wall on the top border, so the grid is the classic one). Its moment is the
+  **sweep** (`ArenaMoment` kind `sweep`): every 30 s the eye turns red and a
+  laser line runs down the arena in 2 s, visual only. A theme may paint a
+  tile's red-alert look under `<key>:alarm`. Playable in versus and on
+  `/arenas`; the area's stages come next.
 - **Área 2 — Subestação.** Five stages: four long ones (31 or 61 columns,
   seen 15 at a time through a camera that follows the team forward only)
   split into parts, each behind a gate that opens on a goal — clear the

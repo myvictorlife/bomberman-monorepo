@@ -117,7 +117,7 @@ test.describe('navigation', () => {
   }) => {
     await page.goto('/arenas');
 
-    await expect(page.locator('[data-testid="arena-card"]')).toHaveCount(3);
+    await expect(page.locator('[data-testid="arena-card"]')).toHaveCount(4);
     await page
       .locator('[data-map="autodromo"] [data-testid="arena-play"]')
       .click();
