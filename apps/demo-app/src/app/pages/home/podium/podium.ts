@@ -8,7 +8,7 @@ import {
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { environment } from '@libs/environment';
-import { colorSlot, paintCartoonCharacter } from '@libs/game-client';
+import { colorSlot, paintCharacterInTile } from '@libs/game-client';
 import {
   DEFAULT_CHARACTER_ID,
   isCharacterId,
@@ -34,7 +34,7 @@ export const paintPodiumFace: PodiumPainter = (
   place,
   color,
 ) => {
-  paintCartoonCharacter(ctx, {
+  paintCharacterInTile(ctx, {
     characterId:
       characterId && isCharacterId(characterId)
         ? characterId

@@ -42,6 +42,13 @@ export interface PodiumStep extends PodiumLine {
   tagKey: string;
 }
 
+/**
+ * `card` frames each face in a medallion over themed steps, for any surface.
+ * `stage` stands the characters on solid steps, for a dark scene painted
+ * behind the podium (the title screen's): its colours are fixed, not themed.
+ */
+export type PodiumVariant = 'card' | 'stage';
+
 /** The podium's own order: the winner in the middle, flanked by the other two. */
 const DISPLAY_ORDER = [2, 1, 3];
 /** Logical size of a character sprite; the canvas is drawn at a multiple of it. */
@@ -79,6 +86,7 @@ export function toPodium(list: readonly PodiumLine[]): PodiumStep[] {
   templateUrl: './podium.html',
   styleUrls: ['./podium.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: { '[class.podium--stage]': "variant() === 'stage'" },
 })
 export class PodiumComponent {
   private readonly sprites =
@@ -91,6 +99,7 @@ export class PodiumComponent {
   readonly size = input(192);
   /** Highlights this player's step. */
   readonly myId = input<string | null>(null);
+  readonly variant = input<PodiumVariant>('card');
 
   readonly steps = computed(() => {
     const top = toPodium(this.entries());

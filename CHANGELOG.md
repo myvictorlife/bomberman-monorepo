@@ -75,6 +75,34 @@ config file. Ordinary app-level additions are minor.
 
 ### Added
 
+- **How to play, acted out.** A slice of the arena, in the skin's own tiles,
+  plays the four rules in turn: a bomb dropped and walked away from, the
+  cross of fire stopped by pillars and breaking a crate, the power-up it hid
+  picked up, and a chain reaction that leaves one player cheering. The rule
+  on the board lights up beside it and fills a bar while it plays; pointing
+  at a rule holds the board on it. Reduced motion shows a still of each.
+- **Game modes, rearranged.** Online leads in a tall card with the whole
+  arena lit from behind; offline and the new campaign card stack beside it.
+  The campaign card is a painting with the game's own sprites: the first
+  area's creatures marching at the Novato and Faísca, the queen ant at the
+  end. Ranking leaves the modes (the podium below already shows it), the
+  "available" badge and the icons go, each card says who plays and how, and
+  the whole card is the link, with its own call to action.
+- **The home opens on a painted scene.** The first screen is dusk over the
+  arena: the name, the pitch and the way in over a bomb with a lit fuse,
+  the Novato on the crates, drifting clouds and embers, with far layers
+  lagging as the page scrolls. The live arena follows it, centred,
+  larger and laid back like a board, under its own heading instead of a
+  second copy of the name; its top fades out of the scene's night ground.
+- **The home's podium stands on a stage.** The top three now stand on solid
+  steps in a painted dusk scene, with beams of light swinging down on the
+  winner and confetti falling, still with the live names, titles and wins.
+  `lib-podium` gains `variant="stage"` for this; the default `card` look,
+  used by the online room, is unchanged.
+- **The power-ups circle a crate on the home page.** Above the cards, every
+  power-up orbits an open crate under a beam of light. Pointing at a card
+  turns the ring until that power-up is at the front; the ring stands still
+  with reduced motion and pauses off screen.
 - **A fourth arena: the Núcleo.** The datacenter where CIDA, the city's AI,
   lives — the arena of Área 3. A circuit-board floor, server racks for
   pillars, glass data cubes for crates, a barrier with a light strip and a

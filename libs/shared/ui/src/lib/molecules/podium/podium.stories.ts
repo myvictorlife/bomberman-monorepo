@@ -19,7 +19,7 @@ const meta: Meta<PodiumComponent> = {
   component: PodiumComponent,
   render: (args) => ({
     props: { ...args, paint: paintDisc },
-    template: `<lib-podium [entries]="entries" [paint]="paint" [myId]="myId" />`,
+    template: `<lib-podium [entries]="entries" [paint]="paint" [myId]="myId" [variant]="variant" />`,
   }),
   args: {
     entries: [
@@ -28,6 +28,7 @@ const meta: Meta<PodiumComponent> = {
       { id: 't', name: 'Tião', wins: 2, matches: 3, characterId: 'tiao' },
     ],
     myId: 'r',
+    variant: 'card',
   },
 };
 export default meta;
@@ -43,4 +44,15 @@ export const Lonely: Story = {
     entries: [{ id: 'v', name: 'Victor', wins: 1, matches: 1 }],
     myId: null,
   },
+};
+
+/** Standing on solid steps, for a dark scene painted behind it. */
+export const Stage: Story = {
+  args: { variant: 'stage' },
+  decorators: [
+    (story) => ({
+      ...story(),
+      template: `<div style="padding: 2rem; background: linear-gradient(#24123f, #c4683a)">${story().template}</div>`,
+    }),
+  ],
 };

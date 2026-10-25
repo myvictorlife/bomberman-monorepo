@@ -269,18 +269,24 @@ test.describe('navigation', () => {
     await expect(page.locator('h1')).toBeVisible();
   });
 
-  test('plays a live preview on each mode card', async ({ page }) => {
+  test('opens each mode card on its picture', async ({ page }) => {
     await page.goto('/');
     const videos = page.locator('[data-testid="home-mode-video"]');
-    await expect(videos).toHaveCount(3);
+    await expect(videos).toHaveCount(2);
     // Painted by the rules and the skin on a plain canvas: sized once set up.
     for (const video of await videos.all()) {
       await expect
         .poll(() => video.evaluate((c) => (c as HTMLCanvasElement).width))
         .toBeGreaterThan(0);
     }
-    await expect(videos.nth(0)).toHaveAttribute('data-video', 'local');
-    await expect(videos.nth(2)).toHaveAttribute('data-video', 'ranking');
+    await expect(videos.nth(0)).toHaveAttribute('data-video', 'online');
+    await expect(videos.nth(1)).toHaveAttribute('data-video', 'local');
+    // The campaign's card is a painting with the game's sprites.
+    const teaser = page.locator('[data-testid="home-mode-teaser"] canvas');
+    await teaser.scrollIntoViewIfNeeded();
+    await expect
+      .poll(() => teaser.evaluate((c) => (c as HTMLCanvasElement).width))
+      .toBeGreaterThan(0);
   });
 
   test('sets a translated document title per route', async ({ page }) => {

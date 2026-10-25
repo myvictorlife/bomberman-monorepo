@@ -1,0 +1,201 @@
+/* The opening scene is a painting, dusk whatever the theme, so its colours
+   are fixed rather than read from the theme's tokens. */
+:host {
+  display: block;
+  --intro-ink: #f4eefc;
+  --intro-muted: #eadff7;
+  --intro-gold: #ffc96b;
+  --intro-night: #120d2a;
+  --intro-line: rgba(244, 238, 252, 0.18);
+}
+
+.intro {
+  position: relative;
+  overflow: hidden;
+  /* The window under the sticky header, never shorter than the copy needs. */
+  height: calc(100svh - 4rem);
+  min-height: 32rem;
+  background: #1c1244;
+  color: var(--intro-ink);
+}
+
+.intro__scene {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.intro__copy {
+  position: absolute;
+  top: 50%;
+  left: max(1rem, 6vw);
+  display: grid;
+  gap: 1.1rem;
+  max-width: 34rem;
+  margin-top: -2rem;
+  translate: 0 -50%;
+  text-shadow: 0 2px 18px rgba(12, 8, 30, 0.4);
+  will-change: transform;
+}
+
+.intro__eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: var(--intro-gold);
+  font-size: 0.78rem;
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+
+  &::before {
+    content: '';
+    width: 1.6rem;
+    height: 2px;
+    border-radius: 2px;
+    background: currentColor;
+  }
+}
+
+.intro__title {
+  font-size: clamp(3.6rem, 12vw, 9.5rem);
+  font-weight: 900;
+  line-height: 0.86;
+  letter-spacing: -0.06em;
+  text-transform: uppercase;
+}
+
+.intro__lead {
+  max-width: 30rem;
+  color: var(--intro-muted);
+  font-size: var(--font-size-lg);
+  line-height: 1.55;
+}
+
+.intro__ctas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 0.3rem;
+}
+
+.intro__btn {
+  padding: 0.85rem 1.6rem;
+  border-radius: var(--radius-full);
+  font-weight: var(--font-weight-semibold);
+  text-decoration: none;
+  text-shadow: none;
+
+  &--primary {
+    background: var(--intro-ink);
+    color: var(--intro-night);
+
+    &:hover {
+      background: var(--intro-gold);
+    }
+  }
+
+  &--ghost {
+    border: 1px solid var(--intro-line);
+    background: rgba(244, 238, 252, 0.1);
+    color: var(--intro-ink);
+    backdrop-filter: blur(6px);
+
+    &:hover {
+      background: rgba(244, 238, 252, 0.18);
+    }
+  }
+}
+
+.intro__hint {
+  position: absolute;
+  bottom: 1.1rem;
+  left: 50%;
+  display: grid;
+  justify-items: center;
+  gap: 0.4rem;
+  color: var(--intro-ink);
+  font-size: 0.74rem;
+  letter-spacing: 0.16em;
+  text-decoration: none;
+  text-transform: uppercase;
+  opacity: 0.75;
+  translate: -50% 0;
+
+  &::after {
+    content: '';
+    width: 1px;
+    height: 28px;
+    background: linear-gradient(var(--intro-ink), transparent);
+    animation: intro-drip 1.6s ease-in-out infinite;
+  }
+
+  &:hover {
+    opacity: 1;
+  }
+}
+
+.intro__btn,
+.intro__hint {
+  &:focus-visible {
+    outline: 2px solid var(--intro-gold);
+    outline-offset: 3px;
+  }
+}
+
+@keyframes intro-drip {
+  0% {
+    transform: scaleY(0);
+    transform-origin: top;
+  }
+  50% {
+    transform: scaleY(1);
+    transform-origin: top;
+  }
+  51% {
+    transform-origin: bottom;
+  }
+  100% {
+    transform: scaleY(0);
+    transform-origin: bottom;
+  }
+}
+
+/* Phones: the art keeps the top, the copy sits low over a shade. */
+@media (max-width: 759px) {
+  .intro::after {
+    content: '';
+    position: absolute;
+    inset: 40% 0 0;
+    background: linear-gradient(transparent, rgba(12, 8, 30, 0.85));
+    pointer-events: none;
+  }
+
+  .intro__copy {
+    top: auto;
+    bottom: 4.5rem;
+    left: 1rem;
+    right: 1rem;
+    z-index: 1;
+    max-width: none;
+    margin-top: 0;
+    translate: none;
+    gap: 0.8rem;
+  }
+
+  .intro__lead {
+    font-size: var(--font-size-base);
+  }
+
+  .intro__hint {
+    z-index: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .intro__hint::after {
+    animation: none;
+  }
+}

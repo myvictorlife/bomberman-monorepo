@@ -1,5 +1,10 @@
 @if (status() === 'ready') {
-<lib-podium class="podium-board" [entries]="entries()" [paint]="paint" />
+<lib-podium
+  class="podium-board"
+  variant="stage"
+  [entries]="entries()"
+  [paint]="paint"
+/>
 <div class="podium__actions">
   <a routerLink="/online" libButton variant="secondary" size="md"
     >{{ 'HOME.PODIUM_SEE_ALL' | translate }}</a

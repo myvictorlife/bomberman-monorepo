@@ -1,5 +1,6 @@
 import { CharacterId, Direction, MountId } from '@libs/game-core';
 import {
+  CartoonPose,
   paintCartoonCharacter,
   paintCartoonMountIcon,
 } from './cartoon/cartoon';
@@ -72,13 +73,7 @@ function canvasFor(
  */
 export const paintCharacterFrame: CharacterPainter = (doc, frame) => {
   const [canvas, ctx] = canvasFor(doc, frame.size);
-  // The head rises above the cell: shrink the whole frame to fit the square.
-  const headroom = frame.mountId ? MOUNTED_HEADROOM : CHARACTER_HEADROOM;
-  const fit = CHARACTER_TILE / (CHARACTER_TILE + headroom);
-  ctx.translate((CHARACTER_TILE * (1 - fit)) / 2, 0);
-  ctx.scale(fit, fit);
-  ctx.translate(0, headroom);
-  paintCartoonCharacter(ctx, {
+  paintCharacterInTile(ctx, {
     characterId: frame.characterId,
     facing: frame.facing,
     frame: frame.frame,
@@ -88,6 +83,25 @@ export const paintCharacterFrame: CharacterPainter = (doc, frame) => {
   rimLight(ctx, canvas.width / CHARACTER_TILE);
   return canvas;
 };
+
+/**
+ * Paints a character whole into a context whose unit space is one tile
+ * (64 per side). In the arena the head rises above its cell; here the frame
+ * shrinks so the head fits inside the square instead of being cut off.
+ */
+export function paintCharacterInTile(
+  ctx: CanvasRenderingContext2D,
+  pose: CartoonPose,
+): void {
+  const headroom = pose.mountId ? MOUNTED_HEADROOM : CHARACTER_HEADROOM;
+  const fit = CHARACTER_TILE / (CHARACTER_TILE + headroom);
+  ctx.save();
+  ctx.translate((CHARACTER_TILE * (1 - fit)) / 2, 0);
+  ctx.scale(fit, fit);
+  ctx.translate(0, headroom);
+  paintCartoonCharacter(ctx, pose);
+  ctx.restore();
+}
 
 /** The framed portrait of a mount, for lists. */
 export const paintMountIcon: MountIconPainter = (

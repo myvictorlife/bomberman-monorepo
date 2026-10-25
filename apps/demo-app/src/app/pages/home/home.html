@@ -1,48 +1,19 @@
 <main class="home">
-  <!-- Hero: the pitch on the left, the game itself on the right -->
-  <section class="home-hero">
-    <div
-      class="home-wrap grid lg:grid-cols-[1fr_1.05fr] gap-12 lg:gap-12 items-center py-16 sm:py-20 lg:py-24"
-    >
-      <div class="text-center lg:text-left">
-        <span class="home-pill home-pill--accent"
-          >{{ 'HOME.HERO_BADGE' | translate }}</span
+  <!-- Opening: the painted dusk scene, the name and the way in -->
+  <app-intro />
+
+  <!-- Live: the arena itself, a match the rules play with example players -->
+  <section id="ao-vivo" class="home-hero home-live">
+    <div class="home-wrap py-16 sm:py-20 lg:py-24">
+      <div class="text-center">
+        <span class="home-pill home-pill--accent home-live__pill"
+          >{{ 'HOME.LIVE_EYEBROW' | translate }}</span
         >
-        <h1 class="home-hero__title mt-6">
-          {{ 'HOME.HERO_TITLE' | translate }}
-        </h1>
-        <p class="home-hero__lead mt-6">
-          {{ 'HOME.HERO_SUBTITLE' | translate }}
-        </p>
-        <div
-          class="mt-9 flex flex-col sm:flex-row sm:flex-wrap items-center justify-center lg:justify-start gap-3"
-        >
-          <a
-            routerLink="/online"
-            libButton
-            variant="primary"
-            size="lg"
-            class="home-cta w-full sm:w-auto"
-            (click)="trackPlay('online', 'hero')"
-            data-testid="home-play"
-          >
-            {{ 'HOME.CTA_PLAY' | translate }}
-          </a>
-          <a href="#como-jogar" class="home-hero__how"
-            >{{ 'HOME.CTA_HOW' | translate }}</a
-          >
-        </div>
-        <div class="mt-5 flex justify-center lg:justify-start">
-          <app-presence />
-        </div>
-        <ul class="home-facts mt-9" role="list">
-          @for (fact of facts; track fact) {
-          <li>{{ fact | translate }}</li>
-          }
-        </ul>
+        <h2 class="home-h2">{{ 'HOME.LIVE_TITLE' | translate }}</h2>
+        <p class="home-sub">{{ 'HOME.LIVE_LEAD' | translate }}</p>
       </div>
 
-      <div class="home-stage-wrap">
+      <div class="home-stage-wrap home-live__stage mt-12">
         <div class="home-stage">
           <canvas
             #modeVideo
@@ -62,6 +33,26 @@
         ></canvas>
         }
       </div>
+
+      <div class="mt-10 flex flex-col items-center gap-5 text-center">
+        <a
+          routerLink="/online"
+          libButton
+          variant="primary"
+          size="lg"
+          class="home-cta w-full sm:w-auto"
+          (click)="trackPlay('online', 'hero')"
+          data-testid="home-play"
+        >
+          {{ 'HOME.CTA_PLAY' | translate }}
+        </a>
+        <app-presence />
+        <ul class="home-facts home-live__facts" role="list">
+          @for (fact of facts; track fact) {
+          <li>{{ fact | translate }}</li>
+          }
+        </ul>
+      </div>
     </div>
 
     <!-- Ticker -->
@@ -74,20 +65,27 @@
     </div>
   </section>
 
-  <!-- Game modes -->
+  <!-- Game modes: online leads, offline and the campaign beside it -->
   <section class="home-section">
     <div class="home-wrap">
       <p class="home-eyebrow">{{ 'HOME.MODES_EYEBROW' | translate }}</p>
       <h2 class="home-h2">{{ 'HOME.MODES_TITLE' | translate }}</h2>
-      <p class="home-sub">{{ 'HOME.MODES_LIVE' | translate }}</p>
-      <ul class="mt-10 grid md:grid-cols-3 gap-5" role="list">
+      <p class="home-sub">{{ 'HOME.MODES_LEAD' | translate }}</p>
+      <ul class="home-modes mt-10" role="list">
         @for (mode of modes; track mode.titleKey) {
         <li
           class="home-card home-mode"
-          [class.home-card--live]="mode.link"
-          [class.home-card--soon]="!mode.link"
+          [class.home-mode--featured]="mode.featured"
+          [attr.data-mode]="mode.video"
         >
           <div class="home-mode__screen">
+            @if (mode.video === 'campaign') {
+            <app-campaign-teaser
+              role="img"
+              [attr.aria-label]="mode.titleKey + '_VIDEO' | translate"
+              data-testid="home-mode-teaser"
+            />
+            } @else {
             <canvas
               #modeVideo
               [attr.data-video]="mode.video"
@@ -95,66 +93,20 @@
               [attr.aria-label]="mode.titleKey + '_VIDEO' | translate"
               data-testid="home-mode-video"
             ></canvas>
+            }
           </div>
-          <div class="flex items-start justify-between gap-3">
-            <span class="home-card__icon" aria-hidden="true">
-              @switch (mode.icon) { @case ('keyboard') {
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.8"
-              >
-                <rect x="2.5" y="6" width="19" height="12" rx="2.5" />
-                <path
-                  d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M8 14h8"
-                  stroke-linecap="round"
-                />
-              </svg>
-              } @case ('globe') {
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.8"
-              >
-                <circle cx="12" cy="12" r="9" />
-                <path
-                  d="M3 12h18M12 3c3 3.5 3 14.5 0 18M12 3c-3 3.5-3 14.5 0 18"
-                />
-              </svg>
-              } @case ('trophy') {
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.8"
-              >
-                <path d="M7 4h10v5a5 5 0 0 1-10 0z" />
-                <path
-                  d="M7 6H4a3 3 0 0 0 3 4M17 6h3a3 3 0 0 1-3 4M12 14v3M8 20h8"
-                  stroke-linecap="round"
-                />
-              </svg>
-              } }
-            </span>
-            <span class="home-pill" [class.home-pill--live]="mode.link">
-              {{ (mode.link ? 'HOME.AVAILABLE' : 'HOME.SOON') | translate }}
-            </span>
+          <div class="home-mode__body">
+            <p class="home-mode__meta">{{ mode.metaKey | translate }}</p>
+            <h3 class="home-card__title">{{ mode.titleKey | translate }}</h3>
+            <p class="home-card__text">{{ mode.descKey | translate }}</p>
+            <a
+              [routerLink]="mode.link"
+              class="home-mode__link"
+              (click)="trackMode(mode.video)"
+              >{{ mode.ctaKey | translate }}
+              <span aria-hidden="true">→</span></a
+            >
           </div>
-          <h3 class="home-card__title mt-5">{{ mode.titleKey | translate }}</h3>
-          <p class="home-card__text mt-2">{{ mode.descKey | translate }}</p>
-          @if (mode.link; as link) {
-          <a
-            [routerLink]="link"
-            libButton
-            variant="primary"
-            size="md"
-            class="home-cta mt-6"
-          >
-            {{ 'HOME.CTA_PLAY' | translate }}
-          </a>
-          }
         </li>
         }
       </ul>
@@ -163,11 +115,15 @@
 
   <!-- The top three online, on a podium. Hidden when there is no server to ask. -->
   <section
-    class="home-section home-section--alt"
+    class="home-section home-podium-stage"
     [hidden]="podiumStatus() === 'off'"
     data-testid="home-podium"
     [attr.data-status]="podiumStatus()"
   >
+    <app-podium-scene
+      class="home-podium-stage__scene"
+      [celebrate]="podiumStatus() === 'ready'"
+    />
     <div class="home-wrap">
       <p class="home-eyebrow">{{ 'HOME.PODIUM_EYEBROW' | translate }}</p>
       <h2 class="home-h2">{{ 'HOME.PODIUM_TITLE' | translate }}</h2>
@@ -176,30 +132,42 @@
     </div>
   </section>
 
-  <!-- How to play -->
+  <!-- How to play: the board acts out each rule as its step lights up -->
   <section id="como-jogar" class="home-section home-section--alt">
     <div class="home-wrap">
       <p class="home-eyebrow">{{ 'HOME.HOW_EYEBROW' | translate }}</p>
       <h2 class="home-h2">{{ 'HOME.HOW_TITLE' | translate }}</h2>
       <p class="home-sub">{{ 'HOME.HOW_SUBTITLE' | translate }}</p>
-      <ol class="mt-10 grid sm:grid-cols-2 lg:grid-cols-4 gap-5" role="list">
-        @for (rule of rules; track rule.step) {
-        <li class="home-card home-rule">
-          <div class="home-rule__art">
-            <canvas
-              #sprite
-              [attr.data-sprites]="rule.sprites.join(',')"
-              aria-hidden="true"
-            ></canvas>
+      <div class="home-rules mt-10">
+        <div class="home-rules__board">
+          <app-rules-board
+            [active]="heldRule()"
+            (step)="playingRule.set($event)"
+            role="img"
+            [attr.aria-label]="'HOME.HOW_BOARD_ALT' | translate"
+          />
+        </div>
+        <ol class="home-rules__list" role="list">
+          @for (rule of rules; track rule.step; let i = $index) {
+          <li
+            class="home-rule"
+            [class.home-rule--on]="playingRule() === i"
+            [class.home-rule--held]="heldRule() === i"
+            (mouseenter)="heldRule.set(i)"
+            (mouseleave)="heldRule.set(null)"
+          >
             <span class="home-rule__step" aria-hidden="true"
               >{{ rule.step }}</span
             >
-          </div>
-          <h3 class="home-card__title mt-5">{{ rule.titleKey | translate }}</h3>
-          <p class="home-card__text mt-2">{{ rule.descKey | translate }}</p>
-        </li>
-        }
-      </ol>
+            <div class="home-rule__text">
+              <h3 class="home-card__title">{{ rule.titleKey | translate }}</h3>
+              <p class="home-card__text">{{ rule.descKey | translate }}</p>
+            </div>
+            <span class="home-rule__progress" aria-hidden="true"></span>
+          </li>
+          }
+        </ol>
+      </div>
     </div>
   </section>
 
@@ -209,11 +177,18 @@
       <p class="home-eyebrow">{{ 'HOME.POWERUPS_EYEBROW' | translate }}</p>
       <h2 class="home-h2">{{ 'HOME.POWERUPS_TITLE' | translate }}</h2>
       <p class="home-sub">{{ 'HOME.POWERUPS_SUBTITLE' | translate }}</p>
-      <ul class="mt-10 grid sm:grid-cols-2 lg:grid-cols-4 gap-5" role="list">
+      <app-power-up-orbit
+        class="mt-6"
+        [kinds]="powerUpKinds"
+        [active]="activePowerUp()"
+      />
+      <ul class="mt-6 grid sm:grid-cols-2 lg:grid-cols-4 gap-5" role="list">
         @for (powerUp of powerUps; track powerUp.kind) {
         <li
           class="home-card home-powerup"
           [class]="'home-card home-powerup home-powerup--' + powerUp.kind"
+          (mouseenter)="activePowerUp.set(powerUp.kind)"
+          (mouseleave)="activePowerUp.set(null)"
         >
           <canvas
             #sprite

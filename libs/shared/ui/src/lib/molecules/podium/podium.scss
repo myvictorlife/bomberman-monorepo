@@ -160,8 +160,93 @@
   color: var(--color-primary);
 }
 
-@media (prefers-reduced-motion: reduce) {
+/* The stage: characters stand on solid steps, over a dark painted scene.
+   Text sits above each figure, so the steps can touch like a real podium. */
+:host(.podium--stage) {
+  --gold: #ffd36b;
+  --silver: #c9cfe6;
+  --bronze: #e89a62;
+  --stage-ink: #f4eefc;
+  --stage-muted: #cdc2e6;
+
+  .podium {
+    gap: 0;
+    max-width: 40rem;
+  }
+
+  .podium__step {
+    --block-height: 5.5rem;
+  }
+
+  .podium__step--1 {
+    --block-height: 10rem;
+  }
+
+  .podium__step--2 {
+    --block-height: 7.5rem;
+  }
+
+  .podium__figure {
+    order: 1;
+    width: clamp(5rem, 30cqw, 10rem);
+    margin: var(--space-2) 0 0;
+    border-radius: 0;
+    background: radial-gradient(
+      ellipse 34% 7% at 50% 96%,
+      rgba(8, 4, 24, 0.45),
+      transparent
+    );
+    box-shadow: none;
+  }
+
+  .podium__step--1 .podium__figure {
+    width: clamp(5.5rem, 34cqw, 11.5rem);
+    animation: podium-hop 1.1s ease-in-out infinite alternate;
+  }
+
+  .podium__sprite {
+    width: 100%;
+    height: 100%;
+  }
+
   .podium__crown {
+    top: -0.4rem;
+    z-index: 1;
+  }
+
+  .podium__name {
+    color: var(--stage-ink);
+  }
+
+  .podium__tag,
+  .podium__score {
+    color: var(--stage-muted);
+  }
+
+  .podium__block {
+    order: 2;
+    margin-top: 0;
+    padding-top: var(--space-4);
+    border: 0;
+    border-top: 6px solid var(--metal);
+    border-radius: 0;
+    background: linear-gradient(180deg, #4a2b5e, #2a1838);
+  }
+
+  .podium__place {
+    font-size: clamp(2rem, 7cqw, 3rem);
+  }
+}
+
+@keyframes podium-hop {
+  to {
+    transform: translateY(-6%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .podium__crown,
+  :host(.podium--stage) .podium__step--1 .podium__figure {
     animation: none;
   }
 }

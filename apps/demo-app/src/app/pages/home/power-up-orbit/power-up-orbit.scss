@@ -1,0 +1,9 @@
+:host {
+  display: block;
+}
+
+.orbit {
+  display: block;
+  width: 100%;
+  height: clamp(14rem, 34vw, 20rem);
+}

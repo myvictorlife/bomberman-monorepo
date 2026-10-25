@@ -23,11 +23,13 @@ const line = (
     [paint]="paint"
     [myId]="myId()"
     [size]="64"
+    [variant]="variant()"
   />`,
 })
 class HostComponent {
   readonly entries = signal<PodiumLine[]>([]);
   readonly myId = signal<string | null>(null);
+  readonly variant = signal<'card' | 'stage'>('card');
   readonly paint: PodiumPainter = vi.fn();
 }
 
@@ -134,5 +136,15 @@ describe('PodiumComponent', () => {
     expect(spectator.query('[data-testid="podium-step"]')).toHaveClass(
       'podium__step--me',
     );
+  });
+
+  it('stands the characters on the steps in the stage variant', () => {
+    spectator.component.entries.set([line('a', 1, 1)]);
+    spectator.detectChanges();
+    expect(spectator.query('lib-podium')).not.toHaveClass('podium--stage');
+
+    spectator.component.variant.set('stage');
+    spectator.detectChanges();
+    expect(spectator.query('lib-podium')).toHaveClass('podium--stage');
   });
 });

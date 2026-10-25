@@ -1,0 +1,20 @@
+<section class="intro" data-testid="home-intro">
+  <canvas #canvas class="intro__scene" aria-hidden="true"></canvas>
+  <div #copy class="intro__copy">
+    <span class="intro__eyebrow">{{ 'HOME.HERO_BADGE' | translate }}</span>
+    <h1 class="intro__title">{{ 'HOME.HERO_TITLE' | translate }}</h1>
+    <p class="intro__lead">{{ 'HOME.HERO_SUBTITLE' | translate }}</p>
+    <div class="intro__ctas">
+      <a
+        routerLink="/online"
+        class="intro__btn intro__btn--primary"
+        (click)="trackPlay()"
+        >{{ 'HOME.CTA_PLAY' | translate }}</a
+      >
+      <a href="#como-jogar" class="intro__btn intro__btn--ghost"
+        >{{ 'HOME.CTA_HOW' | translate }}</a
+      >
+    </div>
+  </div>
+  <a href="#ao-vivo" class="intro__hint">{{ 'HOME.SCROLL' | translate }}</a>
+</section>

@@ -6,6 +6,7 @@ import {
   DestroyRef,
   ElementRef,
   inject,
+  signal,
   viewChild,
   viewChildren,
 } from '@angular/core';
@@ -15,27 +16,32 @@ import { PowerUpKind } from '@libs/game-core';
 import { ANALYTICS } from '@libs/analytics';
 import { ButtonComponent, VirtualGamepadComponent } from '@libs/ui';
 import { TranslatePipe } from '@ngx-translate/core';
+import { IntroComponent } from './intro/intro';
+import { CampaignTeaserComponent } from './campaign-teaser/campaign-teaser';
 import { PodiumComponent } from './podium/podium';
+import { RulesBoardComponent } from './rules-board/rules-board';
+import { PodiumSceneComponent } from './podium-scene/podium-scene';
+import { PowerUpOrbitComponent } from './power-up-orbit/power-up-orbit';
 import { PresenceComponent } from './presence/presence';
 
-type ModeIcon = 'keyboard' | 'globe' | 'trophy';
-
 interface GameMode {
-  icon: ModeIcon;
   titleKey: string;
   descKey: string;
-  /** What the card's little video shows: a key of `demoScene`, or the ranking. */
-  video: 'local' | 'online' | 'ranking';
-  /** Where the card leads, or `null` while the mode is not built yet. */
-  link: string | null;
+  /** Who plays and how, in a line above the title. */
+  metaKey: string;
+  /** The card's call to action, which says where it leads. */
+  ctaKey: string;
+  /** What the card's picture shows: a key of `demoScene`, or the campaign's painting. */
+  video: 'local' | 'online' | 'campaign';
+  link: string;
+  /** The mode the page leads with: a larger card. */
+  featured?: boolean;
 }
 
 interface Rule {
   step: number;
   titleKey: string;
   descKey: string;
-  /** Sprites from the game's skin that illustrate the rule. */
-  sprites: string[];
 }
 
 interface PowerUpInfo {
@@ -61,8 +67,13 @@ interface ControlScheme {
     ButtonComponent,
     RouterLink,
     TranslatePipe,
+    IntroComponent,
+    CampaignTeaserComponent,
+    RulesBoardComponent,
     PodiumComponent,
+    PodiumSceneComponent,
     PresenceComponent,
+    PowerUpOrbitComponent,
     VirtualGamepadComponent,
   ],
   templateUrl: './home.html',
@@ -80,6 +91,11 @@ export class HomePage {
   readonly podiumStatus = computed(() => this.podium().status());
 
   readonly facts = ['HOME.FACT_1', 'HOME.FACT_2', 'HOME.FACT_3'];
+
+  /** A mode card was opened. */
+  trackMode(mode: GameMode['video']): void {
+    this.analytics.logEvent('play_click', { mode, from: 'modes' });
+  }
 
   /** A "play" button was pressed: which mode, and which of the page's buttons. */
   trackPlay(mode: 'online', from: 'hero' | 'band'): void {
@@ -101,43 +117,41 @@ export class HomePage {
 
   readonly modes: GameMode[] = [
     {
-      icon: 'keyboard',
+      titleKey: 'HOME.MODE_ONLINE_TITLE',
+      descKey: 'HOME.MODE_ONLINE_DESC',
+      metaKey: 'HOME.MODE_ONLINE_META',
+      ctaKey: 'HOME.MODE_ONLINE_CTA',
+      video: 'online',
+      link: '/online',
+      featured: true,
+    },
+    {
       titleKey: 'HOME.MODE_LOCAL_TITLE',
       descKey: 'HOME.MODE_LOCAL_DESC',
+      metaKey: 'HOME.MODE_LOCAL_META',
+      ctaKey: 'HOME.MODE_LOCAL_CTA',
       video: 'local',
       link: '/play',
     },
     {
-      icon: 'globe',
-      titleKey: 'HOME.MODE_ONLINE_TITLE',
-      descKey: 'HOME.MODE_ONLINE_DESC',
-      video: 'online',
-      link: '/online',
-    },
-    {
-      icon: 'trophy',
-      titleKey: 'HOME.MODE_RANKING_TITLE',
-      descKey: 'HOME.MODE_RANKING_DESC',
-      video: 'ranking',
-      link: '/online',
+      titleKey: 'HOME.MODE_CAMPAIGN_TITLE',
+      descKey: 'HOME.MODE_CAMPAIGN_DESC',
+      metaKey: 'HOME.MODE_CAMPAIGN_META',
+      ctaKey: 'HOME.MODE_CAMPAIGN_CTA',
+      video: 'campaign',
+      link: '/campaign',
     },
   ];
 
-  readonly rules: Rule[] = [
-    [TEXTURE.bomb(1), TEXTURE.flame('center', 0)],
-    [TEXTURE.flame('end-right', 0), TEXTURE.block],
-    [
-      TEXTURE.powerUp('bomb'),
-      TEXTURE.powerUp('fire'),
-      TEXTURE.powerUp('speed'),
-    ],
-    [TEXTURE.player(0, 'down', 0), TEXTURE.player(2, 'left', 0)],
-  ].map((sprites, i) => ({
-    step: i + 1,
-    titleKey: `HOME.HOW_${i + 1}_TITLE`,
-    descKey: `HOME.HOW_${i + 1}_DESC`,
-    sprites,
+  readonly rules: Rule[] = [1, 2, 3, 4].map((step) => ({
+    step,
+    titleKey: `HOME.HOW_${step}_TITLE`,
+    descKey: `HOME.HOW_${step}_DESC`,
   }));
+  /** The rule the board is acting out now. */
+  readonly playingRule = signal(0);
+  /** The rule pointed at, which holds the board on it. */
+  readonly heldRule = signal<number | null>(null);
 
   readonly powerUps: PowerUpInfo[] = [
     {
@@ -206,6 +220,9 @@ export class HomePage {
   ];
 
   readonly powerUpTexture = (kind: PowerUpKind) => TEXTURE.powerUp(kind);
+  readonly powerUpKinds = this.powerUps.map((p) => p.kind);
+  /** The power-up whose card is pointed at; the orbit turns it to the front. */
+  readonly activePowerUp = signal<PowerUpKind | null>(null);
 
   constructor() {
     // Canvas only exists in a browser; every paint is synchronous and the
