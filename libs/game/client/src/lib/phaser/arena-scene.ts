@@ -2023,9 +2023,9 @@ export class ArenaScene extends Phaser.Scene {
       .setScale(1 - ease * 0.08, 1)
       .setAlpha(t < 0.7 ? 1 : Math.max(0, 1 - (t - 0.7) / 0.3));
     if (elapsed < 5) {
-      image.setTint(0xffffff);
-      image.setTintFill();
-    } else image.clearTint();
+      // Phaser 4 split fill out of the tint: set the colour, then the mode.
+      image.setTint(0xffffff).setTintMode(Phaser.TintModes.FILL);
+    } else image.clearTint().setTintMode(Phaser.TintModes.MULTIPLY);
   }
 }
 
