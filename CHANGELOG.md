@@ -64,6 +64,12 @@ config file. Ordinary app-level additions are minor.
   matchmaking no longer echoes whatever origin it is sent. Loopback origins
   stay allowed for development, and `GET /` for the health check. Unset,
   nothing changes. A soft guard: a script can forge the header.
+- **One connection can no longer flood the room.** More than 40 messages in a
+  second (`MAX_MESSAGES_PER_SECOND`) drops the connection. The lobby goes out
+  at most once every 200 ms, and a change on the border waits for the next
+  regular frame (≤ 50 ms) instead of sending its own — before, a guest
+  joining and leaving the queue in a loop made the room broadcast the lobby
+  and a full frame to every viewer on each message.
 
 ### Added
 

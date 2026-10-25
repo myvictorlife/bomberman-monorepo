@@ -87,6 +87,11 @@ export interface ArenaRoomDeps {
    * is full and real players are turned away.
    */
   maxConnectionsPerIp?: number;
+  /**
+   * Most messages one connection may send in a second before it is dropped;
+   * see {@link MAX_MESSAGES_PER_SECOND}.
+   */
+  maxMessagesPerSecond?: number;
   /** The pages allowed to connect; empty or absent lets every origin in. See {@link originAllowed}. */
   allowedOrigins?: readonly string[];
 }
@@ -140,6 +145,19 @@ export function clientAddress(
 
 /** How often the queue is re-checked for a countdown that ran out. */
 const LOBBY_CHECK_MS = 250;
+/**
+ * The shortest gap between two lobby broadcasts. A change sooner than this
+ * waits for the next check (at most {@link LOBBY_CHECK_MS} away), so a client
+ * toggling the queue in a loop cannot make the room broadcast once per message.
+ */
+const LOBBY_MIN_GAP_MS = 200;
+
+/**
+ * The default for {@link ArenaRoomDeps.maxMessagesPerSecond}. A player sends
+ * on a change of key only — a busy thumb is ten or fifteen a second — so this
+ * leaves room to spare and still drops a script flooding the room.
+ */
+export const MAX_MESSAGES_PER_SECOND = 40;
 const RANKING_SIZE = 10;
 
 /** The most token checks one connection may ask for within {@link HELLO_WINDOW_MS}. */
@@ -205,6 +223,7 @@ export function createArenaRoom(deps: ArenaRoomDeps) {
     private unwatchProfiles: (() => void) | null = null;
     private ticksSinceFrame = 0;
     private lastLobby = '';
+    private lobbySentAt = -Infinity;
     /** Counts the rounds, so a client can tell a new one from a changed one. */
     private round = 0;
 
@@ -212,6 +231,8 @@ export function createArenaRoom(deps: ArenaRoomDeps) {
       if (liveId) throw new Error('The public room already exists.');
       liveId = this.roomId;
       this.patchRate = null;
+      this.maxMessagesPerSecond =
+        deps.maxMessagesPerSecond ?? MAX_MESSAGES_PER_SECOND;
       this.unwatchProfiles = deps.records.watchProfiles((record) =>
         this.profileChanged(record),
       );
@@ -848,13 +869,19 @@ export function createArenaRoom(deps: ArenaRoomDeps) {
         this.heldInputs.clear();
         this.pendingEvents = [];
       }
-      if (this.syncOutsiders() || start) this.sendFrame();
+      // A change on the border goes out with the next regular frame (every
+      // `FRAME_EVERY_TICKS`), not one of its own: queueing and leaving in a
+      // loop must not make the room send a frame to everyone per message.
+      this.syncOutsiders();
+      if (start) this.sendFrame();
 
       const snapshot = this.lobby.snapshot(now(), this.watchers());
       // `now` changes every call; only a real change goes out.
       const key = JSON.stringify({ ...snapshot, now: 0 });
-      if (key !== this.lastLobby) {
+      const at = now();
+      if (key !== this.lastLobby && at - this.lobbySentAt >= LOBBY_MIN_GAP_MS) {
         this.lastLobby = key;
+        this.lobbySentAt = at;
         this.broadcast(SERVER_MESSAGE.lobby, snapshot);
         // The room's listing carries a summary, so `GET /status` answers without touching the room.
         void this.setMetadata({

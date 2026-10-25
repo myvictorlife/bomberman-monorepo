@@ -49,6 +49,13 @@ origin. Loopback origins (`localhost`, `127.0.0.1`, `[::1]`, any port) are
 always allowed, so local development keeps working; `GET /` stays open for the
 tunnel's health check. A soft guard — a script can forge the header — that
 stops other sites from embedding the room and the copied-and-pasted bot.
+A connection that sends more than `MAX_MESSAGES_PER_SECOND` (40; the room dep
+`maxMessagesPerSecond`) messages in a second is dropped by Colyseus — a player
+sends on a change of key only. The lobby is broadcast at most once per
+`LOBBY_MIN_GAP_MS` (200 ms; a change sooner waits for the next 250 ms check),
+and a change on the border rides the next regular frame instead of sending one
+of its own, so toggling the queue in a loop cannot make the room broadcast to
+everyone once per message.
 Without a project id nobody can sign in, but guests still play (below):
 the ranking stays empty, since only accounts are counted.
 

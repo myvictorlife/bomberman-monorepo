@@ -150,6 +150,15 @@ beforeAll(async () => {
     }),
   );
   server.define(
+    'chatty',
+    createArenaRoom({
+      rules: RULES,
+      verify: fakeVerify,
+      records,
+      maxMessagesPerSecond: 5,
+    }),
+  );
+  server.define(
     'site-only',
     createArenaRoom({
       rules: RULES,
@@ -1419,6 +1428,40 @@ describe('ArenaRoom', () => {
     it('refuses a connection from no page at all once origins are set', async () => {
       // The test client is a script: it sends no Origin, like a bot would.
       await expect(connect('site-only')).rejects.toThrow(/forbidden-origin/);
+    });
+
+    it('drops a connection that sends more messages a second than allowed', async () => {
+      const peer = await connect('chatty');
+      const left = new Promise<number>((resolve) =>
+        peer.room.onLeave((code) => resolve(code)),
+      );
+      for (let i = 0; i < 20; i++) peer.room.send(CLIENT_MESSAGE.react, {});
+      expect(await left).not.toBe(1000);
+    });
+
+    it('broadcasts the lobby at most once per gap, however fast the queue is toggled', async () => {
+      const guest = await asGuest('Toggler');
+      const room = matchMaker.getLocalRoomById(
+        guest.room.roomId,
+      ) as unknown as {
+        broadcast: (type: string, payload: unknown) => void;
+      };
+      const lobbies: unknown[] = [];
+      const broadcast = room.broadcast.bind(room);
+      room.broadcast = (type, payload) => {
+        if (type === SERVER_MESSAGE.lobby) lobbies.push(payload);
+        broadcast(type, payload);
+      };
+      for (let i = 0; i < 15; i++) {
+        guest.room.send(CLIENT_MESSAGE.joinQueue, {});
+        guest.room.send(CLIENT_MESSAGE.leaveQueue);
+      }
+      guest.room.send(CLIENT_MESSAGE.joinQueue, {});
+      // The last state still arrives, by the next check at the latest.
+      await guest.next<LobbySnapshot>(SERVER_MESSAGE.lobby, (lobby) =>
+        lobby.queue.some((seat) => seat.id === guest.identity.id),
+      );
+      expect(lobbies.length).toBeLessThanOrEqual(3);
     });
 
     it('turns away a flood of token checks on one connection, but not a normal sign-in', async () => {
