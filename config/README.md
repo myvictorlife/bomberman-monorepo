@@ -27,6 +27,10 @@ The console shows JavaScript, not JSON — unquoted keys, single quotes, a trail
 a leading `const firebaseConfig =`. **Paste it as-is anyway.** The reader normalises all
 of that. Quoting the keys afterwards only makes your editor stop underlining the file.
 
+An optional `"appCheckSiteKey": "..."` turns on Firebase App Check (the reCAPTCHA
+site key — public, like `apiKey`; not in the pasted object, so add it yourself).
+Absent, App Check stays off. See the `firebase-deploy` skill, section 7.
+
 > Prefer the exact JSON with no editing? With the CLI installed and authenticated:
 > `firebase apps:sdkconfig web --project <project-id> --json`
 

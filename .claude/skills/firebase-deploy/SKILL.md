@@ -330,34 +330,63 @@ this in seconds rather than after a full build.
 ## 7. Locking down the web API key
 
 The config in the bundle is public. That is by design, and the protection lives
-elsewhere — do all four of these once the site is live.
+elsewhere — do all of these once the site is live.
 
-**1. Restrict the API key to your domains.** Google Cloud Console → APIs &
+**1. Turn on App Check — the one that actually stops a copied key.** A referrer
+restriction (item 4) only stops a _browser_ on another origin; a script forges
+the `Referer` header as easily as the `Origin` one. App Check is the real gate:
+it attests the request came from your app, so a copied `apiKey` used anywhere
+else fails. **The code side is already wired** — `@libs/auth-firebase`
+initialises App Check whenever `appCheckSiteKey` is set (see item 2). To turn it
+on:
+
+- Console → **App Check** → register the web app (the one whose `appId` matches
+  `config/firebase.json`) with **reCAPTCHA Enterprise** (shown as "Fraud
+  Defense"). Create the reCAPTCHA key under Cloud Console → Security →
+  reCAPTCHA, type **Website**, with your domains (`detona.online`,
+  `<project-id>.web.app`, `<project-id>.firebaseapp.com`, `localhost`).
+- Put the **site key** in `config/firebase.json` as `appCheckSiteKey` (or the
+  `FIREBASE_APP_CHECK_SITE_KEY` env), rebuild and deploy.
+- App Check → **APIs → Authentication**: wait until the chart shows _verified_
+  requests arriving (proof the token flows), **then** Enforce. Enforcing before
+  the token flows locks out real users.
+
+**2. The `appCheckSiteKey` config field.** Public, like `apiKey`, and not part
+of the object the console hands you — set it on its own in `config/firebase.json`
+(or `FIREBASE_APP_CHECK_SITE_KEY`). Empty, App Check stays off and sign-in works
+as before, so a fork without a key still boots.
+
+**3. Protect the sign-in flow.** Console → **Authentication → Settings**:
+confirm **Email enumeration protection** is on (it stops "does this e-mail have
+an account?"), and trim **Authorized domains** to your own (`detona.online`, the
+two Hosting domains, `localhost`). With App Check enforced (item 1), automated
+calls to create accounts or spray verification e-mails fail before they cost
+you a quota.
+
+**4. Restrict the API key to your domains.** Google Cloud Console → APIs &
 Services → Credentials → the _Browser key (auto created by Firebase)_ → Application
-restrictions → **HTTP referrers**:
+restrictions → **HTTP referrers** — a soft guard (bypassable by a script, see
+item 1) that still blocks other sites' browsers:
 
 ```
+https://detona.online/*                ← your custom domain
 https://<project-id>.web.app/*
 https://<project-id>.firebaseapp.com/*
 https://<project-id>--*.web.app/*      ← preview channels
 http://localhost:4200/*
 ```
 
-Under **API restrictions**, limit it to what the app actually calls — for an
-analytics-only setup that is the Firebase Installations API and Google Analytics.
-Anything else is surface you are not using.
+Under **API restrictions**, limit it to what the app actually calls — the
+Identity Toolkit and Token Service APIs for sign-in, plus the Firebase
+Installations API and Google Analytics. Anything else is surface you are not
+using.
 
-**2. Turn on App Check.** Console → App Check → register the web app with
-**reCAPTCHA Enterprise**, then enforce it per service. This is the real answer to
-"someone copied my apiKey": it attests that a request came from your app, and a
-copied key on another origin fails attestation.
-
-**3. Write Security Rules** before enabling Firestore, Storage or Realtime
+**5. Write Security Rules** before enabling Firestore, Storage or Realtime
 Database. The default rules in test mode are open to the internet and expire
 silently. This template uses none of those services, so there is nothing to write
 yet — the moment you add one, this becomes the most important item on the list.
 
-**4. Set a budget alert.** Google Cloud Console → Billing → Budgets & alerts.
+**6. Set a budget alert.** Google Cloud Console → Billing → Budgets & alerts.
 Abuse of a public endpoint shows up as a bill.
 
 ### What must never reach the frontend

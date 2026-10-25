@@ -11,6 +11,60 @@ config file. Ordinary app-level additions are minor.
 
 ## [Unreleased]
 
+### Changed
+
+- **The touch D-pad floats and grows.** A thumb landing anywhere on the left
+  half of the screen now takes the pad, which jumps under it; a thumb that
+  strays past the rim drags the pad along (`followCentre`), so a drifting
+  thumb no longer has to lift and land again. The hub follows the thumb, a
+  direction change ticks the phone where `navigator.vibrate` exists, and a
+  lost pointer capture frees the pad instead of leaving it stuck. On a short
+  screen the pad is bigger (`clamp(6.5rem, 30vmin, 9rem)`) and kept clear of
+  the notch. `lib-virtual-gamepad` takes `[float]`, which `/play` and
+  `/campaign` turn off while their result and "tap to play" screens show.
+  The home page's phone picture sizes its controller in container units, in
+  the game's proportions, so it sits beside the arena instead of over it, and
+  its hint explains the floating pad.
+
+### Fixed
+
+- **No more stuck zoom on a phone mid-game.** Two thumbs moving apart read as
+  a pinch and a quick double tap on the bomb as a double-tap zoom, and the
+  game's `touch-action: none` then blocked the pinch back out. While game
+  mode is on, `holdZoom()` (`@libs/ui`) sets the viewport to
+  `user-scalable=no` (which also brings an already-zoomed iOS page back to
+  scale 1), puts `touch-action: none` on the whole document, and cancels
+  Safari's gesture events, two-finger moves and double taps; leaving game mode
+  gives the rest of the site its zoom back. `/play`, `/campaign` and the
+  expanded `/online` on a touch screen hold it.
+
+### Security
+
+- **Firebase App Check is wired into sign-in.** When
+  `firebaseConfig.appCheckSiteKey` is set (from `config/firebase.json` or
+  `FIREBASE_APP_CHECK_SITE_KEY`), `@libs/auth-firebase` initialises App Check on
+  the shared Firebase app before any Auth request, so a copied `apiKey` used
+  from another origin fails attestation once App Check is enforced on
+  Authentication in the console. Empty key, App Check is simply off — a fork or
+  a local build still boots. The SDK loads as a lazy chunk, never on first
+  paint. See `firebase-deploy` skill, section 7.
+- **The game server guards against a connection flood.** `onAuth` now refuses a
+  connection once an address already holds `MAX_CONNECTIONS_PER_IP` live ones
+  (default 20, `0` turns it off), so one script cannot open sockets until the
+  room fills and real players are turned away. A connection may ask for at most
+  five token checks in ten seconds — more are refused before `jwtVerify` runs,
+  bounding the crypto one socket can demand — and `GET /ranking` remembers its
+  JSON for the cache window so a `?x=…` flood no longer re-sorts every record
+  per hit.
+- **The game server can answer only its own site.** `ALLOWED_ORIGINS` (or
+  `allowedOrigins` in `config/game-server.json`) lists the pages allowed to
+  use it. Set, a join from any other `Origin` — or from none, as a script
+  sends — is refused in `onAuth` (`forbidden-origin`); `/ranking`, `/status`
+  and `/me` answer 403 instead of `Access-Control-Allow-Origin: *`; and
+  matchmaking no longer echoes whatever origin it is sent. Loopback origins
+  stay allowed for development, and `GET /` for the health check. Unset,
+  nothing changes. A soft guard: a script can forge the header.
+
 ### Added
 
 - **A fourth arena: the Núcleo.** The datacenter where CIDA, the city's AI,

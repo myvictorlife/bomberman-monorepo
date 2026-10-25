@@ -6,6 +6,14 @@ export interface FirebaseConfig {
   messagingSenderId: string;
   appId: string;
   measurementId: string;
+  /**
+   * The reCAPTCHA site key for Firebase App Check — public, like `apiKey`, and
+   * not part of the object the console hands you, so it is set on its own (in
+   * `config/firebase.json` or `FIREBASE_APP_CHECK_SITE_KEY`). Empty turns App
+   * Check off, so a fork or a local build without one still boots. See
+   * `firebase-auth.ts`.
+   */
+  appCheckSiteKey: string;
 }
 
 /**

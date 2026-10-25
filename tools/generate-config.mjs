@@ -79,6 +79,9 @@ const CONFIGS = [
       'messagingSenderId',
       'appId',
       'measurementId',
+      // App Check's reCAPTCHA site key. Public and optional: absent, App Check
+      // is simply off. Comes from the file or `FIREBASE_APP_CHECK_SITE_KEY`.
+      'appCheckSiteKey',
     ],
     /** Anything less and the SDK cannot initialise, so the flag stays `false`. */
     required: ['apiKey', 'projectId', 'appId'],

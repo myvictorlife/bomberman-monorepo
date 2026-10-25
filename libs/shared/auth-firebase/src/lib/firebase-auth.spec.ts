@@ -58,12 +58,22 @@ const sdk = vi.hoisted(() => {
     signOut: vi.fn(async () => {
       auth.currentUser = null;
     }),
+    initializeAppCheck: vi.fn(() => ({})),
+    ReCaptchaEnterpriseProvider: vi.fn(function (this: unknown, key: string) {
+      (this as { key: string }).key = key;
+    }),
   };
 });
 
 vi.mock('firebase/app', () => ({
   getApps: () => sdk.getApps(),
   initializeApp: (config: unknown) => sdk.initializeApp(config),
+}));
+
+vi.mock('firebase/app-check', () => ({
+  initializeAppCheck: (app: unknown, options: unknown) =>
+    (sdk.initializeAppCheck as (...a: unknown[]) => unknown)(app, options),
+  ReCaptchaEnterpriseProvider: sdk.ReCaptchaEnterpriseProvider,
 }));
 
 vi.mock('firebase/auth', () => ({
@@ -175,6 +185,34 @@ describe('FirebaseAuth with a Firebase project', () => {
     await create(true).initialize();
 
     expect(sdk.initializeApp).not.toHaveBeenCalled();
+  });
+
+  describe('App Check', () => {
+    const originalSiteKey = environment.firebaseConfig.appCheckSiteKey;
+    afterEach(() => {
+      environment.firebaseConfig.appCheckSiteKey = originalSiteKey;
+    });
+
+    it('starts App Check with the reCAPTCHA site key when one is configured', async () => {
+      environment.firebaseConfig.appCheckSiteKey = 'site-key-123';
+      await create(true).initialize();
+
+      expect(sdk.ReCaptchaEnterpriseProvider).toHaveBeenCalledWith(
+        'site-key-123',
+      );
+      expect(sdk.initializeAppCheck).toHaveBeenCalledTimes(1);
+      expect(sdk.initializeAppCheck).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ isTokenAutoRefreshEnabled: true }),
+      );
+    });
+
+    it('leaves App Check off when no site key is configured', async () => {
+      environment.firebaseConfig.appCheckSiteKey = '';
+      await create(true).initialize();
+
+      expect(sdk.initializeAppCheck).not.toHaveBeenCalled();
+    });
   });
 
   it('signs up with a display name and sends the confirmation e-mail back to the room', async () => {

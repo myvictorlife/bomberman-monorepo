@@ -208,6 +208,8 @@ export class FirebaseAuth implements Auth {
     ]);
     const app =
       appSdk.getApps()[0] ?? appSdk.initializeApp(environment.firebaseConfig);
+    // Before any Auth request, so each sign-in call carries the attestation token.
+    await this.initAppCheck(app);
     const auth = this.createAuth(sdk, app);
     this.sdk = sdk;
     this.auth = auth;
@@ -238,6 +240,32 @@ export class FirebaseAuth implements Auth {
       });
     } catch {
       return sdk.getAuth(app);
+    }
+  }
+
+  /**
+   * Firebase App Check attests that a request comes from this app, so a copied
+   * `apiKey` used from anywhere else fails — it is enforced on Authentication
+   * in the Firebase console. Initialised on the shared app before Auth makes
+   * any request, so every sign-in call carries the attestation token. Off when
+   * no site key is configured, so a fork or a local build still boots; a
+   * failure here never blocks sign-in, since the console enforcement is the
+   * real gate. The SDK is imported dynamically, like the rest of Firebase.
+   */
+  private async initAppCheck(app: FirebaseApp): Promise<void> {
+    const siteKey = environment.firebaseConfig.appCheckSiteKey;
+    if (!siteKey) return;
+    try {
+      const appCheck = await import('firebase/app-check');
+      appCheck.initializeAppCheck(app, {
+        // reCAPTCHA Enterprise (Fraud Defense). `appCheckSiteKey` must be an
+        // Enterprise key, not a classic one. Switch to `ReCaptchaV3Provider`
+        // only if the project moves back to classic reCAPTCHA.
+        provider: new appCheck.ReCaptchaEnterpriseProvider(siteKey),
+        isTokenAutoRefreshEnabled: true,
+      });
+    } catch (error) {
+      console.warn('[auth] App Check not initialised', error);
     }
   }
 
