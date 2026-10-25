@@ -323,6 +323,9 @@ test.describe('navigation', () => {
       // browser play sound.
       const layout = page.locator('[data-testid="play-page"]');
       await expect(layout).toHaveClass(/play--game/);
+      // No browser zoom while playing: two thumbs would read as a pinch.
+      const viewport = page.locator('meta[name="viewport"]');
+      await expect(viewport).toHaveAttribute('content', /user-scalable=no/);
       await page.locator('[data-testid="play-tap"]').tap();
       await expect(page.locator('[data-testid="play-tap"]')).toHaveCount(0);
       await expect(page.locator('[data-testid="play-setup-p2"]')).toHaveCount(
@@ -364,6 +367,8 @@ test.describe('navigation', () => {
       await page.locator('[data-testid="play-expand"]').tap();
       await expect(layout).not.toHaveClass(/play--game/);
       await expect(page.locator('[data-testid="play-setup"]')).toBeVisible();
+      // The rest of the site keeps its zoom.
+      await expect(viewport).not.toHaveAttribute('content', /user-scalable/);
       expect(errors).toEqual([]);
     });
   });

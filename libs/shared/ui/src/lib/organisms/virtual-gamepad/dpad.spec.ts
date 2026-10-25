@@ -1,4 +1,9 @@
-import { dragDirection, QUARTER_TURN, QUARTER_TURN_BACK } from './dpad';
+import {
+  dragDirection,
+  followCentre,
+  QUARTER_TURN,
+  QUARTER_TURN_BACK,
+} from './dpad';
 
 const centre = { x: 100, y: 100 };
 
@@ -51,5 +56,24 @@ describe('QUARTER_TURN', () => {
     }
     expect(QUARTER_TURN.right).toBe('up');
     expect(QUARTER_TURN_BACK.up).toBe('right');
+  });
+});
+
+describe('followCentre', () => {
+  it('stays put while the finger is within reach', () => {
+    expect(followCentre(centre, { x: 130, y: 140 }, 50)).toBe(centre);
+  });
+
+  it('is dragged behind a finger that strays, a reach away', () => {
+    // 90 right of the centre with a reach of 50: the centre moves 40 right.
+    expect(followCentre(centre, { x: 190, y: 100 }, 50)).toEqual({
+      x: 140,
+      y: 100,
+    });
+    // 30 left and 40 up is 50 away; 100 away along it moves the centre halfway.
+    expect(followCentre(centre, { x: 40, y: 20 }, 50)).toEqual({
+      x: 70,
+      y: 60,
+    });
   });
 });

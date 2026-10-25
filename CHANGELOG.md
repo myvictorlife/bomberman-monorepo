@@ -24,7 +24,9 @@ config file. Ordinary app-level additions are minor.
   `/campaign` turn off while their result and "tap to play" screens show.
   The home page's phone picture sizes its controller in container units, in
   the game's proportions, so it sits beside the arena instead of over it, and
-  its hint explains the floating pad.
+  its hint explains the floating pad, which a ghost thumb plays out on a loop
+  (`[demo]="true"`: a scripted thumb driving the real pad code, still for
+  anyone who asked for reduced motion).
 
 ### Fixed
 

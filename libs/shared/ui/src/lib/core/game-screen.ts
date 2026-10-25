@@ -118,3 +118,95 @@ export function watchPortrait(
 export function isTouchScreen(): boolean {
   return !!globalThis.matchMedia?.('(pointer: coarse)').matches;
 }
+
+/**
+ * The viewport with zoom turned off. `initial-scale=1` stays: on iOS,
+ * swapping this in also brings a page that was already zoomed back to 1.
+ */
+export function withoutZoom(content: string | null): string {
+  const kept = (content ?? 'width=device-width, initial-scale=1')
+    .split(',')
+    .map((part) => part.trim())
+    .filter(
+      (part) =>
+        part && !/^(initial-scale|maximum-scale|user-scalable)\s*=/.test(part),
+    );
+  return [
+    ...kept,
+    'initial-scale=1',
+    'maximum-scale=1',
+    'user-scalable=no',
+  ].join(', ');
+}
+
+let zoomHolds = 0;
+let releaseZoom: () => void = () => undefined;
+
+/**
+ * Keeps the browser from zooming while a game is on screen, and returns the
+ * release. Two thumbs moving apart, one on the pad and one on the bomb,
+ * read as a pinch; a quick double tap on the bomb, as a double-tap zoom.
+ * And `touch-action: none`, which stops a zoom, stops the pinch back out
+ * too, so a player who got zoomed in was stuck there.
+ *
+ * No one switch does it in every browser, so it takes layers:
+ * - the viewport says `user-scalable=no`, which Chrome obeys and which
+ *   brings an already-zoomed iOS page back to scale 1 (Safari ignores it
+ *   for the pinch itself);
+ * - `touch-action: none` on the whole document, which Chrome obeys
+ *   everywhere, not only over the game;
+ * - Safari's own `gesturestart`/`gesturechange` cancelled, the one thing
+ *   that reliably stops its pinch, a two-finger `touchmove` cancelled as a
+ *   backstop, and `dblclick` against its double-tap zoom.
+ *
+ * `preventDefault()` on a `pointerdown` stops none of this: it only cancels
+ * the mouse events a touch would fake. Holds count, so two holders never
+ * release each other's; the page gets its zoom back with the last release,
+ * the rest of the site keeping it for whoever needs it.
+ */
+export function holdZoom(): () => void {
+  if (typeof document === 'undefined') return () => undefined;
+  if (zoomHolds++ === 0) releaseZoom = lockZoom(document);
+  let released = false;
+  return () => {
+    if (released) return;
+    released = true;
+    if (--zoomHolds === 0) releaseZoom();
+  };
+}
+
+function lockZoom(doc: Document): () => void {
+  const meta = doc.querySelector<HTMLMetaElement>('meta[name="viewport"]');
+  const viewport = meta?.getAttribute('content') ?? null;
+  meta?.setAttribute('content', withoutZoom(viewport));
+
+  const styled = [doc.documentElement, doc.body]
+    .filter(Boolean)
+    .map((element) => ({ element, before: element.style.touchAction }));
+  for (const { element } of styled) element.style.touchAction = 'none';
+
+  const cancel = (event: Event) => event.preventDefault();
+  const pinch = (event: Event) => {
+    if ((event as TouchEvent).touches?.length > 1) event.preventDefault();
+  };
+  // Not passive, or the browser ignores `preventDefault()`.
+  const active = { passive: false } as const;
+  const listeners: [string, (event: Event) => void][] = [
+    ['gesturestart', cancel],
+    ['gesturechange', cancel],
+    ['gestureend', cancel],
+    ['dblclick', cancel],
+    ['touchmove', pinch],
+  ];
+  for (const [type, listener] of listeners)
+    doc.addEventListener(type, listener, active);
+
+  return () => {
+    for (const [type, listener] of listeners)
+      doc.removeEventListener(type, listener);
+    for (const { element, before } of styled)
+      element.style.touchAction = before;
+    if (viewport === null) meta?.removeAttribute('content');
+    else meta?.setAttribute('content', viewport);
+  };
+}

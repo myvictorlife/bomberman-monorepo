@@ -54,6 +54,7 @@ import {
 import {
   AlertComponent,
   ButtonComponent,
+  holdZoom,
   PadDirection,
   PodiumComponent,
   PodiumPainter,
@@ -398,6 +399,10 @@ export class Online {
   private readonly analytics = inject(ANALYTICS);
 
   constructor() {
+    // No browser zoom while the room fills a touch screen: two thumbs read as a pinch.
+    effect((onCleanup) => {
+      if (this.expanded() && this.touch()) onCleanup(holdZoom());
+    });
     if (typeof window !== 'undefined') {
       this.watchOrientation();
       if (window.matchMedia?.('(pointer: coarse)').matches)

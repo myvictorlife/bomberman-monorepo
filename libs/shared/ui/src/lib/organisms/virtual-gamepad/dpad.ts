@@ -48,6 +48,25 @@ export function dragDirection(
 }
 
 /**
+ * Where a floating pad's centre goes when the finger has strayed more than
+ * `reach` from it: dragged along behind the finger, `reach` away. A thumb
+ * that drifts keeps steering without lifting, and turning back takes the
+ * same short move wherever the thumb has wandered.
+ */
+export function followCentre(
+  centre: PadPoint,
+  point: PadPoint,
+  reach: number,
+): PadPoint {
+  const dx = point.x - centre.x;
+  const dy = point.y - centre.y;
+  const distance = Math.hypot(dx, dy);
+  if (distance <= reach) return centre;
+  const pull = (distance - reach) / distance;
+  return { x: centre.x + dx * pull, y: centre.y + dy * pull };
+}
+
+/**
  * Where each direction points once the pad is drawn a quarter turn
  * clockwise — a game turned sideways on a phone held upright. The screen's
  * right is then the pad's up, and so on round.

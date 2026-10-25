@@ -376,9 +376,17 @@
     white-space: normal;
   }
 
+  // Clear of the notch and the rounded corners: the controller is laid over
+  // the whole screen here, safe areas included. Turned sideways, the notch
+  // (the phone's top) is on the game's left.
   .play__gamepad {
-    --gamepad-gutter: var(--space-2);
-    --gamepad-pad: clamp(5.5rem, 26vmin, 8rem);
+    --gamepad-gutter: max(
+      var(--space-3),
+      env(safe-area-inset-left),
+      env(safe-area-inset-right),
+      env(safe-area-inset-top)
+    );
+    --gamepad-pad: clamp(6.5rem, 30vmin, 9rem);
   }
 }
 

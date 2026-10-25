@@ -1,40 +1,61 @@
 <div
-  #pad
-  class="gamepad__pad"
-  role="group"
-  [attr.aria-label]="'GAMEPAD.MOVE' | translate"
-  [attr.data-direction]="held()"
+  class="gamepad__zone"
+  [class.gamepad__zone--float]="float()"
   (pointerdown)="onPadDown($event)"
   (pointermove)="onPadMove($event)"
   (pointerup)="onPadUp($event)"
   (pointercancel)="onPadUp($event)"
-  data-testid="gamepad-pad"
+  (lostpointercapture)="onPadUp($event)"
+  data-testid="gamepad-zone"
 >
-  <span
-    class="gamepad__arrow gamepad__arrow--up"
-    [class.gamepad__arrow--held]="held() === 'up'"
-    aria-hidden="true"
-    >▲</span
+  <div
+    #pad
+    class="gamepad__pad"
+    role="group"
+    [attr.aria-label]="'GAMEPAD.MOVE' | translate"
+    [attr.data-direction]="held()"
+    [style.--pad-shift-x.px]="shift().x"
+    [style.--pad-shift-y.px]="shift().y"
+    [style.--hub-x.px]="knob().x"
+    [style.--hub-y.px]="knob().y"
+    data-testid="gamepad-pad"
   >
-  <span
-    class="gamepad__arrow gamepad__arrow--left"
-    [class.gamepad__arrow--held]="held() === 'left'"
-    aria-hidden="true"
-    >◀</span
-  >
-  <span class="gamepad__hub" aria-hidden="true"></span>
-  <span
-    class="gamepad__arrow gamepad__arrow--right"
-    [class.gamepad__arrow--held]="held() === 'right'"
-    aria-hidden="true"
-    >▶</span
-  >
-  <span
-    class="gamepad__arrow gamepad__arrow--down"
-    [class.gamepad__arrow--held]="held() === 'down'"
-    aria-hidden="true"
-    >▼</span
-  >
+    <span
+      class="gamepad__arrow gamepad__arrow--up"
+      [class.gamepad__arrow--held]="held() === 'up'"
+      aria-hidden="true"
+      >▲</span
+    >
+    <span
+      class="gamepad__arrow gamepad__arrow--left"
+      [class.gamepad__arrow--held]="held() === 'left'"
+      aria-hidden="true"
+      >◀</span
+    >
+    <span class="gamepad__hub" aria-hidden="true"></span>
+    <span
+      class="gamepad__arrow gamepad__arrow--right"
+      [class.gamepad__arrow--held]="held() === 'right'"
+      aria-hidden="true"
+      >▶</span
+    >
+    <span
+      class="gamepad__arrow gamepad__arrow--down"
+      [class.gamepad__arrow--held]="held() === 'down'"
+      aria-hidden="true"
+      >▼</span
+    >
+    @if (demo()) {
+    <span
+      class="gamepad__thumb"
+      [class.gamepad__thumb--down]="thumbDown()"
+      [style.--thumb-x.px]="thumb().x"
+      [style.--thumb-y.px]="thumb().y"
+      aria-hidden="true"
+      data-testid="gamepad-thumb"
+    ></span>
+    }
+  </div>
 </div>
 
 <div class="gamepad__buttons">

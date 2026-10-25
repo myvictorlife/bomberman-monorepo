@@ -265,6 +265,7 @@
     [ability]="!!me()?.mount"
     [detonate]="!!me()?.remote"
     [turned]="sideways()"
+    [float]="!tapToPlay() && !over()"
     (direction)="onPadDirection($event)"
     (bombPress)="padBomb()"
     (abilityPress)="padAbility()"

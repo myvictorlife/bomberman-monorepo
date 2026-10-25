@@ -1,3 +1,4 @@
+import { TestBed } from '@angular/core/testing';
 import { createComponentFactory, Spectator } from '@ngneat/spectator/vitest';
 import {
   provideTranslateService,
@@ -137,6 +138,103 @@ describe('VirtualGamepadComponent', () => {
     expect(directions).toEqual(['up']);
     pad.dispatchEvent(pointer('pointerup', 50, 10, 1));
     expect(directions).toEqual(['up', null]);
+  });
+
+  it('jumps under a thumb that lands beside it, and steers from there', () => {
+    const zone = spectator.query<HTMLElement>('[data-testid="gamepad-zone"]')!;
+    zone.dispatchEvent(pointer('pointerdown', 200, 150));
+    spectator.detectChanges();
+    // Centred under the thumb: no push yet, the pad drawn 150 right, 100 down.
+    expect(directions).toEqual([]);
+    expect(pad.style.getPropertyValue('--pad-shift-x')).toBe('150px');
+    expect(pad.style.getPropertyValue('--pad-shift-y')).toBe('100px');
+
+    zone.dispatchEvent(pointer('pointermove', 200, 120));
+    spectator.detectChanges();
+    expect(directions).toEqual(['up']);
+    // The hub follows the thumb, up to 22 % of the pad's width away.
+    expect(pad.style.getPropertyValue('--hub-y')).toBe('-22px');
+
+    zone.dispatchEvent(pointer('pointerup', 200, 120));
+    spectator.detectChanges();
+    expect(directions).toEqual(['up', null]);
+    expect(pad.style.getPropertyValue('--pad-shift-x')).toBe('0px');
+  });
+
+  it('is dragged along by a thumb that strays, so turning back is a short move', () => {
+    pad.dispatchEvent(pointer('pointerdown', 50, 10));
+    // 250 up from a centre at (50, 50): the centre follows to 50 below the thumb.
+    pad.dispatchEvent(pointer('pointermove', 50, -200));
+    spectator.detectChanges();
+    expect(pad.style.getPropertyValue('--pad-shift-y')).toBe('-200px');
+    // 30 back down is already a push down: no lifting the thumb.
+    pad.dispatchEvent(pointer('pointermove', 50, -120));
+    expect(directions).toEqual(['up', 'down']);
+  });
+
+  it('takes only the pad itself with float off', () => {
+    spectator.setInput({ float: false });
+    const zone = spectator.query<HTMLElement>('[data-testid="gamepad-zone"]')!;
+    zone.dispatchEvent(pointer('pointerdown', 200, 150));
+    zone.dispatchEvent(pointer('pointermove', 200, 100));
+    expect(directions).toEqual([]);
+    pad.dispatchEvent(pointer('pointerdown', 50, 10));
+    expect(directions).toEqual(['up']);
+  });
+
+  it('lets go when the browser takes the pointer away', () => {
+    pad.dispatchEvent(pointer('pointerdown', 50, 10));
+    pad.dispatchEvent(pointer('lostpointercapture', 50, 10));
+    expect(directions).toEqual(['up', null]);
+    // Free again: the next thumb takes it.
+    pad.dispatchEvent(pointer('pointerdown', 90, 50, 2));
+    expect(directions).toEqual(['up', null, 'right']);
+  });
+
+  it('plays a ghost thumb with demo on, through the real pad', () => {
+    const frames: FrameRequestCallback[] = [];
+    vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) =>
+      frames.push(callback),
+    );
+    vi.stubGlobal('cancelAnimationFrame', () => undefined);
+    const demo = createComponent({
+      props: { demo: true },
+      detectChanges: false,
+    });
+    const demoPad = demo.query<HTMLElement>('[data-testid="gamepad-pad"]')!;
+    vi.spyOn(demoPad, 'getBoundingClientRect').mockReturnValue(
+      pad.getBoundingClientRect(),
+    );
+    const seen: (string | null)[] = [];
+    demo.component.direction.subscribe((d) => seen.push(d));
+    demo.detectChanges();
+    TestBed.tick();
+    /** Runs every frame asked for, `at` ms into the demo (Angular asks too). */
+    const frame = (at: number) => frames.splice(0).forEach((run) => run(at));
+    frame(0);
+    // 1 s in, the thumb has landed beside the pad and pushed up.
+    frame(700);
+    frame(1000);
+    demo.detectChanges();
+    expect(demo.query('[data-testid="gamepad-thumb"]')).toHaveClass(
+      'gamepad__thumb--down',
+    );
+    expect(demoPad.getAttribute('data-direction')).toBe('up');
+    // Strayed right, dragging the pad, then turned back left.
+    frame(2300);
+    frame(2900);
+    // Lifted between the two gestures.
+    frame(3500);
+    demo.detectChanges();
+    expect(demo.query('[data-testid="gamepad-thumb"]')).not.toHaveClass(
+      'gamepad__thumb--down',
+    );
+    expect(seen).toEqual(['up', 'right', 'left', null]);
+    vi.unstubAllGlobals();
+  });
+
+  it('shows no ghost thumb without demo', () => {
+    expect(spectator.query('[data-testid="gamepad-thumb"]')).toBeNull();
   });
 
   it('fires the actions on touch down', () => {

@@ -75,7 +75,7 @@
     "CONTROLS_TITLE": "Controls",
     "CONTROLS_SUBTITLE": "Two players on one keyboard, or the on-screen controller on a phone.",
     "CONTROLS_PHONE": "Phone",
-    "CONTROLS_PHONE_HINT": "Go full screen on a phone and the controller appears over the arena — the game turns sideways for your thumbs.",
+    "CONTROLS_PHONE_HINT": "Go full screen on a phone and the controller appears over the arena. To move, touch anywhere on the left half: the pad comes to your thumb and follows it.",
     "CTA_FINAL_TITLE": "Ready for battle?",
     "CTA_FINAL_SUBTITLE": "Join the arena and light the fuse.",
     "FACT_1": "Up to 5 online, bots to practise",

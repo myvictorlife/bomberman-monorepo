@@ -285,7 +285,8 @@
           </div>
         </div>
         }
-        <!-- On a phone: the game's own controller, laid over a little match. -->
+        <!-- On a phone: the game's own controller, laid over a little match,
+             a ghost thumb showing how the pad follows it. -->
         <div class="home-card home-keys home-keys--phone">
           <p class="home-keys__player">
             {{ 'HOME.CONTROLS_PHONE' | translate }}
@@ -296,7 +297,7 @@
               data-video="hero"
               class="home-phone__screen"
             ></canvas>
-            <lib-virtual-gamepad />
+            <lib-virtual-gamepad [demo]="true" />
           </div>
           <ul class="home-phone__legend" role="list">
             <li>

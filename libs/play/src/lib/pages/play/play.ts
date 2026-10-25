@@ -28,6 +28,7 @@ import { DEFAULT_MAP_ID, isMapId, MapId, PlayerSetup } from '@libs/game-core';
 import {
   AlertComponent,
   ButtonComponent,
+  holdZoom,
   PadDirection,
   PlayerBadgesComponent,
   SegmentedControlComponent,
@@ -242,6 +243,10 @@ export class Play {
   );
 
   constructor() {
+    // No browser zoom while the arena fills the screen: two thumbs read as a pinch.
+    effect((onCleanup) => {
+      if (this.game()) onCleanup(holdZoom());
+    });
     // Phaser fits the canvas to the host's `getBoundingClientRect`, which a
     // turned ancestor reports in screen terms — width and height swapped.
     // Give it the host's own terms back while the game is sideways.

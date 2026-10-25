@@ -575,18 +575,16 @@
     0 0 0 1px var(--color-border-strong),
     var(--shadow-lg);
   overflow: hidden;
+  container-type: size;
 
-  // The controller's own sizes, scaled to a picture of a phone.
-  --gamepad-pad: 5.5rem;
-  --gamepad-button: 3.25rem;
-  --gamepad-gutter: 0.6rem;
-
-  // Narrow cards shrink the controller with the picture.
-  @media (max-width: 480px) {
-    --gamepad-pad: 3.75rem;
-    --gamepad-button: 2.1rem;
-    --gamepad-gutter: 0.35rem;
-  }
+  // The controller in the game's own proportions, as shares of the picture's
+  // height, so at any size it sits in the slack beside the arena, clear of
+  // it, the way it does on a phone. The buttons' gap is a token the
+  // controller reads; it shrinks with the rest.
+  --gamepad-pad: 32cqh;
+  --gamepad-button: 16cqh;
+  --gamepad-gutter: 5cqh;
+  --space-3: 3cqh;
 }
 
 .home-phone__screen {

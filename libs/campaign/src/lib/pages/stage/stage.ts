@@ -27,6 +27,7 @@ import {
   AlertComponent,
   ButtonComponent,
   enterFullScreen,
+  holdZoom,
   isTouchScreen,
   leaveFullScreen,
   measureTurned,
@@ -194,6 +195,10 @@ export class Stage {
   readonly bossKey = bossKey;
 
   constructor() {
+    // No browser zoom while the arena fills the screen: two thumbs read as a pinch.
+    effect((onCleanup) => {
+      if (this.game()) onCleanup(holdZoom());
+    });
     // A cleared stage counts once, the moment the rules say so, and the kit
     // the player cleared it with goes on to the next stage.
     // A lost one costs everything: the kit and the area's stages.

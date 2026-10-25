@@ -1,5 +1,6 @@
 // The controller takes the whole area it is laid over, solid only where the
-// thumbs land: the pad at bottom-left, the buttons at bottom-right.
+// thumbs land: the left half for the pad (which rests bottom-left), the
+// buttons at bottom-right.
 :host {
   position: absolute;
   inset: 0;
@@ -19,9 +20,26 @@
   -webkit-touch-callout: none;
 }
 
+// Where a thumb takes the pad: the left half, floating; only the pad itself
+// when the page needs the rest of that half for something else.
+.gamepad__zone {
+  display: flex;
+  align-self: stretch;
+  align-items: inherit;
+  flex: 1;
+  max-width: 50%;
+  pointer-events: none;
+  touch-action: none;
+}
+
+.gamepad__zone--float {
+  pointer-events: auto;
+}
+
 .gamepad__pad {
-  --pad: var(--gamepad-pad, clamp(7rem, 32vmin, 11rem));
+  --pad: var(--gamepad-pad, clamp(7.5rem, 34vmin, 11rem));
   position: relative;
+  flex: none;
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
   grid-template-rows: 1fr 1fr 1fr;
@@ -39,6 +57,8 @@
   pointer-events: auto;
   touch-action: none;
   backdrop-filter: blur(2px);
+  // Moved under a thumb that landed beside it, or dragged along by one that strayed.
+  transform: translate(var(--pad-shift-x, 0), var(--pad-shift-y, 0));
 
   &[data-direction] {
     border-color: rgb(255 255 255 / 0.55);
@@ -74,13 +94,49 @@
   text-shadow: 0 0 10px rgb(255 255 255 / 0.8);
 }
 
+// The thumb's spot: it follows the finger, so the hand can feel where it pushes.
 .gamepad__hub {
   grid-area: hub;
-  width: 30%;
-  height: 30%;
+  width: calc(var(--pad) * 0.34);
+  height: calc(var(--pad) * 0.34);
   margin: auto;
+  border: 2px solid rgb(255 255 255 / 0.35);
   border-radius: 50%;
-  background: rgb(255 255 255 / 0.18);
+  background: rgb(255 255 255 / 0.22);
+  transform: translate(var(--hub-x, 0), var(--hub-y, 0));
+}
+
+// The demo's ghost thumb, where the finger is: it presses in as it lands
+// and fades out where it lifts. It moves every frame, so only its press and
+// fade are eased.
+.gamepad__thumb {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: calc(var(--pad) * 0.42);
+  height: calc(var(--pad) * 0.42);
+  margin: calc(var(--pad) * -0.21);
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 40% 35%,
+    rgb(255 255 255 / 0.7),
+    rgb(255 255 255 / 0.25)
+  );
+  box-shadow:
+    0 0 0 2px rgb(255 255 255 / 0.55),
+    0 4px 14px rgb(0 0 0 / 0.45);
+  opacity: 0;
+  pointer-events: none;
+  translate: var(--thumb-x, 0) var(--thumb-y, 0);
+  scale: 1.35;
+  transition:
+    opacity 160ms ease,
+    scale 160ms ease;
+}
+
+.gamepad__thumb--down {
+  opacity: 1;
+  scale: 1;
 }
 
 // Where the thumb lands on a pad held sideways: the bomb nearest and biggest,

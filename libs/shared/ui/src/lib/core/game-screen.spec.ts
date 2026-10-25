@@ -1,5 +1,6 @@
 import {
   enterFullScreen,
+  holdZoom,
   isTouchScreen,
   leaveFullScreen,
   lockOrientation,
@@ -9,6 +10,7 @@ import {
   unlockOrientation,
   UPRIGHT_KEY,
   watchPortrait,
+  withoutZoom,
   writeUpright,
 } from './game-screen';
 
@@ -121,5 +123,70 @@ describe('game screen', () => {
     vi.stubGlobal('matchMedia', undefined);
     expect(watchPortrait(() => undefined)()).toBeUndefined();
     expect(isTouchScreen()).toBe(false);
+  });
+
+  describe('zoom', () => {
+    let meta: HTMLMetaElement;
+    const viewport = 'width=device-width, initial-scale=1, viewport-fit=cover';
+
+    beforeEach(() => {
+      meta = document.createElement('meta');
+      meta.name = 'viewport';
+      meta.content = viewport;
+      document.head.append(meta);
+    });
+
+    afterEach(() => meta.remove());
+
+    /** A cancellable event, and whether a listener cancelled it. */
+    function cancelled(type: string, touches = 1): boolean {
+      const event = new Event(type, { cancelable: true, bubbles: true });
+      Object.defineProperty(event, 'touches', { value: { length: touches } });
+      document.body.dispatchEvent(event);
+      return event.defaultPrevented;
+    }
+
+    it('turns zoom off in the viewport, keeping the rest of it', () => {
+      expect(withoutZoom(viewport)).toBe(
+        'width=device-width, viewport-fit=cover, initial-scale=1, maximum-scale=1, user-scalable=no',
+      );
+      expect(withoutZoom('width=device-width, maximum-scale=5')).toBe(
+        'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no',
+      );
+      expect(withoutZoom(null)).toContain('width=device-width');
+    });
+
+    it('holds the zoom while a game is on screen, and gives it back after', () => {
+      const root = document.documentElement.style.touchAction;
+      const body = document.body.style.touchAction;
+      const release = holdZoom();
+      expect(meta.content).toContain('user-scalable=no');
+      expect(document.documentElement.style.touchAction).toBe('none');
+      expect(document.body.style.touchAction).toBe('none');
+      // Safari's pinch and double tap, and a two-finger move as a backstop.
+      expect(cancelled('gesturestart')).toBe(true);
+      expect(cancelled('gesturechange')).toBe(true);
+      expect(cancelled('dblclick')).toBe(true);
+      expect(cancelled('touchmove', 2)).toBe(true);
+      // One thumb on the pad still moves freely.
+      expect(cancelled('touchmove', 1)).toBe(false);
+
+      release();
+      expect(meta.content).toBe(viewport);
+      expect(document.documentElement.style.touchAction).toBe(root);
+      expect(document.body.style.touchAction).toBe(body);
+      expect(cancelled('gesturestart')).toBe(false);
+      expect(cancelled('touchmove', 2)).toBe(false);
+    });
+
+    it('lets go only with the last hold, and ignores a second release', () => {
+      const first = holdZoom();
+      const second = holdZoom();
+      first();
+      first();
+      expect(meta.content).toContain('user-scalable=no');
+      second();
+      expect(meta.content).toBe(viewport);
+    });
   });
 });
