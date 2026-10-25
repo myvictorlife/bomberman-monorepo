@@ -14,6 +14,7 @@ import { firebaseTokenVerifier } from './auth';
 import { httpHandler } from './http';
 import { meHandler } from './me';
 import { loadConfig } from './config';
+import { corsOrigin } from './origin';
 import { RecordsStore } from './records-store';
 import { RulesStore } from './rules-store';
 
@@ -76,19 +77,35 @@ server.define(
     records,
     admins: config.admins,
     saveRules: (next) => rulesStore.save(next),
+    maxConnectionsPerIp: config.maxConnectionsPerIp,
+    allowedOrigins: config.allowedOrigins,
   }),
 );
 // The stages room: a team plays the campaign's stages together. Its rules
 // are fixed (no admin changes are saved for it); the records are shared.
 server.define(
   STAGES_ROOM,
-  createArenaRoom({ rules: STAGES_ROOM_RULES, verify, records }),
+  createArenaRoom({
+    rules: STAGES_ROOM_RULES,
+    verify,
+    records,
+    maxConnectionsPerIp: config.maxConnectionsPerIp,
+    allowedOrigins: config.allowedOrigins,
+  }),
 );
 
 // One public room, created below by the server itself: a client may join it,
 // never make another. Colyseus exposes `create` and `joinOrCreate` by default,
 // and a room that outlives its last visitor would pile up with every request.
 matchMaker.controller.exposedMethods = ['join', 'joinById', 'reconnect'];
+// Matchmaking answers only the allowed pages. Colyseus echoes any origin by
+// default; a refused one gets the first allowed origin, which its browser
+// rejects. The room's `onAuth` refuses the join itself either way.
+matchMaker.controller.getCorsHeaders = (headers) =>
+  corsOrigin(headers.get('origin'), config.allowedOrigins) ?? {
+    'Access-Control-Allow-Origin': config.allowedOrigins[0] ?? '*',
+    Vary: 'Origin',
+  };
 
 await server.listen(config.port, config.host ?? undefined);
 // Our routes answer first; what they do not claim goes on to Colyseus' listener
@@ -99,8 +116,16 @@ const colyseusListeners = httpServer.listeners('request') as ((
   res: ServerResponse,
 ) => void)[];
 httpServer.removeAllListeners('request');
-const ours = httpHandler(() => records.all().values(), roomStatus);
-const me = meHandler({ verify, records });
+const ours = httpHandler(
+  () => records.all().values(),
+  roomStatus,
+  config.allowedOrigins,
+);
+const me = meHandler({
+  verify,
+  records,
+  allowedOrigins: config.allowedOrigins,
+});
 httpServer.on('request', (req: IncomingMessage, res: ServerResponse) => {
   if (ours(req, res) || me(req, res)) return;
   for (const next of colyseusListeners) next.call(httpServer, req, res);
@@ -129,5 +154,5 @@ console.log(
   `[game-server] ws://${config.host ?? 'localhost'}:${config.port} — rooms "${ARENA_ROOM}" and "${STAGES_ROOM}" ready`,
 );
 console.log(
-  `[game-server] rules: ${JSON.stringify(rules)} · admins: ${config.admins.length}`,
+  `[game-server] rules: ${JSON.stringify(rules)} · admins: ${config.admins.length} · origins: ${config.allowedOrigins.join(', ') || 'any'}`,
 );

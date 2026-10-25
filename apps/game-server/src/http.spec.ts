@@ -23,6 +23,7 @@ function call(
   handler: ReturnType<typeof httpHandler>,
   method: string,
   url: string,
+  origin?: string,
 ) {
   let status = 0;
   let headers: Record<string, string> = {};
@@ -36,7 +37,10 @@ function call(
       body = chunk ?? '';
     },
   } as unknown as ServerResponse;
-  const handled = handler({ method, url } as IncomingMessage, res);
+  const handled = handler(
+    { method, url, headers: origin ? { origin } : {} } as IncomingMessage,
+    res,
+  );
   return { status, headers, body, handled };
 }
 
@@ -124,5 +128,40 @@ describe('httpHandler', () => {
     failing({ method: 'GET', url: '/status' } as IncomingMessage, res2);
     await new Promise((r) => setTimeout(r, 0));
     expect(res2.writeHead).toHaveBeenCalledWith(503, expect.anything());
+  });
+
+  describe('with allowed origins', () => {
+    const strict = httpHandler(
+      () => [record('a', 1, 1)],
+      () => Promise.resolve(null),
+      ['https://game.example'],
+    );
+
+    it('answers the allowed page, naming it rather than *', () => {
+      const { status, headers } = call(
+        strict,
+        'GET',
+        '/ranking',
+        'https://game.example',
+      );
+      expect(status).toBe(200);
+      expect(headers['Access-Control-Allow-Origin']).toBe(
+        'https://game.example',
+      );
+      expect(headers['Vary']).toBe('Origin');
+    });
+
+    it('turns away another site, and a request from no page at all', () => {
+      for (const path of ['/ranking', '/status']) {
+        const other = call(strict, 'GET', path, 'https://evil.example');
+        expect(other).toMatchObject({ status: 403, handled: true });
+        expect(other.headers['Access-Control-Allow-Origin']).toBeUndefined();
+        expect(call(strict, 'GET', path).status).toBe(403);
+      }
+    });
+
+    it('keeps the root open for the health check', () => {
+      expect(call(strict, 'GET', '/').status).toBe(200);
+    });
   });
 });

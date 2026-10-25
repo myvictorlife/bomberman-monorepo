@@ -35,7 +35,20 @@ tunnel on the same machine publishes the server), `FIREBASE_PROJECT_ID` (falls b
 `OUTSIDERS` (how many of the queue stand outside during a round; default 5,
 `0` for none).
 `ADMINS` (comma-separated e-mails allowed to change the room's rules from
-the page; otherwise the `admins` array of `config/game-server.json`).
+the page; otherwise the `admins` array of `config/game-server.json`),
+`MAX_CONNECTIONS_PER_IP` (most simultaneous connections one address may hold,
+default 20, `0` to turn the limit off — a soft guard so one script cannot open
+sockets until the room fills and real players are turned away; checked in
+`onAuth`), `ALLOWED_ORIGINS` (comma-separated pages allowed to use the server,
+e.g. `https://game.example.com`; otherwise the `allowedOrigins` array of
+`config/game-server.json`; empty lets every origin in). With origins set,
+`onAuth` refuses a join whose `Origin` is not listed — or missing, as a script
+sends none — with `forbidden-origin`; `/ranking`, `/status` and `/me` answer
+403 and name the origin instead of `*`; matchmaking's CORS stops echoing any
+origin. Loopback origins (`localhost`, `127.0.0.1`, `[::1]`, any port) are
+always allowed, so local development keeps working; `GET /` stays open for the
+tunnel's health check. A soft guard — a script can forge the header — that
+stops other sites from embedding the room and the copied-and-pasted bot.
 Without a project id nobody can sign in, but guests still play (below):
 the ranking stays empty, since only accounts are counted.
 
@@ -312,7 +325,19 @@ forgets all of it, along with who was silenced.
   controller drives. Keys and touch on one player share the tracker, so
   the last one pressed wins either way.
 - `/play` has the controller already: `lib-virtual-gamepad` (`@libs/ui`,
-  a D-pad resolved by `dragDirection` plus bomb/ability/detonate buttons)
+  a D-pad resolved by `dragDirection` plus bomb/ability/detonate buttons;
+  the pad floats — any touch on the left half takes it and `followCentre`
+  drags it after a straying thumb — unless the page sets `[float]="false"`
+  while a result or "tap to play" screen needs those taps)
+  and, while game mode is on, `holdZoom()` (`game-screen.ts`) keeps the
+  browser from zooming: the viewport gets `user-scalable=no` (Chrome obeys;
+  on iOS the swap resets a zoom already made), `touch-action: none` covers
+  the document, and Safari's `gesturestart`/`gesturechange`, two-finger
+  `touchmove` and `dblclick` are cancelled with `{ passive: false }`. Every
+  game page holds it from an `effect` on its game-mode signal. A
+  `preventDefault()` on `pointerdown` does not stop a zoom — only the
+  mouse events a touch fakes. Pinch and double tap are not something
+  Playwright can fake: check them on a real iPhone and Android phone
   laid over a full-screen game mode (`play--game`, fixed over the page at
   `--z-modal`). A touch screen — `(pointer: coarse)` or the first touch
   pointer — goes straight to game mode behind "tap to play" and drops the

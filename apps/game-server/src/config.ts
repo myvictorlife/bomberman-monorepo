@@ -4,6 +4,7 @@ import {
 } from '@libs/game-protocol';
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { normalizeOrigin } from './origin';
 
 export interface ServerConfig {
   port: number;
@@ -19,11 +20,24 @@ export interface ServerConfig {
   outsiders: number;
   /** E-mails (lower case) of the accounts that may change the room's rules from the page. */
   admins: string[];
+  /**
+   * Most simultaneous connections one address may hold; `0` turns the limit
+   * off. A soft guard against one script opening sockets until the room fills.
+   */
+  maxConnectionsPerIp: number;
+  /**
+   * The pages allowed to use the server (`https://example.com`); empty lets
+   * every origin in. See `originAllowed` in `origin.ts`.
+   */
+  allowedOrigins: string[];
 }
+
+/** The default for {@link ServerConfig.maxConnectionsPerIp}: enough for a shared home or office, far below a flood. */
+const DEFAULT_MAX_CONNECTIONS_PER_IP = 20;
 
 /**
  * Environment first (`PORT`, `HOST`, `FIREBASE_PROJECT_ID`, `DATA_DIR`,
- * `OUTSIDERS`, `ADMINS`), then the same `config/firebase.json` and `config/game-server.json`
+ * `OUTSIDERS`, `ADMINS`, `MAX_CONNECTIONS_PER_IP`, `ALLOWED_ORIGINS`), then the same `config/firebase.json` and `config/game-server.json`
  * the web app is generated from, so a local setup has one place to fill in.
  */
 export function loadConfig(
@@ -32,6 +46,7 @@ export function loadConfig(
 ): ServerConfig {
   const port = Number(env['PORT']);
   const outsiders = Number(env['OUTSIDERS']);
+  const maxConnectionsPerIp = Number(env['MAX_CONNECTIONS_PER_IP']);
   const gameServer = readJson(join(cwd, 'config/game-server.json'));
   const host = env['HOST'] ?? gameServer?.['host'];
   return {
@@ -49,6 +64,16 @@ export function loadConfig(
       env['ADMINS']?.split(',') ??
         (Array.isArray(gameServer?.['admins']) ? gameServer['admins'] : []),
     ),
+    maxConnectionsPerIp:
+      Number.isInteger(maxConnectionsPerIp) && maxConnectionsPerIp >= 0
+        ? maxConnectionsPerIp
+        : DEFAULT_MAX_CONNECTIONS_PER_IP,
+    allowedOrigins: origins(
+      env['ALLOWED_ORIGINS']?.split(',') ??
+        (Array.isArray(gameServer?.['allowedOrigins'])
+          ? gameServer['allowedOrigins']
+          : []),
+    ),
   };
 }
 
@@ -57,6 +82,15 @@ const emails = (values: unknown[]): string[] =>
     .filter((v): v is string => typeof v === 'string')
     .map((v) => v.trim().toLowerCase())
     .filter((v) => v.includes('@'));
+
+const origins = (values: unknown[]): string[] => [
+  ...new Set(
+    values
+      .filter((v): v is string => typeof v === 'string')
+      .map(normalizeOrigin)
+      .filter((v): v is string => v !== null),
+  ),
+];
 
 /** The file's top-level object, or `null` when it is missing, unreadable or not an object. */
 function readJson(path: string): Record<string, unknown> | null {

@@ -7,6 +7,7 @@ import {
 import { parseProfileUpdate, ProfileUpdateError } from '@libs/game-protocol';
 import { IncomingMessage, ServerResponse } from 'node:http';
 import { TokenVerifier, VerifiedAccount } from './auth';
+import { corsOrigin } from './origin';
 
 /** A profile update is a few short fields; anything bigger is not one. */
 const MAX_BODY_BYTES = 4 * 1024;
@@ -21,6 +22,8 @@ export interface MeDeps {
     putProfile(record: PlayerRecord): void;
   };
   now?: () => number;
+  /** The pages allowed to call `/me`; empty or absent lets every origin in. */
+  allowedOrigins?: readonly string[];
 }
 
 /**
@@ -34,14 +37,15 @@ export interface MeDeps {
  *   account), or 200 with the new profile. The room is told, and re-sends the
  *   ranking.
  *
- * Open to any origin like `/ranking`: the bearer token, not a cookie, is the
- * credential, so another site can do nothing with it it could not do anyway.
+ * Open to the same origins as `/ranking` (any, unless `allowedOrigins` is
+ * set; 403 otherwise): the bearer token, not a cookie, is the credential.
  * Never cached. Claims `/me` only — see `httpHandler` on why.
  */
 export function meHandler(deps: MeDeps) {
   const now = deps.now ?? Date.now;
+  // Each response's CORS origin, set once its request is let in.
+  const cors = new WeakMap<ServerResponse, Record<string, string>>();
   const headers = {
-    'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, PUT, OPTIONS',
     'Access-Control-Allow-Headers': 'Authorization, Content-Type',
     'Access-Control-Max-Age': '600',
@@ -49,6 +53,7 @@ export function meHandler(deps: MeDeps) {
   };
   const reply = (res: ServerResponse, status: number, body?: unknown) => {
     res.writeHead(status, {
+      ...cors.get(res),
       ...headers,
       ...(body === undefined
         ? {}
@@ -119,6 +124,13 @@ export function meHandler(deps: MeDeps) {
   return (req: IncomingMessage, res: ServerResponse): boolean => {
     const path = (req.url ?? '/').split('?')[0];
     if (path !== '/me') return false;
+    const allowed = corsOrigin(req.headers?.origin, deps.allowedOrigins ?? []);
+    if (!allowed) {
+      res.writeHead(403, { Vary: 'Origin' });
+      res.end();
+      return true;
+    }
+    cors.set(res, allowed);
     if (req.method === 'OPTIONS') {
       reply(res, 204);
       return true;

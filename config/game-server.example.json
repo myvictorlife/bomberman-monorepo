@@ -1,4 +1,5 @@
 {
   "url": "https://game.example.com",
-  "admins": ["leader@example.com"]
+  "admins": ["leader@example.com"],
+  "allowedOrigins": ["https://game.example.com"]
 }

@@ -35,7 +35,12 @@ function memoryRecords(initial: PlayerRecord[] = []) {
 async function call(
   handler: ReturnType<typeof meHandler>,
   method: string,
-  options: { url?: string; token?: string; body?: string } = {},
+  options: {
+    url?: string;
+    token?: string;
+    body?: string;
+    origin?: string;
+  } = {},
 ) {
   const req = Readable.from(
     options.body === undefined ? [] : [Buffer.from(options.body)],
@@ -43,7 +48,10 @@ async function call(
   Object.assign(req, {
     method,
     url: options.url ?? '/me',
-    headers: options.token ? { authorization: `Bearer ${options.token}` } : {},
+    headers: {
+      ...(options.token ? { authorization: `Bearer ${options.token}` } : {}),
+      ...(options.origin ? { origin: options.origin } : {}),
+    },
   });
   let status = 0;
   let headers: Record<string, string> = {};
@@ -88,6 +96,32 @@ describe('meHandler', () => {
     expect(status).toBe(204);
     expect(headers['Access-Control-Allow-Methods']).toContain('PUT');
     expect(headers['Access-Control-Allow-Headers']).toContain('Authorization');
+  });
+
+  it('answers only the allowed pages once origins are set', async () => {
+    const handler = meHandler({
+      verify: fakeVerify,
+      records: memoryRecords(),
+      allowedOrigins: ['https://game.example'],
+    });
+
+    const allowed = await call(handler, 'GET', {
+      token: 'a:A:yes',
+      origin: 'https://game.example',
+    });
+    expect(allowed.status).toBe(200);
+    expect(allowed.headers['Access-Control-Allow-Origin']).toBe(
+      'https://game.example',
+    );
+    expect(
+      (
+        await call(handler, 'GET', {
+          token: 'a:A:yes',
+          origin: 'https://x.example',
+        })
+      ).status,
+    ).toBe(403);
+    expect((await call(handler, 'GET', { token: 'a:A:yes' })).status).toBe(403);
   });
 
   it('is unavailable without a Firebase project', async () => {

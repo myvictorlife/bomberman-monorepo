@@ -24,6 +24,8 @@ describe('loadConfig', () => {
       dataDir: join(dir, '.data/game-server'),
       outsiders: 5,
       admins: [],
+      maxConnectionsPerIp: 20,
+      allowedOrigins: [],
     });
   });
 
@@ -32,6 +34,16 @@ describe('loadConfig', () => {
     expect(loadConfig({ OUTSIDERS: '3' }, workspace()).outsiders).toBe(3);
     expect(loadConfig({ OUTSIDERS: '-1' }, workspace()).outsiders).toBe(5);
     expect(loadConfig({ OUTSIDERS: 'many' }, workspace()).outsiders).toBe(5);
+  });
+
+  it('reads the per-address connection cap from MAX_CONNECTIONS_PER_IP, keeping the default on a bad value', () => {
+    const cap = (env: Record<string, string>) =>
+      loadConfig(env, workspace()).maxConnectionsPerIp;
+    expect(cap({})).toBe(20);
+    expect(cap({ MAX_CONNECTIONS_PER_IP: '8' })).toBe(8);
+    expect(cap({ MAX_CONNECTIONS_PER_IP: '0' })).toBe(0);
+    expect(cap({ MAX_CONNECTIONS_PER_IP: '-3' })).toBe(20);
+    expect(cap({ MAX_CONNECTIONS_PER_IP: 'lots' })).toBe(20);
   });
 
   it('reads the project id from config/firebase.json', () => {
@@ -66,6 +78,8 @@ describe('loadConfig', () => {
       dataDir: '/srv/data',
       outsiders: 2,
       admins: [],
+      maxConnectionsPerIp: 20,
+      allowedOrigins: [],
     });
   });
 
@@ -91,6 +105,23 @@ describe('loadConfig', () => {
     expect(loadConfig({ HOST: '::1' }, dir).host).toBe('::1');
     expect(loadConfig({}, workspace(undefined, '{"host":""}')).host).toBeNull();
     expect(loadConfig({}, workspace(undefined, '{"host":3}')).host).toBeNull();
+  });
+
+  it('reads the allowed origins from config/game-server.json, ALLOWED_ORIGINS winning', () => {
+    const dir = workspace(
+      undefined,
+      '{"allowedOrigins":["https://Game.Example/", "not a url", 3, "https://game.example"]}',
+    );
+    expect(loadConfig({}, dir).allowedOrigins).toEqual([
+      'https://game.example',
+    ]);
+    expect(
+      loadConfig(
+        { ALLOWED_ORIGINS: 'https://a.example, https://b.example' },
+        dir,
+      ).allowedOrigins,
+    ).toEqual(['https://a.example', 'https://b.example']);
+    expect(loadConfig({}, workspace()).allowedOrigins).toEqual([]);
   });
 
   it('lets ADMINS in the environment replace the file', () => {

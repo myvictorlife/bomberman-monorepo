@@ -140,6 +140,24 @@ beforeAll(async () => {
       records,
     }),
   );
+  server.define(
+    'capped',
+    createArenaRoom({
+      rules: RULES,
+      verify: fakeVerify,
+      records,
+      maxConnectionsPerIp: 2,
+    }),
+  );
+  server.define(
+    'site-only',
+    createArenaRoom({
+      rules: RULES,
+      verify: fakeVerify,
+      records,
+      allowedOrigins: ['https://game.example'],
+    }),
+  );
   await server.listen(PORT);
 });
 
@@ -1386,6 +1404,35 @@ describe('ArenaRoom', () => {
       );
       expect(after.queue.map((q) => q.id)).toEqual(['sta', 'stb']);
       expect(after.stage?.id).toBe('gramado-1');
+    });
+  });
+
+  describe('abuse guards', () => {
+    it('refuses a connection once the address is at the per-IP cap', async () => {
+      // The "capped" room allows two at a time; the tests all connect from
+      // localhost, so a third is one address over the limit.
+      await connect('capped');
+      await connect('capped');
+      await expect(connect('capped')).rejects.toBeDefined();
+    });
+
+    it('refuses a connection from no page at all once origins are set', async () => {
+      // The test client is a script: it sends no Origin, like a bot would.
+      await expect(connect('site-only')).rejects.toThrow(/forbidden-origin/);
+    });
+
+    it('turns away a flood of token checks on one connection, but not a normal sign-in', async () => {
+      const peer = await connect('capped');
+      const token = 'thr:Thr:yes';
+      // The first check is a normal sign-in: it goes through.
+      peer.room.send(CLIENT_MESSAGE.hello, { token });
+      await peer.next<PlayerProfile>(SERVER_MESSAGE.profile);
+      // Five more in the same window: once over the limit, a check is turned
+      // away with a plain bad-message, before any token is verified.
+      for (let i = 0; i < 5; i++)
+        peer.room.send(CLIENT_MESSAGE.hello, { token });
+      const error = await peer.next<{ code: string }>(SERVER_MESSAGE.error);
+      expect(error.code).toBe('bad-message');
     });
   });
 });

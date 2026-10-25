@@ -64,6 +64,7 @@ import {
 } from '@libs/game-protocol';
 import { randomUUID } from 'node:crypto';
 import { TokenVerifier, VerifiedAccount } from './auth';
+import { originAllowed } from './origin';
 import { RecordsStore } from './records-store';
 
 export interface ArenaRoomDeps {
@@ -80,6 +81,14 @@ export interface ArenaRoomDeps {
   random?: () => number;
   /** How long a dropped player keeps their place; see {@link RECONNECT_GRACE_MS}. */
   reconnectGraceMs?: number;
+  /**
+   * Most simultaneous connections from one address; `0` or absent turns the
+   * limit off. A soft guard so one script cannot open sockets until the room
+   * is full and real players are turned away.
+   */
+  maxConnectionsPerIp?: number;
+  /** The pages allowed to connect; empty or absent lets every origin in. See {@link originAllowed}. */
+  allowedOrigins?: readonly string[];
 }
 
 /**
@@ -133,6 +142,10 @@ export function clientAddress(
 const LOBBY_CHECK_MS = 250;
 const RANKING_SIZE = 10;
 
+/** The most token checks one connection may ask for within {@link HELLO_WINDOW_MS}. */
+const HELLO_LIMIT = 5;
+const HELLO_WINDOW_MS = 10_000;
+
 interface HeldInput {
   direction: InputMessage['direction'];
   bomb: boolean;
@@ -183,6 +196,11 @@ export function createArenaRoom(deps: ArenaRoomDeps) {
     private readonly lastInputAt = new Map<string, number>();
     /** Players whose last connection dropped, waiting to come back before they lose their place. */
     private readonly leaving = new Map<string, Delayed>();
+    /** Token checks per connection, to bound the crypto work one socket can demand. */
+    private readonly helloAttempts = new Map<
+      string,
+      { count: number; since: number }
+    >();
     private pendingEvents: GameEvent[] = [];
     private unwatchProfiles: (() => void) | null = null;
     private ticksSinceFrame = 0;
@@ -249,13 +267,37 @@ export function createArenaRoom(deps: ArenaRoomDeps) {
       this.clock.setInterval(() => this.refreshLobby(), LOBBY_CHECK_MS);
     }
 
-    /** Notes where the connection comes from; anyone may connect. */
+    /**
+     * Notes where the connection comes from; anyone may connect, unless the
+     * page is not one of the allowed origins, or this address already holds
+     * the cap of live connections — then it is refused, so one script cannot
+     * fill the room and lock real players out.
+     */
     override onAuth(
       _client: Client,
       _options: unknown,
       context: AuthContext,
     ): { address: string } {
-      return { address: clientAddress(context) };
+      if (
+        !originAllowed(context.headers.get('origin'), deps.allowedOrigins ?? [])
+      )
+        throw new Error('forbidden-origin');
+      const address = clientAddress(context);
+      const cap = deps.maxConnectionsPerIp ?? 0;
+      if (cap > 0 && this.connectionsFrom(address) >= cap)
+        throw new Error('too-many-connections');
+      return { address };
+    }
+
+    /** Live connections (already joined) that came from `address`. */
+    private connectionsFrom(address: string): number {
+      let count = 0;
+      for (const client of this.clients)
+        if (
+          (client.auth as { address?: string } | undefined)?.address === address
+        )
+          count++;
+      return count;
     }
 
     override onJoin(client: Client): void {
@@ -305,6 +347,7 @@ export function createArenaRoom(deps: ArenaRoomDeps) {
       this.accounts.delete(client.sessionId);
       this.guests.delete(client.sessionId);
       this.chat.forget(client.sessionId);
+      this.helloAttempts.delete(client.sessionId);
       // One viewer fewer, whatever happens to the place.
       this.refreshLobby();
       // Another tab of the same account keeps the place. Otherwise the place is
@@ -441,6 +484,10 @@ export function createArenaRoom(deps: ArenaRoomDeps) {
       const hello = parseHello(message);
       if (!hello) return this.fail(client, 'bad-message');
       if (!deps.verify) return this.fail(client, 'auth-required');
+      // Too many checks on this socket in a short window: refuse before the
+      // crypto, so a connection cannot spend the server on verify attempts.
+      if (!this.allowHello(client.sessionId))
+        return this.fail(client, 'bad-message');
 
       let account: VerifiedAccount;
       try {
@@ -469,6 +516,22 @@ export function createArenaRoom(deps: ArenaRoomDeps) {
       );
       client.send(SERVER_MESSAGE.admin, { admin: this.isAdmin(account) });
       if (!account.emailVerified) this.fail(client, 'email-not-verified');
+    }
+
+    /**
+     * At most {@link HELLO_LIMIT} token checks per {@link HELLO_WINDOW_MS} on
+     * one connection: a bound on the crypto work a single socket can demand.
+     */
+    private allowHello(sessionId: string): boolean {
+      const at = now();
+      const seen = this.helloAttempts.get(sessionId);
+      if (!seen || at - seen.since > HELLO_WINDOW_MS) {
+        this.helloAttempts.set(sessionId, { count: 1, since: at });
+        return true;
+      }
+      if (seen.count >= HELLO_LIMIT) return false;
+      seen.count++;
+      return true;
     }
 
     /**
