@@ -73,3 +73,6 @@ hosting/dist/
 # Promo videos and their thumbnails, rendered locally
 /detona-angular-demo*
 *.mp4
+
+# Instagram posts and art, made locally — never committed
+/instagram/
