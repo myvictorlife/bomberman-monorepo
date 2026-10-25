@@ -13,6 +13,10 @@ config file. Ordinary app-level additions are minor.
 
 ### Changed
 
+- **An outsider who gets in comes in wearing the vest, for 3 s.** The
+  thrower whose bomb takes someone's place used to get a hidden 1 s shield;
+  now it is the vest's (`ENTRY_SHIELD_TICKS` 3 s, on `vestUntilTick`): the
+  same flicker and HUD countdown as the item, so everyone sees it.
 - **The touch D-pad floats and grows.** A thumb landing anywhere on the left
   half of the screen now takes the pad, which jumps under it; a thumb that
   strays past the rim drags the pad along (`followCentre`), so a drifting

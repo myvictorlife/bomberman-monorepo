@@ -930,8 +930,8 @@ function hitPlayer(
 
 /**
  * An outsider's bomb got someone: the thrower steps in where the victim fell,
- * with the starting kit and a moment of immunity to the flame still burning
- * there. The victim is out as usual; the round has one more player in it.
+ * with the starting kit and the vest for a few seconds — immune to the
+ * flame still burning there, and to whatever comes next. The victim is out as usual; the round has one more player in it.
  */
 function enterArena(state: GameState, thrower: Outsider, victim: Player): void {
   removeOutsider(state, thrower.id);
@@ -944,7 +944,7 @@ function enterArena(state: GameState, thrower: Outsider, victim: Player): void {
   const entrant = old
     ? newPlayer(thrower, old.slot, col, row, old.color)
     : newPlayer(thrower, victim.slot, col, row, victim.color);
-  entrant.shieldedUntilTick = state.tick + ENTRY_SHIELD_TICKS;
+  entrant.vestUntilTick = state.tick + ENTRY_SHIELD_TICKS;
   if (old) state.players[fallen] = entrant;
   else state.players.push(entrant);
   state.events.push({

@@ -121,15 +121,16 @@ export const MAX_PLAYERS = SPAWN_CELLS.length;
  * throw bombs in. A thrown bomb lands {@link OUTSIDER_THROW_CELLS} cells in
  * from the wall (further if that cell is taken), after a short flight, and
  * burns like a starting bomb. A kill puts the thrower in the round, on the
- * victim's cell, untouchable for {@link ENTRY_SHIELD_TICKS} — the flame that
- * made the kill is still burning there.
+ * victim's cell, in the vest for {@link ENTRY_SHIELD_TICKS} — the flame that
+ * made the kill is still burning there, and the others get a moment to see
+ * them coming: the vest flickers and counts down as when it is picked up.
  */
 export const OUTSIDER_THROW_CELLS = 3;
 export const OUTSIDER_THROW_TICKS = Math.round(0.6 * TICK_RATE);
 export const OUTSIDER_BOMB_RANGE = START_FIRE;
 /** Tiles per second along the border. */
 export const OUTSIDER_SPEED = BASE_SPEED;
-export const ENTRY_SHIELD_TICKS = 1 * TICK_RATE;
+export const ENTRY_SHIELD_TICKS = 3 * TICK_RATE;
 
 /**
  * Where outsiders appear, in order: the middle of each side, then a corner.

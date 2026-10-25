@@ -2,6 +2,7 @@ import {
   BOMB_FLIGHT_TICKS_PER_CELL,
   BOMB_FUSE_TICKS,
   ENTRY_SHIELD_TICKS,
+  TICK_RATE,
   FLAME_TICKS,
   OUTSIDER_BOMB_RANGE,
   OUTSIDER_SPAWN_CELLS,
@@ -285,7 +286,7 @@ describe('a kill from outside', () => {
     return runUntil(state, () => !player(state, 'p1').alive);
   }
 
-  it('puts the thrower in the round where the victim fell, briefly shielded', () => {
+  it('puts the thrower in the round where the victim fell, in the vest for 3 s', () => {
     const state = killP1();
     const victim = player(state, 'p1');
     const entrant = player(state, 'x');
@@ -301,7 +302,7 @@ describe('a kill from outside', () => {
       maxBombs: START_BOMBS,
       fireRange: START_FIRE,
       mountId: null,
-      shieldedUntilTick: (victim.diedAtTick ?? 0) + ENTRY_SHIELD_TICKS,
+      vestUntilTick: (victim.diedAtTick ?? 0) + ENTRY_SHIELD_TICKS,
     });
     expect(state.events).toContainEqual({
       type: 'player-died',
@@ -318,6 +319,7 @@ describe('a kill from outside', () => {
     run(state, FLAME_TICKS);
     expect(player(state, 'x').alive).toBe(true);
     expect(state.players.map((p) => p.id)).toEqual(['p1', 'p2', 'x']);
+    expect(ENTRY_SHIELD_TICKS).toBe(3 * TICK_RATE);
   });
 
   it('keeps the round going with the entrant in it', () => {
