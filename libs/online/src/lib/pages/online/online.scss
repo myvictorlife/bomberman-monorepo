@@ -118,6 +118,19 @@
   text-align: center;
 }
 
+/* The arena vote fills the stage: it scrolls rather than clipping on a small screen. */
+.online__overlay--vote {
+  container-type: size;
+  justify-content: safe center;
+  gap: var(--space-1);
+  padding: var(--space-2);
+  overflow-y: auto;
+
+  .online__big {
+    font-size: var(--font-size-2xl);
+  }
+}
+
 .online__overlay--soft {
   background: rgb(0 0 0 / 0.35);
 }

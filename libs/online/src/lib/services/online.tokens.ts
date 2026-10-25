@@ -5,6 +5,7 @@ import {
   ArenaLauncher,
   connectToArena,
   mountArena,
+  paintArenaPreview,
 } from '@libs/game-client';
 
 /**
@@ -34,3 +35,12 @@ export const ONLINE_ARENA_LAUNCHER = new InjectionToken<ArenaLauncher>(
 export const ONLINE_ROOM = new InjectionToken<string>('ONLINE_ROOM', {
   factory: () => ARENA_ROOM,
 });
+
+/**
+ * How the arena vote paints each arena's picture. A token because painting
+ * needs a 2D canvas the test DOM lacks.
+ */
+export const MAP_THUMB_PAINTER = new InjectionToken<typeof paintArenaPreview>(
+  'MAP_THUMB_PAINTER',
+  { factory: () => paintArenaPreview },
+);

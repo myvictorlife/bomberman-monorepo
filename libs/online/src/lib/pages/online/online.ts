@@ -40,6 +40,7 @@ import {
   GameState,
   isCharacterId,
   isPlayerColorId,
+  MapId,
   sanitizeProgress,
 } from '@libs/game-core';
 import {
@@ -66,6 +67,7 @@ import {
 import { TranslatePipe } from '@ngx-translate/core';
 import { OnlineStore } from '../../+state/online.store';
 import { ChatPanelComponent } from '../../molecules/chat-panel/chat-panel';
+import { MapVoteComponent } from '../../molecules/map-vote/map-vote';
 import { PlayersPanelComponent } from '../../molecules/players-panel/players-panel';
 import {
   JoinBlock,
@@ -215,6 +217,7 @@ function unlockOrientation(): void {
     PlayersPanelComponent,
     RulesPanelComponent,
     StagePanelComponent,
+    MapVoteComponent,
     ChatPanelComponent,
     PodiumComponent,
     VirtualGamepadComponent,
@@ -264,6 +267,12 @@ export class Online {
   readonly admin = this.store.admin;
   /** Stages room: the stage, its host and the team's progress. */
   readonly stage = this.store.stage;
+  /** The arena vote of the countdown under way; `null` without one. */
+  readonly vote = this.store.vote;
+  /** The arena vote is on screen: the controller steps aside so it covers no card. */
+  readonly voting = computed(
+    () => this.phase() === 'countdown' && this.vote() !== null,
+  );
   /** Stages room: the stage on screen, from the arena — creatures, gate, boss, result. */
   readonly hudStage = computed(() => this.store.hud()?.stage ?? null);
   /** Players of the round on screen, with what they picked up. */
@@ -599,6 +608,11 @@ export class Online {
   /** Stages room, host: the stage the next round plays. */
   pickStage(stageId: string): void {
     this.store.pickStage(stageId);
+  }
+
+  /** A player of the next round votes for its arena — `null` for any — and is ready. */
+  voteMap(mapId: MapId | null): void {
+    this.store.voteMap(mapId);
   }
 
   leaveAfterRound(leave: boolean): void {

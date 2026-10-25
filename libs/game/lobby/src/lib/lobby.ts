@@ -2,7 +2,9 @@ import {
   CampaignProgress,
   CHARACTERS,
   DEFAULT_CHARACTER_ID,
+  DEFAULT_MAP_ID,
   EMPTY_PROGRESS,
+  MapId,
   StageResult,
 } from '@libs/game-core';
 import {
@@ -10,11 +12,14 @@ import {
   Champion,
   LobbyPhase,
   LobbySnapshot,
+  MapVote,
   NO_WATCHERS,
   peopleNeeded,
+  READY_MIN_MS,
   RoomRules,
   Seat,
   StageLobby,
+  voteWinners,
   Watchers,
 } from '@libs/game-protocol';
 import {
@@ -50,6 +55,8 @@ export interface StartRound {
   players: Seat[];
   /** Stages room: the stage this round plays. */
   stageId?: string;
+  /** With `mapVote`: the arena the vote chose. Absent, the room draws one. */
+  mapId?: MapId;
 }
 
 /** A bot's id. Account ids are Firebase uids, so they never look like this. */
@@ -102,7 +109,11 @@ export const BOT_NAMES: readonly string[] = [
  * caller passes `now` in, so every transition is testable in a plain unit test.
  *
  * - Two or more queued start a countdown; the round starts when it runs out.
- * - A full room (`maxPlayers` queued) starts at once, countdown or not.
+ * - A full room (`maxPlayers` queued) starts at once, countdown or not —
+ *   unless `rules.mapVote` is on: then the next round's people vote for the
+ *   arena during the countdown, a vote meaning ready, and the round starts
+ *   when all of them are (but not before {@link READY_MIN_MS}) or when the
+ *   countdown runs out, full room or not.
  * - The countdown never restarts when someone joins, so a steady trickle of
  *   newcomers cannot hold a round back forever. It is cancelled if the queue
  *   drops below `minPlayers`.
@@ -133,6 +144,10 @@ export class Lobby {
   /** Players of the current round who asked to leave when it ends. */
   private readonly leavingAfter = new Set<string>();
   private countdownEndsAt: number | null = null;
+  /** When the countdown under way opened: the vote's {@link READY_MIN_MS} counts from it. */
+  private countdownStartedAt: number | null = null;
+  /** The arena vote of the countdown under way: who is ready, for which arena (`null`: any). */
+  private readonly picks = new Map<string, MapId | null>();
   private resultsEndsAt: number | null = null;
   private winnerId: string | null = null;
   /** The last round's winner while they keep their seat. */
@@ -399,8 +414,32 @@ export class Lobby {
     return this.leavingAfter.has(id);
   }
 
+  /** The rules ask for a vote on the arena: versus rooms only, a stage has its own. */
+  private get voting(): boolean {
+    return !this.isStages && !!this.rulesValue.mapVote;
+  }
+
+  /** Who may vote now: the people of the next round, while the countdown runs. */
+  voters(): string[] {
+    if (!this.voting || this.phaseValue !== 'countdown') return [];
+    return this.queue.slice(0, this.rules.maxPlayers).map((s) => s.id);
+  }
+
+  /**
+   * A player of the next round votes for its arena — `null` for any — and is
+   * ready; voting again changes the arena, never the readiness. Returns
+   * whether the vote counts. Call {@link update} after it: the round may
+   * start there.
+   */
+  vote(id: string, mapId: MapId | null): boolean {
+    if (!this.voters().includes(id)) return false;
+    this.picks.set(id, mapId);
+    return true;
+  }
+
   /** Leaves the queue; a player of the round in progress is marked gone instead. */
   leave(id: string): void {
+    this.picks.delete(id);
     this.queue = this.queue.filter((s) => s.id !== id);
     if (this.championValue?.id === id) this.championValue = null;
     if (this.players.some((s) => s.id === id)) this.gone.add(id);
@@ -464,6 +503,8 @@ export class Lobby {
         ? Math.min(this.rules.countdownMs, STAGE_CONTINUE_MS)
         : this.rules.countdownMs;
       this.countdownEndsAt = now + wait;
+      this.countdownStartedAt = now;
+      this.picks.clear();
     }
     this.continuing = false;
 
@@ -471,14 +512,46 @@ export class Lobby {
       if (!enough) {
         this.phaseValue = 'waiting';
         this.countdownEndsAt = null;
-      } else if (
-        this.queue.length >= this.rules.maxPlayers ||
-        (this.countdownEndsAt !== null && now >= this.countdownEndsAt)
-      ) {
+        this.countdownStartedAt = null;
+        this.picks.clear();
+      } else if (this.dueToStart(now)) {
         return this.startRound();
       }
     }
     return null;
+  }
+
+  /** The countdown ran out, the room is full — or, with a vote, everyone in it is ready. */
+  private dueToStart(now: number): boolean {
+    if (this.countdownEndsAt !== null && now >= this.countdownEndsAt)
+      return true;
+    if (!this.voting) return this.queue.length >= this.rules.maxPlayers;
+    const voters = this.voters();
+    return (
+      voters.length > 0 &&
+      voters.every((id) => this.picks.has(id)) &&
+      now >= (this.countdownStartedAt ?? now) + READY_MIN_MS
+    );
+  }
+
+  /** The vote under way, as the page shows it: only the picks of those who may vote. */
+  private voteSnapshot(): MapVote | null {
+    const voters = this.voters();
+    if (!voters.length) return null;
+    const picks: Record<string, MapId | null> = {};
+    for (const id of voters)
+      if (this.picks.has(id)) picks[id] = this.picks.get(id) ?? null;
+    return { voters, picks };
+  }
+
+  /** The arena the vote chose: the most voted, a tie or no votes drawn among them. */
+  private votedMap(people: Seat[]): MapId {
+    const picks: Record<string, MapId | null> = {};
+    for (const seat of people)
+      if (this.picks.has(seat.id))
+        picks[seat.id] = this.picks.get(seat.id) ?? null;
+    const pool = voteWinners(picks);
+    return pool[Math.floor(this.random() * pool.length)] ?? DEFAULT_MAP_ID;
   }
 
   /** `watchers` comes from the room, which knows the connections; the queue does not. */
@@ -497,6 +570,7 @@ export class Lobby {
       watchers: { names: [...watchers.names], anonymous: watchers.anonymous },
       leavingAfter: [...this.leavingAfter],
       stage: this.stageSnapshot(),
+      vote: this.voteSnapshot(),
     };
   }
 
@@ -538,6 +612,9 @@ export class Lobby {
     this.roundStage = stageId;
     const people = this.queue.splice(0, this.rules.maxPlayers);
     this.players = [...people, ...this.bots(people)];
+    const mapId = this.voting ? this.votedMap(people) : undefined;
+    this.picks.clear();
+    this.countdownStartedAt = null;
     this.rounds++;
     this.gone.clear();
     this.fallenIds = [];
@@ -548,6 +625,7 @@ export class Lobby {
     return {
       players: this.players.map((s) => ({ ...s })),
       ...(stageId ? { stageId } : {}),
+      ...(mapId ? { mapId } : {}),
     };
   }
 

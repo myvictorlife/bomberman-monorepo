@@ -847,9 +847,11 @@
       "MIN_PLAYERS": "Mínimo de jogadores",
       "MIN_PLAYERS_DESC": "A contagem começa com esta quantidade na fila.",
       "MAX_PLAYERS": "Máximo de jogadores",
-      "MAX_PLAYERS_DESC": "Arena cheia começa na hora.",
+      "MAX_PLAYERS_DESC": "Arena cheia começa na hora — com a votação de arena, assim que todos estiverem prontos.",
       "COUNTDOWN_MS": "Contagem regressiva",
       "COUNTDOWN_MS_DESC": "Quanto tempo a sala espera por mais jogadores.",
+      "MAP_VOTE": "Votação de arena",
+      "MAP_VOTE_DESC": "Na contagem, quem vai jogar escolhe a arena — escolher já é ficar pronto — e a rodada começa quando todos estiverem prontos. Vence a mais votada; empate ou nenhum voto, sorteio. Desligado: a arena é sorteada.",
       "RESULTS_MS": "Resultado na tela",
       "RESULTS_MS_DESC": "Quanto tempo o vencedor fica na tela antes da próxima rodada.",
       "ROUND_TIMER_MS": "Cronômetro da rodada",
@@ -890,6 +892,18 @@
       "EXPAND": "Expandir: o jogo em tela cheia com o chat ao lado",
       "COLLAPSE": "Sair da tela cheia",
       "GUEST_WON": "Com uma conta, essa vitória valeria ranking."
+    },
+    "VOTE": {
+      "TITLE": "Escolha a arena",
+      "COUNTDOWN_HINT": "ou assim que todos estiverem prontos",
+      "ANY": "Qualquer uma",
+      "NO_VOTES": "nenhum voto",
+      "ONE_VOTE": "1 voto",
+      "VOTES": "{{n}} votos",
+      "ANY_COUNT": "sem preferência",
+      "READY": "Prontos {{n}}/{{max}}",
+      "HINT": "Escolha uma arena para votar e ficar pronto. Em “Qualquer uma” você fica pronto sem votar.",
+      "WATCH": "Quem vai jogar a próxima rodada está escolhendo a arena."
     },
     "QUEUE": {
       "TITLE": "Próxima partida",

@@ -101,8 +101,24 @@ on `/online` draws itself from the schema; `parseRules` validates a change.
   they fell on, where an outsider steps in. Never in a stage.
 
 - Max 5 (four corners + the middle), min 2, countdown 15 s, results 5 s.
-- Fifth player in line starts the round at once; the countdown never restarts
-  when someone joins; it cancels below two.
+- Fifth player in line starts the round at once (unless `mapVote` is on, below);
+  the countdown never restarts when someone joins; it cancels below two.
+- **Arena vote** (`mapVote`, on in the public room, off in the stages room and
+  by default for a room you define). During the countdown the next round's
+  people — the first `maxPlayers` in line, `Lobby.voters()` — send
+  `map:vote { mapId }` (`null`: "any", ready without voting). A vote is also
+  "I'm ready"; a second vote changes the arena, never the readiness. The round
+  starts when every voter is ready, but not before `READY_MIN_MS` (3 s) after
+  the countdown opened, or when the countdown runs out — a full room no longer
+  starts at once. `StartRound.mapId` is the most voted arena (`voteWinners`);
+  a tie, or nobody choosing, is drawn among them with the lobby's `random`.
+  Anyone else's vote, or one outside a countdown, is ignored without an error
+  (the page only offers it to voters); an unknown arena is `bad-message`.
+  Leaving the line drops the vote; a new countdown starts with nobody ready.
+  The snapshot's `vote` (`{ voters, picks }`) feeds `lib-map-vote` in
+  `libs/online`, which paints each arena with `paintArenaPreview`
+  (`MAP_THUMB_PAINTER`, a token so tests skip the canvas) and hides the touch
+  pad while it shows.
 - One place per account (Firebase uid), across tabs. When the last tab drops,
   the place is held for `RECONNECT_GRACE_MS` (15 s) so a reload carries on;
   after that, or at once on an explicit `sign-out`, the player leaves the

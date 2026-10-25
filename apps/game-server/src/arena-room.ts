@@ -51,6 +51,7 @@ import {
   parseJoinQueue,
   parseLeaveAfterRound,
   parsePickStage,
+  parseVoteMap,
   parseReaction,
   parseRules,
   publicState,
@@ -259,6 +260,9 @@ export function createArenaRoom(deps: ArenaRoomDeps) {
       );
       this.onMessage(CLIENT_MESSAGE.pickStage, (client, message) =>
         this.pickStage(client, message),
+      );
+      this.onMessage(CLIENT_MESSAGE.voteMap, (client, message) =>
+        this.voteMap(client, message),
       );
       this.onMessage(CLIENT_MESSAGE.input, (client, message) =>
         this.input(client, message),
@@ -694,6 +698,19 @@ export function createArenaRoom(deps: ArenaRoomDeps) {
         this.fail(client, result);
     }
 
+    /**
+     * A player of the next round votes for its arena, and is ready. A vote
+     * from anyone else — or outside a countdown — is ignored: the page only
+     * offers it to those who may.
+     */
+    voteMap(client: Client, message: unknown): void {
+      const player = this.player(client);
+      if (!player) return this.fail(client, 'auth-required');
+      const vote = parseVoteMap(message);
+      if (!vote) return this.fail(client, 'bad-message');
+      if (this.lobby.vote(player.id, vote.mapId)) this.refreshLobby();
+    }
+
     /** A player of the round plays it out, then is not put back in line. */
     leaveAfterRound(client: Client, message: unknown): void {
       const account = this.player(client);
@@ -850,7 +867,8 @@ export function createArenaRoom(deps: ArenaRoomDeps) {
           ? this.createStage(start.stageId, start.players, seed)
           : createGame({
               seed,
-              mapId: MAPS[Math.floor(random() * MAPS.length)]?.id,
+              mapId:
+                start.mapId ?? MAPS[Math.floor(random() * MAPS.length)]?.id,
               players: start.players.map(
                 ({ id, name, characterId, color }) => ({
                   id,

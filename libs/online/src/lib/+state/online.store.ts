@@ -24,7 +24,7 @@ import {
   ServerErrorCode,
   serverOffset,
 } from '@libs/game-protocol';
-import { CampaignProgress, CharacterId } from '@libs/game-core';
+import { CampaignProgress, CharacterId, MapId } from '@libs/game-core';
 import {
   patchState,
   signalStore,
@@ -146,6 +146,8 @@ export const OnlineStore = signalStore(
     stage: computed(() => lobby()?.stage ?? null),
     /** Rules an admin set during the round, for the next one; `null` when nothing is pending. */
     nextRules: computed((): RoomRules | null => lobby()?.nextRules ?? null),
+    /** The arena vote of the countdown under way; `null` when there is none. */
+    vote: computed(() => lobby()?.vote ?? null),
   })),
   withMethods((store, connect = inject(ARENA_CONNECTOR)) => {
     let connection: ArenaConnection | null = null;
@@ -405,6 +407,10 @@ export const OnlineStore = signalStore(
       pickStage(stageId: string): void {
         patchState(store, { serverError: null });
         send(CLIENT_MESSAGE.pickStage, { stageId });
+      },
+      /** A player of the next round votes for its arena — `null` for any — and is ready. */
+      voteMap(mapId: MapId | null): void {
+        send(CLIENT_MESSAGE.voteMap, { mapId });
       },
       leaveQueue(): void {
         send(CLIENT_MESSAGE.leaveQueue);

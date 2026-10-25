@@ -13,6 +13,7 @@ import {
   parseJoinQueue,
   parseLeaveAfterRound,
   parsePickStage,
+  parseVoteMap,
   parsePlayerName,
   parseProfileUpdate,
   parseReaction,
@@ -25,6 +26,8 @@ import {
   RULE_FIELDS,
   secondsLeft,
   serverOffset,
+  voteCounts,
+  voteWinners,
   STAGES_ROOM_RULES,
   publicState,
 } from './protocol';
@@ -367,6 +370,34 @@ describe('parsePickStage', () => {
     expect(parsePickStage({ stageId: 'nowhere-9' })).toBeNull();
     expect(parsePickStage({ stageId: 3 })).toBeNull();
     expect(parsePickStage(null)).toBeNull();
+  });
+});
+
+describe('arena vote', () => {
+  it('accepts a known arena or any, and nothing else', () => {
+    expect(parseVoteMap({ mapId: 'nucleo' })).toEqual({ mapId: 'nucleo' });
+    expect(parseVoteMap({ mapId: null })).toEqual({ mapId: null });
+    expect(parseVoteMap({ mapId: 'nowhere' })).toBeNull();
+    expect(parseVoteMap({})).toBeNull();
+    expect(parseVoteMap('nucleo')).toBeNull();
+  });
+
+  it('counts the votes, "any" for none', () => {
+    const counts = voteCounts({ a: 'gramado', b: 'gramado', c: null });
+
+    expect(counts.gramado).toBe(2);
+    expect(counts.nucleo).toBe(0);
+  });
+
+  it('keeps the most voted, or every arena with no votes', () => {
+    expect(voteWinners({ a: 'gramado', b: 'nucleo', c: 'nucleo' })).toEqual([
+      'nucleo',
+    ]);
+    expect(voteWinners({ a: 'gramado', b: 'nucleo' })).toEqual([
+      'gramado',
+      'nucleo',
+    ]);
+    expect(voteWinners({ a: null })).toHaveLength(5);
   });
 });
 

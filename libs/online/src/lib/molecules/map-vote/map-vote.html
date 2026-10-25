@@ -1,0 +1,64 @@
+<section class="map-vote" data-testid="map-vote">
+  <div
+    class="map-vote__cards"
+    role="group"
+    [attr.aria-label]="'ONLINE.VOTE.TITLE' | translate"
+  >
+    @for (card of cards(); track card.id) {
+    <button
+      type="button"
+      class="map-vote__card"
+      [class.map-vote__card--mine]="card.mine"
+      [class.map-vote__card--leading]="card.leading && !card.mine"
+      [disabled]="!canVote()"
+      [attr.aria-pressed]="card.mine"
+      (click)="choose(card)"
+      [attr.data-testid]="'map-vote-' + (card.id ?? 'any')"
+    >
+      @if (card.id; as id) {
+      <canvas
+        #thumb
+        class="map-vote__thumb"
+        [attr.data-map-id]="id"
+        aria-hidden="true"
+      ></canvas>
+      <span class="map-vote__name">{{ nameKey(id) | translate }}</span>
+      } @else {
+      <span class="map-vote__thumb map-vote__thumb--any" aria-hidden="true"
+        >🎲</span
+      >
+      <span class="map-vote__name">{{ 'ONLINE.VOTE.ANY' | translate }}</span>
+      }
+      <span class="map-vote__count">
+        @if (card.id) { {{ votesKey(card.votes) | translate: { n: card.votes }
+        }} } @else { {{ 'ONLINE.VOTE.ANY_COUNT' | translate: { n: card.votes }
+        }} }
+      </span>
+      @if (card.mine) {
+      <span class="map-vote__mine">✓</span>
+      }
+    </button>
+    }
+  </div>
+
+  <div class="map-vote__ready" data-testid="map-vote-ready">
+    <span class="map-vote__ready-count">
+      {{ 'ONLINE.VOTE.READY' | translate: { n: readyCount(), max:
+      voters().length } }}
+    </span>
+    @for (row of voters(); track row.id) {
+    <span
+      class="map-vote__chip"
+      [class.map-vote__chip--ready]="row.ready"
+      [class.map-vote__chip--me]="row.id === myId()"
+    >
+      {{ row.name }} @if (row.ready) {✓}
+    </span>
+    }
+  </div>
+
+  <p class="map-vote__hint">
+    @if (canVote()) { {{ 'ONLINE.VOTE.HINT' | translate }} } @else { {{
+    'ONLINE.VOTE.WATCH' | translate }} }
+  </p>
+</section>

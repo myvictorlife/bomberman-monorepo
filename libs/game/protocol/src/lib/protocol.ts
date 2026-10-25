@@ -8,7 +8,10 @@ import {
   GameState,
   isCharacterId,
   isPlayerColorId,
+  isMapId,
   isStageId,
+  MapId,
+  MAPS,
   MAX_PLAYERS,
   PlayerColorId,
   sanitizeProgress,
@@ -66,6 +69,14 @@ export interface RoomRules {
   minPlayers: number;
   /** How long the countdown waits for more players before starting with whoever is there. */
   countdownMs: number;
+  /**
+   * During the countdown the players of the next round vote for the arena
+   * — a vote is also "I'm ready" — and the round starts as soon as all of
+   * them are, after {@link READY_MIN_MS}. The most voted arena is played; a
+   * tie or no votes, one drawn among them. Off: a full room starts at once
+   * and the arena is drawn.
+   */
+  mapVote: boolean;
   /** How long the result stays on screen before the next round can be set up. */
   resultsMs: number;
   /**
@@ -168,6 +179,7 @@ export const RULE_FIELDS: readonly RuleField[] = [
     options: [5_000, 10_000, 15_000, 30_000, 60_000],
     unit: 'seconds',
   },
+  { key: 'mapVote', kind: 'boolean' },
   {
     key: 'resultsMs',
     kind: 'number',
@@ -253,6 +265,7 @@ export const PUBLIC_ROOM_RULES: RoomRules = {
   maxPlayers: MAX_PLAYERS,
   minPlayers: 2,
   countdownMs: 15_000,
+  mapVote: true,
   resultsMs: 5_000,
   outsiders: 5,
   roundTimerMs: 180_000,
@@ -279,6 +292,8 @@ export const STAGES_ROOM_RULES: RoomRules = {
   maxPlayers: STAGE_TEAM_SIZE,
   minPlayers: 1,
   countdownMs: 60_000,
+  // The host picks the stage, and its arena with it.
+  mapVote: false,
   resultsMs: 6_000,
   outsiders: 0,
   // The stage's own clock applies; see `createGame` with a `stageId`.
@@ -394,6 +409,43 @@ export interface LobbySnapshot {
   leavingAfter?: string[];
   /** The stages room: which stage is next, who picks it, and how everyone stands. `null` in a versus room. */
   stage?: StageLobby | null;
+  /** The arena vote of the countdown under way; `null` with `mapVote` off or no countdown. */
+  vote?: MapVote | null;
+}
+
+/**
+ * However early everyone is ready, a round waits this long after its
+ * countdown opens: a friend a click away still makes it in.
+ */
+export const READY_MIN_MS = 3_000;
+
+/** The arena vote of a countdown, for the page. */
+export interface MapVote {
+  /** Who may vote: the people of the next round, in line order. */
+  voters: string[];
+  /** Who is ready, and the arena each voted for; `null` is "any of them". */
+  picks: Record<string, MapId | null>;
+}
+
+/** Votes per arena, the arenas nobody voted for at `0`; "any" counts for none. */
+export function voteCounts(
+  picks: Readonly<Record<string, MapId | null>>,
+): Record<MapId, number> {
+  const counts = Object.fromEntries(MAPS.map((m) => [m.id, 0])) as Record<
+    MapId,
+    number
+  >;
+  for (const pick of Object.values(picks)) if (pick) counts[pick]++;
+  return counts;
+}
+
+/** The arenas a round may be played on after a vote: the most voted, or all of them when nobody chose one. */
+export function voteWinners(
+  picks: Readonly<Record<string, MapId | null>>,
+): MapId[] {
+  const counts = voteCounts(picks);
+  const top = Math.max(...Object.values(counts));
+  return MAPS.map((m) => m.id).filter((id) => top === 0 || counts[id] === top);
 }
 
 /** The stages room's state beyond the queue, for the page. */
@@ -598,6 +650,8 @@ export const CLIENT_MESSAGE = {
   startNow: 'queue:start',
   /** The host picks the stage the next round plays (stages room). */
   pickStage: 'stage:pick',
+  /** A player of the next round votes for its arena — or for any — and is ready. */
+  voteMap: 'map:vote',
   /**
    * A player of the round in progress asks to leave when it ends — or, with
    * `leave: false`, changes their mind. The round itself is played out.
@@ -740,6 +794,18 @@ export interface PickStageMessage {
 export function parsePickStage(value: unknown): PickStageMessage | null {
   const stageId = isRecord(value) ? value['stageId'] : undefined;
   return typeof stageId === 'string' && isStageId(stageId) ? { stageId } : null;
+}
+
+export interface VoteMapMessage {
+  /** The arena voted for; `null` is ready for any of them. */
+  mapId: MapId | null;
+}
+
+/** A known arena, or `null` for any; whether this player may vote is the room's call. */
+export function parseVoteMap(value: unknown): VoteMapMessage | null {
+  const mapId = isRecord(value) ? value['mapId'] : undefined;
+  if (mapId === null) return { mapId: null };
+  return typeof mapId === 'string' && isMapId(mapId) ? { mapId } : null;
 }
 
 /** Anything but an explicit `leave: false` asks to leave. */

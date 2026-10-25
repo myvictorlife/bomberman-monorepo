@@ -847,9 +847,11 @@
       "MIN_PLAYERS": "Minimum players",
       "MIN_PLAYERS_DESC": "The countdown starts with this many in line.",
       "MAX_PLAYERS": "Maximum players",
-      "MAX_PLAYERS_DESC": "A full arena starts at once.",
+      "MAX_PLAYERS_DESC": "A full arena starts at once — with the arena vote, as soon as everyone is ready.",
       "COUNTDOWN_MS": "Countdown",
       "COUNTDOWN_MS_DESC": "How long the room waits for more players.",
+      "MAP_VOTE": "Arena vote",
+      "MAP_VOTE_DESC": "During the countdown the next round’s players pick the arena — picking means ready — and the round starts once everyone is. The most voted wins; a tie or no votes, a draw. Off: the arena is drawn.",
       "RESULTS_MS": "Results on screen",
       "RESULTS_MS_DESC": "How long the winner stays up before the next round.",
       "ROUND_TIMER_MS": "Round clock",
@@ -890,6 +892,18 @@
       "EXPAND": "Expand: the game full screen with the chat beside it",
       "COLLAPSE": "Exit full screen",
       "GUEST_WON": "With an account, this win would count for the ranking."
+    },
+    "VOTE": {
+      "TITLE": "Pick the arena",
+      "COUNTDOWN_HINT": "or as soon as everyone is ready",
+      "ANY": "Any",
+      "NO_VOTES": "no votes",
+      "ONE_VOTE": "1 vote",
+      "VOTES": "{{n}} votes",
+      "ANY_COUNT": "no preference",
+      "READY": "Ready {{n}}/{{max}}",
+      "HINT": "Pick an arena to vote and be ready. “Any” makes you ready without voting.",
+      "WATCH": "The next round’s players are picking the arena."
     },
     "QUEUE": {
       "TITLE": "Next round",

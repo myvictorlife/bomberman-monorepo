@@ -1,0 +1,153 @@
+// Drawn over the dark overlay of the stage: light text on its own, whatever the theme.
+// The stage's overlay is the size container (see `online.scss`): the cards
+// shrink to fit its height, and a wide, short stage — a phone on its side —
+// lays them out in one row.
+.map-vote {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  width: 100%;
+  max-width: min(40rem, 105cqh);
+  color: #fff;
+}
+
+.map-vote__cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+
+@container (aspect-ratio > 1.4) {
+  .map-vote {
+    max-width: min(64rem, 100%, 190cqh);
+  }
+
+  .map-vote__cards {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+}
+
+.map-vote__card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-height: 2.75rem;
+  padding: var(--space-1);
+  border: 2px solid rgb(255 255 255 / 0.14);
+  border-radius: var(--radius-md);
+  background: rgb(20 15 45 / 0.92);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    border-color: rgb(255 255 255 / 0.4);
+  }
+
+  &:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: 2px;
+  }
+
+  &:disabled {
+    cursor: default;
+  }
+}
+
+.map-vote__card--leading {
+  border-color: rgb(251 191 36 / 0.5);
+}
+
+.map-vote__card--mine {
+  border-color: #fbbf24;
+  box-shadow: 0 0 0 1px #fbbf24;
+}
+
+.map-vote__thumb {
+  display: block;
+  width: 100%;
+  aspect-ratio: 15 / 9;
+  object-fit: cover;
+  border-radius: calc(var(--radius-md) - 2px);
+  background: #0b0b12;
+}
+
+.map-vote__thumb--any {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px dashed rgb(255 255 255 / 0.3);
+  background: transparent;
+  font-size: var(--font-size-2xl);
+  box-sizing: border-box;
+}
+
+.map-vote__name {
+  overflow: hidden;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.map-vote__count {
+  color: rgb(255 255 255 / 0.75);
+  font-size: var(--font-size-xs);
+}
+
+.map-vote__card--leading .map-vote__count,
+.map-vote__card--mine .map-vote__count {
+  color: #fbbf24;
+}
+
+.map-vote__mine {
+  position: absolute;
+  top: var(--space-1);
+  right: var(--space-1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  background: #fbbf24;
+  color: #1a1300;
+  font-weight: var(--font-weight-bold);
+}
+
+.map-vote__ready {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  font-size: var(--font-size-sm);
+}
+
+.map-vote__ready-count {
+  font-weight: var(--font-weight-bold);
+}
+
+.map-vote__chip {
+  padding: 0.125rem var(--space-2);
+  border: 1px solid rgb(255 255 255 / 0.2);
+  border-radius: 999px;
+  color: rgb(255 255 255 / 0.75);
+}
+
+.map-vote__chip--ready {
+  border-color: rgb(94 234 212 / 0.6);
+  background: rgb(45 212 191 / 0.15);
+  color: #fff;
+}
+
+.map-vote__chip--me {
+  font-weight: var(--font-weight-bold);
+}
+
+.map-vote__hint {
+  color: rgb(255 255 255 / 0.75);
+  font-size: var(--font-size-xs);
+}

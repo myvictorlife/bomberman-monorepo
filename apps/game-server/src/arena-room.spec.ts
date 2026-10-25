@@ -34,6 +34,7 @@ const RULES: RoomRules = {
   maxPlayers: 5,
   minPlayers: 2,
   countdownMs: 300,
+  mapVote: false,
   resultsMs: 300,
   outsiders: 2,
   fallenOutside: true,
@@ -136,6 +137,15 @@ beforeAll(async () => {
     'bots',
     createArenaRoom({
       rules: { ...RULES, bots: 5 },
+      verify: fakeVerify,
+      records,
+    }),
+  );
+  server.define(
+    'vote',
+    createArenaRoom({
+      // A countdown long enough that only everyone being ready starts the round.
+      rules: { ...RULES, mapVote: true, countdownMs: 30_000 },
       verify: fakeVerify,
       records,
     }),
@@ -1342,6 +1352,42 @@ describe('ArenaRoom', () => {
         type: 'round-draw',
       });
     });
+  });
+
+  describe('arena vote', () => {
+    it('starts once everyone in line voted, on the most voted arena', async () => {
+      const ana = await signedIn('vta', true, 'vote');
+      const bia = await signedIn('vtb', true, 'vote');
+      const caio = await signedIn('vtc', true, 'vote');
+      ana.room.send(CLIENT_MESSAGE.joinQueue, {});
+      bia.room.send(CLIENT_MESSAGE.joinQueue, {});
+      await ana.next<LobbySnapshot>(
+        SERVER_MESSAGE.lobby,
+        (l) => l.phase === 'countdown' && l.vote?.voters.length === 2,
+      );
+
+      // Caio only watches: his vote is not counted.
+      caio.room.send(CLIENT_MESSAGE.voteMap, { mapId: 'gramado' });
+      ana.room.send(CLIENT_MESSAGE.voteMap, { mapId: 'nucleo' });
+      bia.room.send(CLIENT_MESSAGE.voteMap, { mapId: 'nowhere' });
+      await bia.next<{ code: string }>(
+        SERVER_MESSAGE.error,
+        (e) => e.code === 'bad-message',
+      );
+      const lobby = await ana.next<LobbySnapshot>(
+        SERVER_MESSAGE.lobby,
+        (l) => l.vote?.picks['vta'] === 'nucleo',
+      );
+      expect(lobby.vote?.picks).toEqual({ vta: 'nucleo' });
+
+      bia.room.send(CLIENT_MESSAGE.voteMap, { mapId: null });
+      const frame = await bia.next<FrameMessage>(
+        SERVER_MESSAGE.frame,
+        (f) => f.state.phase === 'playing',
+      );
+      expect(frame.state.mapId).toBe('nucleo');
+      expect(frame.state.players.map((p) => p.id)).toEqual(['vta', 'vtb']);
+    }, 10_000);
   });
 
   describe('stages room', () => {

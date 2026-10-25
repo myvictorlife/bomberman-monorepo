@@ -17,6 +17,7 @@ import { provideTranslateService } from '@ngx-translate/core';
 import { OnlineStore } from '../../+state/online.store';
 import {
   ARENA_CONNECTOR,
+  MAP_THUMB_PAINTER,
   ONLINE_ARENA_LAUNCHER,
   ONLINE_ROOM,
 } from '../../services/online.tokens';
@@ -115,6 +116,7 @@ describe('Online', () => {
       provideTranslateService(),
       { provide: AUTH, useValue: auth },
       { provide: ANALYTICS, useValue: analytics },
+      { provide: MAP_THUMB_PAINTER, useValue: () => undefined },
       {
         provide: ARENA_CONNECTOR,
         useValue: async () => {
@@ -490,6 +492,39 @@ describe('Online', () => {
       winner: 'draw',
       watching: true,
     });
+  });
+
+  it('offers the arena vote during the countdown, with the controller out of its way', async () => {
+    await render();
+    spectator.component.touch.set(true);
+    spectator.component.expanded.set(true);
+    const queue = [{ id: 'me', name: 'Me', characterId: 'lia' as const }];
+    connection.push(
+      SERVER_MESSAGE.lobby,
+      lobby({
+        phase: 'countdown',
+        countdownEndsAt: Date.now() + 9_500,
+        queue,
+        vote: { voters: ['me'], picks: {} },
+      }),
+    );
+    spectator.detectChanges();
+    expect(spectator.query('[data-testid="map-vote"]')).toExist();
+    expect(spectator.query('[data-testid="online-gamepad"]')).toBeNull();
+
+    spectator.component.voteMap('nucleo');
+    expect(connection.sent).toContainEqual({
+      type: CLIENT_MESSAGE.voteMap,
+      payload: { mapId: 'nucleo' },
+    });
+
+    connection.push(
+      SERVER_MESSAGE.lobby,
+      lobby({ phase: 'playing', queue: [] }),
+    );
+    spectator.detectChanges();
+    expect(spectator.query('[data-testid="map-vote"]')).toBeNull();
+    expect(spectator.query('[data-testid="online-gamepad"]')).toExist();
   });
 
   it('counts down and announces the winner', async () => {

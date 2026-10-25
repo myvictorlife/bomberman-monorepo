@@ -1,4 +1,4 @@
-import { RoomRules, Seat } from '@libs/game-protocol';
+import { READY_MIN_MS, RoomRules, Seat } from '@libs/game-protocol';
 import { BOT_NAMES, botId, isBotId, Lobby } from './lobby';
 
 const RULES: RoomRules = {
@@ -6,6 +6,7 @@ const RULES: RoomRules = {
   maxPlayers: 5,
   minPlayers: 2,
   countdownMs: 15_000,
+  mapVote: false,
   resultsMs: 5_000,
   outsiders: 2,
   fallenOutside: true,
@@ -667,6 +668,141 @@ describe('Lobby, winner stays', () => {
     it('tells a bot id from an account id', () => {
       expect(isBotId(botId(3))).toBe(true);
       expect(isBotId('kq1Zr8cpu1')).toBe(false);
+    });
+  });
+
+  describe('arena vote', () => {
+    const voting = (...ids: string[]): Lobby => {
+      const lobby = new Lobby({ ...RULES, mapVote: true }, () => 0);
+      ids.forEach((id) => lobby.join(seat(id)));
+      lobby.update(0);
+      return lobby;
+    };
+
+    it('starts as soon as everyone is ready, but not before the minimum', () => {
+      const lobby = voting('a', 'b');
+      expect(lobby.vote('a', 'nucleo')).toBe(true);
+      expect(lobby.vote('b', null)).toBe(true);
+
+      expect(lobby.update(READY_MIN_MS - 1)).toBeNull();
+      const start = lobby.update(READY_MIN_MS);
+
+      expect(start?.mapId).toBe('nucleo');
+      expect(lobby.phase).toBe('playing');
+    });
+
+    it('waits the countdown out while someone is not ready', () => {
+      const lobby = voting('a', 'b');
+      lobby.vote('a', 'gramado');
+
+      expect(lobby.update(RULES.countdownMs - 1)).toBeNull();
+      expect(lobby.update(RULES.countdownMs)?.mapId).toBe('gramado');
+    });
+
+    it('no longer starts a full room at once', () => {
+      const lobby = voting('a', 'b', 'c', 'd', 'e');
+
+      expect(lobby.update(1_000)).toBeNull();
+      ['a', 'b', 'c', 'd', 'e'].forEach((id) => lobby.vote(id, null));
+      expect(lobby.update(READY_MIN_MS)?.players).toHaveLength(5);
+    });
+
+    it('plays the most voted arena', () => {
+      const lobby = voting('a', 'b', 'c');
+      lobby.vote('a', 'autodromo');
+      lobby.vote('b', 'autodromo');
+      lobby.vote('c', 'nucleo');
+
+      expect(lobby.update(READY_MIN_MS)?.mapId).toBe('autodromo');
+    });
+
+    it('draws a tie among the most voted only', () => {
+      const lobby = new Lobby({ ...RULES, mapVote: true }, () => 0.99);
+      ['a', 'b', 'c'].forEach((id) => lobby.join(seat(id)));
+      lobby.update(0);
+      lobby.vote('a', 'gramado');
+      lobby.vote('b', 'nucleo');
+      lobby.vote('c', null);
+
+      expect(lobby.update(READY_MIN_MS)?.mapId).toBe('nucleo');
+    });
+
+    it('draws among every arena when nobody chose one', () => {
+      const lobby = voting('a', 'b');
+      lobby.vote('a', null);
+      lobby.vote('b', null);
+
+      expect(lobby.update(READY_MIN_MS)?.mapId).toBe('gramado');
+    });
+
+    it('lets a vote change the arena', () => {
+      const lobby = voting('a', 'b');
+      lobby.vote('a', 'gramado');
+      lobby.vote('a', 'subestacao');
+      lobby.vote('b', null);
+
+      expect(lobby.snapshot(1).vote?.picks).toEqual({
+        a: 'subestacao',
+        b: null,
+      });
+      expect(lobby.update(READY_MIN_MS)?.mapId).toBe('subestacao');
+    });
+
+    it('refuses a vote from outside the next round, or outside a countdown', () => {
+      const lobby = new Lobby({ ...RULES, mapVote: true, maxPlayers: 2 });
+      ['a', 'b', 'c'].forEach((id) => lobby.join(seat(id)));
+
+      expect(lobby.vote('a', 'gramado')).toBe(false);
+      lobby.update(0);
+      expect(lobby.vote('c', 'gramado')).toBe(false);
+      expect(lobby.vote('nobody', 'gramado')).toBe(false);
+      expect(lobby.snapshot(0).vote).toEqual({ voters: ['a', 'b'], picks: {} });
+    });
+
+    it('holds the start for someone who joins mid-countdown', () => {
+      const lobby = voting('a', 'b');
+      lobby.vote('a', null);
+      lobby.join(seat('c'));
+      lobby.vote('b', null);
+
+      expect(lobby.update(READY_MIN_MS)).toBeNull();
+      lobby.vote('c', null);
+      expect(lobby.update(READY_MIN_MS)?.players).toHaveLength(3);
+    });
+
+    it('forgets the vote of whoever leaves, and starts without them', () => {
+      const lobby = voting('a', 'b', 'c');
+      lobby.vote('a', 'nucleo');
+      lobby.vote('b', 'gramado');
+      lobby.vote('c', 'gramado');
+      lobby.leave('c');
+      lobby.leave('b');
+      lobby.join(seat('d'));
+
+      expect(lobby.update(READY_MIN_MS)).toBeNull();
+      lobby.vote('d', null);
+      expect(lobby.update(READY_MIN_MS)?.mapId).toBe('nucleo');
+    });
+
+    it('starts the next countdown with nobody ready', () => {
+      const lobby = voting('a', 'b');
+      lobby.vote('a', 'nucleo');
+      lobby.vote('b', 'nucleo');
+      lobby.update(READY_MIN_MS);
+      lobby.finishRound(null, 5_000);
+      lobby.update(5_000 + RULES.resultsMs);
+
+      expect(lobby.phase).toBe('countdown');
+      expect(lobby.snapshot(0).vote?.picks).toEqual({});
+    });
+
+    it('has no vote with the rule off', () => {
+      const lobby = lobbyWith('a', 'b');
+      lobby.update(0);
+
+      expect(lobby.vote('a', 'gramado')).toBe(false);
+      expect(lobby.snapshot(0).vote).toBeNull();
+      expect(lobby.update(RULES.countdownMs)?.mapId).toBeUndefined();
     });
   });
 });

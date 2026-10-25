@@ -198,18 +198,27 @@
           } @else if (phase() === 'countdown') {
           <div
             class="online__overlay"
+            [class.online__overlay--vote]="vote()"
             data-testid="online-countdown"
-            role="status"
           >
-            <p class="online__big">
+            <p class="online__big" role="status">
               {{ 'ONLINE.STAGE.COUNTDOWN' | translate: { s: secondsLeft() } }}
             </p>
             <p class="online__small">
-              @if (stagesMode) { {{ 'ONLINE.STAGES.COUNTDOWN_HINT' | translate:
-              { n: queue().length, max: maxPlayers() } }} } @else { {{
-              'ONLINE.STAGE.COUNTDOWN_HINT' | translate: { n: queue().length,
+              @if (vote()) { {{ 'ONLINE.VOTE.COUNTDOWN_HINT' | translate }} }
+              @else if (stagesMode) { {{ 'ONLINE.STAGES.COUNTDOWN_HINT' |
+              translate: { n: queue().length, max: maxPlayers() } }} } @else {
+              {{ 'ONLINE.STAGE.COUNTDOWN_HINT' | translate: { n: queue().length,
               max: maxPlayers() } }} }
             </p>
+            @if (vote(); as v) {
+            <lib-map-vote
+              [vote]="v"
+              [queue]="queue()"
+              [myId]="myId()"
+              (pick)="voteMap($event)"
+            />
+            }
           </div>
           } @else if (phase() === 'results') {
           <div
@@ -301,7 +310,7 @@
           </button>
         </div>
       </div>
-      @if (pad()) {
+      @if (pad() && !voting()) {
       <lib-virtual-gamepad
         class="online__gamepad"
         [ability]="!!me()?.mount"

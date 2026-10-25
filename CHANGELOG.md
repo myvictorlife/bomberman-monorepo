@@ -75,6 +75,18 @@ config file. Ordinary app-level additions are minor.
 
 ### Added
 
+- **The online room votes for its arena.** During the countdown each player of
+  the next round picks an arena — or "any" — which also marks them ready; the
+  round starts once everyone is (no sooner than 3 s), or when the 15 s run out,
+  on the most voted arena, a tie or no votes drawn among them. A full room
+  now waits for the vote instead of starting at once. New room rule
+  `mapVote` (on in the public room; admins toggle it), wire message
+  `map:vote`, `vote` in the lobby snapshot, `Lobby.vote`/`voters`,
+  `voteCounts`/`voteWinners` and `READY_MIN_MS` in `@libs/game-protocol`,
+  and the `lib-map-vote` card grid in `libs/online`. A server with this
+  change needs the matching page: an older page sees no vote, so its rounds
+  wait the full countdown.
+
 - **A fifth arena: the Programador.** The tech crew's open-space office:
   carpet squares, desks with a monitor of code for pillars (a mug, an energy
   drink or a rubber duck beside the keyboard), stacks of pizza boxes for
