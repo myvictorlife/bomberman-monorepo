@@ -63,6 +63,7 @@ describe('Arenas', () => {
       'subestacao',
       'autodromo',
       'nucleo',
+      'programador',
     ]);
     expect(cards[0]).toHaveText('Lawn');
     expect(play).toHaveBeenCalledTimes(1);
@@ -72,6 +73,7 @@ describe('Arenas', () => {
       'arena:subestacao',
       'arena:autodromo',
       'arena:nucleo',
+      'arena:programador',
     ]);
 
     spectator.detectChanges();

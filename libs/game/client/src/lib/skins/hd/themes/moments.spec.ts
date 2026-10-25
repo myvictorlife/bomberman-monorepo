@@ -1,4 +1,7 @@
 import {
+  ALARM,
+  alarmAt,
+  alarmLookAt,
   BLACKOUT,
   blackoutAt,
   quickened,
@@ -76,5 +79,23 @@ describe('quickened', () => {
     });
     expect(quickened(RAIN, 480)).toBe(RAIN);
     expect(quickened(null, 480)).toBeNull();
+  });
+});
+
+describe('alarmAt', () => {
+  it('is on for the moment at the end of every period, off otherwise and for other moments', () => {
+    const every = ALARM.everyTicks;
+    expect(alarmAt(ALARM, 0)).toBe(false);
+    expect(alarmAt(ALARM, every - ALARM.forTicks - 1)).toBe(false);
+    expect(alarmAt(ALARM, every - ALARM.forTicks)).toBe(true);
+    expect(alarmAt(ALARM, every - 1)).toBe(true);
+    expect(alarmAt(ALARM, every)).toBe(false);
+    expect(alarmAt(SWEEP, every - 1)).toBe(false);
+  });
+
+  it('gives the tiles their alarm look under an alarm or a sweep', () => {
+    expect(alarmLookAt(ALARM, ALARM.everyTicks - 1)).toBe(true);
+    expect(alarmLookAt(SWEEP, SWEEP.everyTicks - 1)).toBe(true);
+    expect(alarmLookAt(RAIN, 10)).toBe(false);
   });
 });

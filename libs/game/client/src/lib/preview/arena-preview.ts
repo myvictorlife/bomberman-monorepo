@@ -3,6 +3,7 @@ import {
   CHARACTERS,
   createGame,
   DEFAULT_MAP_ID,
+  findMap,
   GameState,
   MapId,
   PowerUpKind,
@@ -10,7 +11,12 @@ import {
 import { HD_TILE } from '../skins/hd/hd-palette';
 import { paintHdTextures } from '../skins/hd/hd-painter';
 import { paintEgg } from '../skins/hd/egg';
-import { themeTextures, tileTextureKey } from '../skins/hd/themes';
+import {
+  PIZZAIOLO_TEXTURE,
+  themeTextures,
+  tileTextureKey,
+  tileVariantKey,
+} from '../skins/hd/themes';
 import { TEXTURE } from '../skins/texture-keys';
 
 /**
@@ -85,9 +91,18 @@ export function paintArenaPreview(
   for (let row = 0; row < state.rows; row++) {
     for (let col = 0; col < state.cols; col++) {
       const tile = state.tiles[cellIndex(state, col, row)] ?? 'wall';
-      draw(tileTextureKey(state, col, row, tile, solid), col, row);
+      const key = tileTextureKey(state, col, row, tile, solid);
+      draw(
+        tileVariantKey(mapId, key, col, row, (k) => !!tex.get(k)),
+        col,
+        row,
+      );
     }
   }
+  const window = findMap(mapId).pizzaiolo;
+  const pizzaiolo = window && tex.get(PIZZAIOLO_TEXTURE('idle'));
+  if (window && pizzaiolo)
+    ctx.drawImage(pizzaiolo, window[0] * S, window[1] * S);
 
   const shadow = (x: number, y: number) => {
     const image = tex.get(TEXTURE.shadow);

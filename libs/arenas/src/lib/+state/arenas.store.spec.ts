@@ -16,6 +16,7 @@ describe('ArenasStore', () => {
       'subestacao',
       'autodromo',
       'nucleo',
+      'programador',
     ]);
     expect(store.selected()).toBe(DEFAULT_MAP_ID);
   });

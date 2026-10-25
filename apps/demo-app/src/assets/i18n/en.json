@@ -537,6 +537,19 @@
       "NOTE_2": "CIDA’s eye is a screen in the top wall, not a cell of the board: the centre is still the fifth spawn.",
       "NOTE_3_TITLE": "Data cubes for crates",
       "NOTE_3": "Glass with a lit core in a light frame, so they read as breakable. They break like crates and may hide a power-up."
+    },
+    "PROGRAMADOR": {
+      "NAME": "Coder’s Arena",
+      "OWNER": "The tech crew’s office",
+      "DESC": "The company’s open-plan office, where the Dev, the Manager, the CEO, the Tester, the Infra Guy and the Staff work: office carpet, desks with monitors for pillars, stacks of pizza boxes for crates, cubicle partitions around the edge and whiteboards along the top, with the CI screen in the middle. From the kitchen window, the Pizza Bot throws pizzas into the arena.",
+      "MOMENT": "Broken build",
+      "MOMENT_DESC": "Every 30 s the CI screen says FAILED, the siren lights up and every monitor turns red for 2 s. Only a look: it changes nothing in play.",
+      "NOTE_1_TITLE": "The Pizza Bot",
+      "NOTE_1": "Every 20 s he juggles, marks a cell with a red target and throws a pizza. On a bomb: the bomb goes out and a stack of boxes stands there, maybe with an item. On the floor: a stack of boxes too. On someone’s head: cheese in the face, slow for 2 s.",
+      "NOTE_2_TITLE": "Desks for pillars",
+      "NOTE_2": "A monitor full of code and, beside it, a mug, an energy drink or a rubber duck. Indestructible.",
+      "NOTE_3_TITLE": "Pizza boxes for crates",
+      "NOTE_3": "Three delivery boxes stacked up, the order slip taped on. They break like crates and can hide a power-up."
     }
   },
   "ITEMS": {

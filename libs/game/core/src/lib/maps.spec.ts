@@ -39,6 +39,13 @@ describe('maps', () => {
     expect(isExtraWall(findMap('nucleo'), 7, 0)).toBe(true);
   });
 
+  it('keeps the Programador’s grid the classic one: its CI screen and kitchen window sit on the top wall', () => {
+    const classic = generateArena(5, findMap('gramado'));
+    const programador = generateArena(5, findMap('programador'));
+    expect(programador.tiles).toEqual(classic.tiles);
+    expect(findMap('programador').pizzaiolo).toEqual([2, 0]);
+  });
+
   it('records the map a round is played on, defaulting to the first', () => {
     const players = [{ id: 'a', name: 'A' }];
     expect(createGame({ seed: 1, players }).mapId).toBe(DEFAULT_MAP_ID);

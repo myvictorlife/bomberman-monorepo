@@ -47,6 +47,7 @@ import {
   removeOutsider,
   throwBomb,
 } from './outsiders';
+import { landPizzas, throwPizza } from './pizza';
 import { landThrownBombs, launchBomb } from './throw';
 import { closeArena } from './closing';
 import { scatterItems } from './scatter';
@@ -104,6 +105,7 @@ export function createGame(options: GameOptions): GameState {
     players,
     outsiders: [],
     thrownBombs: [],
+    pizzas: [],
     phase: 'playing',
     winnerId: null,
     endsAtTick: null,
@@ -245,6 +247,8 @@ export function tick(
   // After the fuses: a bomb that lands keeps its whole fuse for the next tick.
   landThrownBombs(state);
   landThrownPlayers(state);
+  landPizzas(state);
+  throwPizza(state);
   closeArena(state);
   killPlayersInFlames(state);
   if (state.stage) {

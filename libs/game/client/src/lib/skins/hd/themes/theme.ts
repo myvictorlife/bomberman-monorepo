@@ -16,6 +16,12 @@ export interface ArenaTheme {
   readonly accent: string;
   /** What the place does on its own over a match — a blackout, rain. Visual only. */
   readonly moment?: ArenaMoment;
+  /**
+   * How many looks a tile has, by `TEXTURE` key: a cell draws `<key>#<n>`
+   * (n from 1) when the theme painted one for the number its position picks,
+   * else the plain tile. A count larger than the looks painted makes them rare.
+   */
+  readonly variants?: Readonly<Record<string, number>>;
   /** Paints every tile of the theme, keyed like `TEXTURE`, at `resolution` pixels per art unit. */
   paint(doc: Document, resolution?: number): Map<string, HTMLCanvasElement>;
 }
@@ -45,8 +51,8 @@ export function tilePainter(
     ctx.lineCap = 'round';
     ctx.scale(resolution, resolution);
     draw(ctx);
-    // A variant (`feature:alarm`) is lit like the tile it stands in for.
-    if (SOLID_TILES.has(key.split(':')[0] ?? key)) relief(ctx, resolution);
+    // A variant (`feature:alarm`, `wall#2`) is lit like the tile it stands in for.
+    if (SOLID_TILES.has(key.split(/[:#]/)[0] ?? key)) relief(ctx, resolution);
     textures.set(key, canvas);
   };
   return { paint, textures };

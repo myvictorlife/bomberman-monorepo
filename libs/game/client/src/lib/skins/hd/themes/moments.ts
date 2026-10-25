@@ -22,6 +22,16 @@ export type ArenaMoment =
       readonly kind: 'sweep';
       readonly everyTicks: number;
       readonly forTicks: number;
+    }
+  /**
+   * Something goes wrong all at once: for `forTicks` every `everyTicks` the
+   * tiles a theme paints an alarm look for (`<key>:alarm`) show it — the
+   * build that breaks in the Programador.
+   */
+  | {
+      readonly kind: 'alarm';
+      readonly everyTicks: number;
+      readonly forTicks: number;
     };
 
 /** The default blackout: every 30 s, 2 s of dark. */
@@ -31,6 +41,12 @@ export const BLACKOUT: Extract<ArenaMoment, { kind: 'blackout' }> = {
   forTicks: 2 * TICK_RATE,
 };
 export const RAIN: ArenaMoment = { kind: 'rain' };
+/** The default alarm: every 30 s, 2 s of it. */
+export const ALARM: Extract<ArenaMoment, { kind: 'alarm' }> = {
+  kind: 'alarm',
+  everyTicks: 30 * TICK_RATE,
+  forTicks: 2 * TICK_RATE,
+};
 /** The default sweep: every 30 s, 2 s for the line to cross the arena. */
 export const SWEEP: Extract<ArenaMoment, { kind: 'sweep' }> = {
   kind: 'sweep',
@@ -74,7 +90,31 @@ export function sweepAt(
   return (phase - start) / moment.forTicks;
 }
 
-/** A blackout or a sweep with a shorter wait, for previews that cannot run half a minute. */
+/**
+ * Whether an alarm is on at `tick`. Like the blackout, it ends on the
+ * period's boundary, so the first one comes a full period in.
+ */
+export function alarmAt(
+  moment: ArenaMoment | null | undefined,
+  tick: number,
+): boolean {
+  if (!moment || moment.kind !== 'alarm' || moment.everyTicks <= 0)
+    return false;
+  return tick % moment.everyTicks >= moment.everyTicks - moment.forTicks;
+}
+
+/**
+ * Whether the tiles show their alarm look at `tick`: a sweep under way, or
+ * an alarm on.
+ */
+export function alarmLookAt(
+  moment: ArenaMoment | null | undefined,
+  tick: number,
+): boolean {
+  return sweepAt(moment, tick) !== null || alarmAt(moment, tick);
+}
+
+/** A blackout, a sweep or an alarm with a shorter wait, for previews that cannot run half a minute. */
 export function quickened(
   moment: ArenaMoment | null | undefined,
   everyTicks: number,
@@ -87,8 +127,8 @@ export function quickened(
 export const SWEEP_COLOR = '#ff4a6a';
 
 /**
- * A theme may paint a tile a second time for while a sweep is under way, under
- * its key plus this suffix — the eye that goes red.
+ * A theme may paint a tile a second time for while a sweep or an alarm is
+ * under way, under its key plus this suffix — the eye that goes red.
  */
 export const ALARM_SUFFIX = ':alarm';
 

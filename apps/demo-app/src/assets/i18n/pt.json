@@ -537,6 +537,19 @@
       "NOTE_2": "O olho da CIDA é uma tela do muro de cima, não uma casa do tabuleiro: o centro continua sendo o quinto nascimento.",
       "NOTE_3_TITLE": "Cubos de dados no lugar dos caixotes",
       "NOTE_3": "Vidro com o núcleo aceso numa moldura clara, para ler como quebrável. Quebram como caixotes e podem esconder power-up."
+    },
+    "PROGRAMADOR": {
+      "NAME": "Arena do Programador",
+      "OWNER": "Casa do time de TI",
+      "DESC": "O open space da firma, onde trabalham o Dev, a Gestora, o CEO, o Tester, o Cara da Infra e o Staff: carpete de escritório, mesas com monitor no lugar dos pilares, pilhas de caixa de pizza no lugar dos caixotes, divisórias de baia na borda e quadros brancos no alto, com a TV do CI no meio. Na janela da copa, o Robô Pizzaiolo taca pizza na arena.",
+      "MOMENT": "Build quebrou",
+      "MOMENT_DESC": "A cada 30 s a TV do CI mostra FALHOU, a sirene acende e todo monitor fica vermelho por 2 s. Só olha: não muda nada no jogo.",
+      "NOTE_1_TITLE": "O Robô Pizzaiolo",
+      "NOTE_1": "A cada 20 s ele faz malabarismo, marca uma casa com um alvo vermelho e taca uma pizza. Caiu numa bomba: a bomba apaga e vira uma pilha de caixas, que pode ter item. Caiu no chão: vira caixa também. Caiu na cabeça de alguém: queijo na cara, fica lento por 2 s.",
+      "NOTE_2_TITLE": "Mesas no lugar dos pilares",
+      "NOTE_2": "Monitor com código e, do lado, uma caneca, um energético ou um patinho de borracha. Indestrutíveis.",
+      "NOTE_3_TITLE": "Caixas de pizza no lugar dos caixotes",
+      "NOTE_3": "Três caixas de delivery empilhadas, com a comanda presa. Quebram como caixotes e podem esconder power-up."
     }
   },
   "ITEMS": {

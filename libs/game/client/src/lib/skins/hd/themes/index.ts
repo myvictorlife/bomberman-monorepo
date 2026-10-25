@@ -4,6 +4,7 @@ import { TEXTURE } from '../../texture-keys';
 import { autodromoTheme } from './autodromo';
 import { gramadoTheme } from './gramado';
 import { nucleoTheme } from './nucleo';
+import { programadorTheme } from './programador';
 import { subestacaoTheme } from './subestacao';
 import { ArenaTheme } from './theme';
 
@@ -14,6 +15,7 @@ export const ARENA_THEMES: Readonly<Record<MapId, ArenaTheme>> = {
   autodromo: autodromoTheme,
   gramado: gramadoTheme,
   nucleo: nucleoTheme,
+  programador: programadorTheme,
 };
 
 const cache = new Map<string, Map<string, HTMLCanvasElement>>();
@@ -70,4 +72,30 @@ export function tileTextureKey(
   if (tile === 'block' && solid(col, row)) return TEXTURE.block;
   return row > 0 && solid(col, row - 1) ? TEXTURE.floorShadow : TEXTURE.floor;
 }
+
+/**
+ * Which look of `key` the cell at `col, row` gets on a theme with variants:
+ * `<key>#<n>` when the theme painted that one (`has`), else `key` itself. The
+ * pick only depends on the cell, so a tile keeps its look all round.
+ */
+export function tileVariantKey(
+  mapId: MapId,
+  key: string,
+  col: number,
+  row: number,
+  has: (key: string) => boolean,
+): string {
+  const count = ARENA_THEMES[mapId].variants?.[key] ?? 0;
+  if (count < 2) return key;
+  const n = (((col * 73856093) ^ (row * 19349663)) >>> 0) % count;
+  const variant = `${key}#${n}`;
+  return n > 0 && has(variant) ? variant : key;
+}
+
 export * from './moments';
+export {
+  PIZZA_TARGET_TEXTURE,
+  PIZZA_TEXTURE,
+  PIZZAIOLO_TEXTURE,
+  type PizzaioloPose,
+} from './programador';

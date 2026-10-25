@@ -22,3 +22,4 @@ export * from './lib/stage';
 export * from './lib/view';
 export * from './lib/throw';
 export * from './lib/types';
+export * from './lib/pizza';

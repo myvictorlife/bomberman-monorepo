@@ -235,6 +235,14 @@ export interface ThrownBomb extends Flight {
   remote: boolean;
 }
 
+/**
+ * A pizza the Pizzaiolo threw, in the air from his window to the cell it
+ * lands on; see `pizza.ts`. It never wraps round the arena.
+ */
+export interface PizzaThrow extends Flight {
+  id: number;
+}
+
 export interface BurningBlock {
   col: number;
   row: number;
@@ -283,6 +291,18 @@ export type GameEvent =
   | { type: 'arena-closing' }
   | { type: 'wall-dropped'; col: number; row: number }
   | { type: 'round-over'; winnerId: string | null }
+  /** The Pizzaiolo threw a pizza at `col, row`; it lands at `landTick`. */
+  | { type: 'pizza-thrown'; col: number; row: number }
+  /**
+   * A pizza came down: on a bomb (put out, a crate now), on the floor (a crate),
+   * on someone's head (cheese: slow for a moment) or on nothing it could keep (a splat).
+   */
+  | {
+      type: 'pizza-landed';
+      col: number;
+      row: number;
+      on: 'bomb' | 'floor' | 'player' | 'splat';
+    }
   /** Stage mode: a creature fell; `killerId` is whose flame it was. */
   | {
       type: 'creature-died';
@@ -547,6 +567,8 @@ export interface GameState {
   /** The next in line, on the border; see `outsiders.ts`. */
   outsiders: Outsider[];
   thrownBombs: ThrownBomb[];
+  /** The Pizzaiolo's pizzas in the air, on a map that has him; see `pizza.ts`. */
+  pizzas: PizzaThrow[];
   phase: GamePhase;
   winnerId: string | null;
   /** Tick at which the round will be decided, once ≤ 1 player is left. */

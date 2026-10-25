@@ -96,11 +96,12 @@ describe('ArenaDetail', () => {
   it('links to the other arenas', () => {
     const others = spectator.queryAll('[data-testid="arena-detail-other"]');
 
-    expect(others).toHaveLength(3);
+    expect(others).toHaveLength(4);
     expect(others[0]?.getAttribute('href')).toBe('/arenas/gramado');
     expect(others[1]?.getAttribute('href')).toBe('/arenas/subestacao');
     expect(others[1]).toHaveText('Substation');
     expect(others[2]?.getAttribute('href')).toBe('/arenas/nucleo');
+    expect(others[3]?.getAttribute('href')).toBe('/arenas/programador');
   });
 
   it('lays out every piece at two sizes and the notes', () => {

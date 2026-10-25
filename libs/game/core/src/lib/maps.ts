@@ -5,12 +5,22 @@
  * (`MAPS.<ID>.NAME`). A feature in the middle — the substation's generator,
  * the track's start-light gantry — is one of those extra walls.
  */
-export type MapId = 'subestacao' | 'autodromo' | 'gramado' | 'nucleo';
+export type MapId =
+  | 'subestacao'
+  | 'autodromo'
+  | 'gramado'
+  | 'nucleo'
+  | 'programador';
 
 export interface MapDefinition {
   readonly id: MapId;
   /** Hard walls beyond the border and the even pillars, as `[col, row]`. */
   readonly extraWalls: readonly (readonly [number, number])[];
+  /**
+   * The Pizzaiolo's window: the left one of the two top-wall cells it takes,
+   * as `[col, row]`. A map with one has him throwing pizzas; see `pizza.ts`.
+   */
+  readonly pizzaiolo?: readonly [number, number];
 }
 
 /**
@@ -21,13 +31,16 @@ export interface MapDefinition {
  * No map adds walls inside the arena: the centre cell, where the generator
  * and the start-light gantry used to stand, is the fifth player's spawn. The
  * Núcleo marks the middle of its top wall instead — already a wall, so the
- * rules are the classic grid's — where its theme draws CIDA's eye.
+ * rules are the classic grid's — where its theme draws CIDA's eye. The
+ * Programador does the same for its CI screen, and puts the Pizzaiolo's
+ * window on the top wall too.
  */
 export const MAPS: readonly MapDefinition[] = [
   { id: 'gramado', extraWalls: [] },
   { id: 'subestacao', extraWalls: [] },
   { id: 'autodromo', extraWalls: [] },
   { id: 'nucleo', extraWalls: [[7, 0]] },
+  { id: 'programador', extraWalls: [[7, 0]], pizzaiolo: [2, 0] },
 ];
 
 export const DEFAULT_MAP_ID: MapId = 'subestacao';

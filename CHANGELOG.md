@@ -75,6 +75,27 @@ config file. Ordinary app-level additions are minor.
 
 ### Added
 
+- **A fifth arena: the Programador.** The tech crew's open-space office:
+  carpet squares, desks with a monitor of code for pillars (a mug, an energy
+  drink or a rubber duck beside the keyboard), stacks of pizza boxes for
+  crates, cubicle partitions round the edge, whiteboards along the top and
+  the CI screen in the middle (an extra wall on the top border, so the grid
+  is the classic one). Its moment is the **broken build** (`ArenaMoment` kind
+  `alarm`): every 30 s every monitor and the CI screen go red for 2 s — and
+  the Pizzaiolo panics and throws three pizzas at once (below). A theme may now give a tile several looks (`ArenaTheme.variants`,
+  painted as `<key>#<n>`, picked by the cell).
+- **The Pizzaiolo** (`pizza.ts` in `@libs/game-core`, `MapDefinition.pizzaiolo`):
+  a robot chef in a kitchen window on the Programador's top wall, out of
+  reach. Every 20 s he juggles for a second, marks a cell with a red target
+  and throws a pizza, which lands 1.5 s later. He aims at a bomb that will
+  still be there, else at a free cell away from the spawns. On a bomb, the
+  bomb goes out and a stack of pizza boxes stands there; on the floor, a
+  stack as well; either hides an item, any of a round's, at random (an item
+  lying there goes under the crate). On someone's head: cheese in the face,
+  half speed for 2 s. When the build breaks (`PIZZA_PANIC_EVERY_TICKS`, the
+  clock the arena's alarm look runs on) he panics and throws three at once,
+  at three cells. He stops when the walls close in and never plays in a
+  stage. New events `pizza-thrown` and `pizza-landed`; `GameState.pizzas`.
 - **How to play, acted out.** A slice of the arena, in the skin's own tiles,
   plays the four rules in turn: a bomb dropped and walked away from, the
   cross of fire stopped by pillars and breaking a crate, the power-up it hid

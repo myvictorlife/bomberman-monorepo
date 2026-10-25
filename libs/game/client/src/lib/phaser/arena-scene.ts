@@ -11,6 +11,7 @@ import {
   DEATH_TICKS,
   Direction,
   findCreature,
+  findMap,
   isArcLive,
   isBlackout,
   flightPosition,
@@ -19,6 +20,7 @@ import {
   hasBombOut,
   isDashing,
   Outsider,
+  pizzaioloPose,
   Player,
   playerColor,
   ThrownBomb,
@@ -30,9 +32,16 @@ import { Voice } from '../audio/voice';
 import { ControlScheme, DirectionTracker, PlayerController } from '../controls';
 import { HudSnapshot, sameHud, toHud } from '../hud';
 import { flameFrame } from '../skins/flame-frame';
-import { ARENA_THEMES } from '../skins/hd/themes';
+import {
+  ARENA_THEMES,
+  PIZZA_TARGET_TEXTURE,
+  PIZZA_TEXTURE,
+  PIZZAIOLO_TEXTURE,
+  tileVariantKey,
+} from '../skins/hd/themes';
 import {
   ArenaMoment,
+  alarmAt,
   blackoutAt,
   ALARM_SUFFIX,
   paintSweep,
@@ -162,8 +171,13 @@ export class ArenaScene extends Phaser.Scene {
   private darkness: Phaser.GameObjects.Rectangle | null = null;
   /** The sweep's red line, under way or hidden. */
   private sweep: Image | null = null;
-  /** Whether the eye is red this frame: a sweep is under way. */
+  /** Whether the tiles show their alarm look this frame: a sweep or an alarm is under way. */
   private sweeping = false;
+  /** The Pizzaiolo in his window, on a map that has him. */
+  private pizzaiolo: Image | null = null;
+  /** Pizzas in the air, and the targets they show on the floor. */
+  private readonly pizzas = new Map<number, Image>();
+  private readonly pizzaTargets = new Map<number, Image>();
   private rain: Phaser.GameObjects.Particles.ParticleEmitter | null = null;
   private lastHud: HudSnapshot | null = null;
 
@@ -338,6 +352,7 @@ export class ArenaScene extends Phaser.Scene {
     this.renderOutsiders(state);
     this.renderThrownBombs(state);
     this.renderHeldBombs(state);
+    this.renderPizzas(state);
 
     const hud = toHud(state);
     if (!sameHud(this.lastHud, hud)) {
@@ -357,6 +372,8 @@ export class ArenaScene extends Phaser.Scene {
       this.outsiders,
       this.thrown,
       this.held,
+      this.pizzas,
+      this.pizzaTargets,
       this.shadows,
       this.creatures,
       this.exits,
@@ -378,6 +395,8 @@ export class ArenaScene extends Phaser.Scene {
       pool.clear();
     }
     for (const image of this.tileImages) image.destroy();
+    this.pizzaiolo?.destroy();
+    this.pizzaiolo = this.addPizzaiolo(state);
     this.tileImages = state.tiles.map((_, i) =>
       this.add
         .image(
@@ -430,7 +449,7 @@ export class ArenaScene extends Phaser.Scene {
     );
     this.darkness?.setAlpha(0.86 * this.dark);
     const sweep = sweepAt(this.moment, state.tick);
-    this.sweeping = sweep !== null;
+    this.sweeping = sweep !== null || alarmAt(this.moment, state.tick);
     this.sweep
       ?.setVisible(sweep !== null)
       .setY((sweep ?? 0) * state.rows * this.config.skin.tileSize);
@@ -546,13 +565,16 @@ export class ArenaScene extends Phaser.Scene {
       );
       // A skin without theme tiles (the classic one) draws every wall alike.
       if (!this.textures.exists(key)) key = TEXTURE.wall;
+      key = tileVariantKey(state.mapId, key, col, row, (k) =>
+        this.textures.exists(k),
+      );
       // The eye goes red while it sweeps, on a theme that paints it so.
       const alarm = `${key}${ALARM_SUFFIX}`;
       if (this.sweeping && this.textures.exists(alarm)) key = alarm;
       if (this.tileKeys[i] !== key) {
         const image = this.tileImages[i];
         image?.setTexture(key);
-        const floor = key === TEXTURE.floor || key === TEXTURE.floorShadow;
+        const floor = key.startsWith(TEXTURE.floor);
         if (floor && (col + row) % 2 === 1) image?.setTint(CHECKER_TINT);
         else image?.clearTint();
         this.tileKeys[i] = key;
@@ -1467,6 +1489,62 @@ export class ArenaScene extends Phaser.Scene {
     );
   }
 
+  /**
+   * The Pizzaiolo's window, over the two top-wall cells it takes: above the
+   * tiles, under everyone. `null` on a map without him or a skin without his look.
+   */
+  private addPizzaiolo(state: GameState): Image | null {
+    const spot = findMap(state.mapId).pizzaiolo;
+    if (!spot || !this.textures.exists(PIZZAIOLO_TEXTURE('idle'))) return null;
+    return this.add
+      .image(
+        spot[0] * this.tile,
+        spot[1] * this.tile,
+        PIZZAIOLO_TEXTURE('idle'),
+      )
+      .setOrigin(0, 0)
+      .setDepth(DEPTH.tile + 0.5);
+  }
+
+  /**
+   * The Pizzaiolo's pose — juggling before a throw, the arm out as it leaves,
+   * scared while the build is broken — and his pizzas: each one in the air on
+   * its arc, its target on the floor until it lands.
+   */
+  private renderPizzas(state: GameState): void {
+    const pose = this.sweeping ? 'panic' : pizzaioloPose(state);
+    this.pizzaiolo?.setTexture(PIZZAIOLO_TEXTURE(pose));
+    const pizzas = state.pizzas ?? [];
+    if (!this.textures.exists(PIZZA_TEXTURE)) return;
+    this.sync(
+      this.pizzaTargets,
+      pizzas,
+      (p) => p.id,
+      (p) =>
+        this.add
+          .image(...this.cellToPixel(p.col, p.row), PIZZA_TARGET_TEXTURE)
+          .setDepth(DEPTH.powerUp + 0.5),
+      (image, p) => {
+        const pulse = 1 + 0.08 * Math.sin((state.tick - p.startTick) * 0.3);
+        image.setScale(pulse);
+      },
+    );
+    this.sync(
+      this.pizzas,
+      pizzas,
+      (p) => p.id,
+      () => this.add.image(0, 0, PIZZA_TEXTURE).setDepth(DEPTH.thrown),
+      (image, p) => {
+        const [col, row, arc] = flightPosition(state, p, state.tick);
+        const [x, y] = this.cellToPixel(col, row);
+        image
+          .setPosition(x, y - arc * this.tile * 1.6)
+          .setScale(1 + arc * 0.35)
+          .setAngle(((state.tick - p.startTick) * 9) % 360);
+      },
+    );
+  }
+
   /** Where a thrown bomb is at `tick`, in tiles, and how high (0–1) it is on its arc. */
   private flightOf(bomb: ThrownBomb, tick: number): [number, number, number] {
     return flightPosition(this.config.session.state, bomb, tick);
@@ -1577,6 +1655,14 @@ export class ArenaScene extends Phaser.Scene {
           break;
         case 'bomb-thrown':
           sfx.play('throw');
+          break;
+        case 'pizza-thrown':
+          sfx.play('throw', 0.8);
+          break;
+        case 'pizza-landed':
+          // Flour and crumbs where it came down; a splat just the crumbs.
+          this.burst(event.col, event.row, TEXTURE.debris, 8, false);
+          sfx.play('place', 0.7);
           break;
         case 'bomb-picked-up':
           sfx.play('place', 0.6);

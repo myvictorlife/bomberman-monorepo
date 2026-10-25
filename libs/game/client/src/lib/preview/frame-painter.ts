@@ -4,15 +4,25 @@ import {
   CHARACTERS,
   DEATH_TICKS,
   DIRECTION_DELTA,
+  findMap,
   flightPosition,
   GameState,
   isDashing,
   MapId,
+  pizzaioloPose,
 } from '@libs/game-core';
 import { HD_TILE } from '../skins/hd/hd-palette';
-import { ARENA_THEMES, tileTextureKey } from '../skins/hd/themes';
+import {
+  ARENA_THEMES,
+  PIZZA_TARGET_TEXTURE,
+  PIZZA_TEXTURE,
+  PIZZAIOLO_TEXTURE,
+  tileTextureKey,
+  tileVariantKey,
+} from '../skins/hd/themes';
 import {
   ALARM_SUFFIX,
+  alarmAt,
   ArenaMoment,
   blackoutAt,
   paintSweep,
@@ -123,14 +133,21 @@ export class FramePainter {
     );
 
     const sweep = sweepAt(this.moment, state.tick);
+    const alarming = sweep !== null || alarmAt(this.moment, state.tick);
     for (let row = 0; row < state.rows; row++) {
       for (let col = 0; col < state.cols; col++) {
         const index = cellIndex(state, col, row);
         const tile = state.tiles[index] ?? 'wall';
-        const key = tileTextureKey(state, col, row, tile, solid);
+        const key = tileVariantKey(
+          state.mapId,
+          tileTextureKey(state, col, row, tile, solid),
+          col,
+          row,
+          (k) => !!this.tex.get(k),
+        );
         // The eye goes red while it sweeps, on a theme that paints it so.
         const alarm = key + ALARM_SUFFIX;
-        draw(sweep !== null && this.tex.get(alarm) ? alarm : key, col, row);
+        draw(alarming && this.tex.get(alarm) ? alarm : key, col, row);
         if (burning.has(index)) {
           // A crate going up: the floor shows through as it fades.
           ctx.save();
@@ -140,6 +157,18 @@ export class FramePainter {
         }
       }
     }
+
+    // The Pizzaiolo in his window, and the targets of his pizzas in the air.
+    const window = findMap(state.mapId).pizzaiolo;
+    const pizzaiolo =
+      window &&
+      this.tex.get(
+        PIZZAIOLO_TEXTURE(alarming ? 'panic' : pizzaioloPose(state)),
+      );
+    if (window && pizzaiolo)
+      ctx.drawImage(pizzaiolo, window[0] * S, window[1] * S);
+    for (const p of state.pizzas ?? [])
+      draw(PIZZA_TARGET_TEXTURE, p.col, p.row);
 
     for (const p of state.powerUps) draw(TEXTURE.powerUp(p.kind), p.col, p.row);
 
@@ -278,6 +307,10 @@ export class FramePainter {
     if (this.moment?.kind === 'rain') this.paintRain(ctx, W, H, state.tick);
     if (sweep !== null) paintSweep(ctx, W, sweep * H, S);
 
+    for (const p of state.pizzas ?? []) {
+      const [col, row, arc] = flightPosition(state, p, state.tick);
+      draw(PIZZA_TEXTURE, col, row - arc * 1.6, 1 + arc * 0.35);
+    }
     for (const b of state.thrownBombs) {
       const [col, row, arc] = flightPosition(state, b, state.tick);
       shadow(col, row, 0.8 - arc * 0.3);
