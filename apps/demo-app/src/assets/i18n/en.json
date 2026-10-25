@@ -354,6 +354,26 @@
       "JOB": "Software engineer and manager",
       "STORY": "The Manager does not suffer through meetings: she books every one of them. Daily at 9, alignment at 10, \"pre-alignment for the alignment\" at 11 and a surprise one-on-one with Tired Dev right after lunch. If anyone's calendar shows fifteen free minutes, the invite has already landed. She is the one who woke Tired Dev at 3 a.m. over the semicolon bug, and the one who promised the client \"it ships by Friday\". She joined the arena to \"unblock the team\" and found that a bomb unblocks things far faster than a Jira ticket. She does not sleep either: after 6 p.m. she finally opens the editor to write her own code."
     },
+    "CEO": {
+      "NAME": "Jittery CEO",
+      "JOB": "Founder and CEO",
+      "STORY": "The CEO has not slept since the funding round. At 2:50 a.m. he is still refreshing the cash chart on his phone, and it only goes down; at 2:55 he calls the Manager, which is why at 3 she wakes Tired Dev. He is the one who sold the client an \"AI-powered\" feature that does not exist yet, and now he meets the investors on Monday. He is on his fourth energy drink, his right eye twitches on its own and he smiles with his teeth clenched: \"it's all great, team, it's all great\". He joined the arena because he read that blowing things up is \"disruption\". When a bomb goes wrong it is not a failure: it is a pivot."
+    },
+    "TESTER": {
+      "NAME": "Contrarian Tester",
+      "JOB": "QA analyst",
+      "STORY": "The Contrarian Tester says \"no\" before he has finished reading the ticket. He reopened the semicolon bug three times, \"just to be safe\", and swears the two-and-a-half-second fuse is out of spec: \"the document said three\". When Tired Dev says \"it works on my machine\", he answers \"then ship your machine to the client\". He disagrees with the Manager at the daily, with the CEO at the all-hands and with the scoreboard at the end of the match. He carries a magnifying glass and a REJECTED stamp; the glass is only there to look as if he read it."
+    },
+    "INFRA": {
+      "NAME": "The Infra Guy",
+      "JOB": "Infrastructure engineer",
+      "STORY": "The staging environment has been down since March, and the ticket is with the Infra Guy, \"in progress\". He has the key to every room, the password to every server and no hurry at all: \"I'll look at it Monday\". When Tired Dev's deploy hangs it is DNS; when it is not DNS it is the cache; when it is not the cache he has already gone to heat the water for his chimarrão. The CEO asks every day when the new server goes up, and the answer is always \"it's provisioning\". In the arena he is the only one who never runs: he says a two-and-a-half-second fuse is \"just latency\"."
+    },
+    "STAFF": {
+      "NAME": "On-Call Staff",
+      "JOB": "Staff engineer",
+      "STORY": "The Staff engineer has been at the company for fifteen years and is the only one who knows why that \"if\" from 2011 exists, the one nobody dares delete. He lives putting out fires: the CEO sells what does not exist, the Manager promises Friday, the Dev deploys on Friday at 6 p.m., the Tester rejects everything and the Infra Guy \"will look on Monday\", and the on-call pager goes off in his pocket. He never says no; he says \"leave it with me\", grabs the extinguisher and goes. He joined the arena because, for him, explosions are routine: \"I've seen worse deploys\". When someone drops a bomb, he gets there before the fire does."
+    },
     "LIA": {
       "NAME": "Dr. Lia",
       "JOB": "Doctor",

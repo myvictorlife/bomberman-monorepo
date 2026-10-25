@@ -354,6 +354,26 @@
       "JOB": "Engenheira de software e gestora",
       "STORY": "A Gestora não sofre com as reuniões: é ela quem marca todas. Daily às 9h, alinhamento às 10h, \"pré-alinhamento do alinhamento\" às 11h e um 1:1 surpresa com o Dev Cansado logo depois do almoço. Se o calendário de alguém mostra 15 minutos livres, o convite já chegou. Foi ela quem acordou o Dev às 3h da manhã por causa do bug do ponto e vírgula, e quem prometeu ao cliente que \"sai até sexta\". Entrou na arena para \"desbloquear o time\" e descobriu que uma bomba desbloqueia tudo bem mais rápido que um card no Jira. Também não dorme: depois das 18h ela finalmente abre o editor para escrever o próprio código."
     },
+    "CEO": {
+      "NAME": "CEO Nervosinho",
+      "JOB": "Fundador e CEO",
+      "STORY": "O CEO não dorme desde a rodada de investimento. Às 2h50 ele ainda está atualizando o gráfico do caixa no celular, e o gráfico só desce; às 2h55 liga para a Gestora, e é por isso que às 3h ela acorda o Dev Cansado. Foi ele quem vendeu ao cliente uma funcionalidade \"com IA\" que ainda não existe, e agora tem reunião com os investidores na segunda. Está na quarta lata de energético, o olho direito treme sozinho e o sorriso é de dentes cerrados: \"tá tudo ótimo, pessoal, tá tudo ótimo\". Entrou na arena porque leu que explodir coisas é \"disrupção\". Quando uma bomba dá errado, não é falha: é um pivô."
+    },
+    "TESTER": {
+      "NAME": "Tester do Contra",
+      "JOB": "Analista de QA",
+      "STORY": "O Tester do Contra diz \"não\" antes de terminar de ler o card. Reabriu o bug do ponto e vírgula três vezes, \"por desencargo de consciência\", e jura que o pavio de dois segundos e meio está fora da especificação: \"no documento estava três\". Quando o Dev Cansado diz \"na minha máquina funciona\", ele responde \"então entrega a sua máquina pro cliente\". Discorda da Gestora na daily, do CEO na reunião geral e do placar no fim da partida. Anda com uma lupa e um carimbo de REPROVADO; a lupa é só para parecer que leu."
+    },
+    "INFRA": {
+      "NAME": "O Cara da Infra",
+      "JOB": "Engenheiro de infraestrutura",
+      "STORY": "O ambiente de homologação está fora do ar desde março, e o ticket está com o Cara da Infra, \"em andamento\". Ele tem a chave de todas as salas, a senha de todos os servidores e nenhuma pressa: \"segunda eu vejo\". Quando o deploy do Dev trava, a culpa é do DNS; quando não é do DNS, é do cache; quando não é do cache, ele já saiu para esquentar a água do chimarrão. O CEO pergunta todo dia quando sobe o servidor novo, e a resposta é sempre \"tá provisionando\". Na arena é o único que não corre: diz que dois segundos e meio de pavio é \"só latência\"."
+    },
+    "STAFF": {
+      "NAME": "Staff do B.O.",
+      "JOB": "Staff engineer",
+      "STORY": "O Staff está na empresa há quinze anos e é o único que sabe por que existe aquele \"if\" de 2011 que ninguém tem coragem de apagar. Vive resolvendo B.O.: o CEO vende o que não existe, a Gestora promete para sexta, o Dev sobe na sexta às 18h, o Tester reprova tudo e o Cara da Infra \"vê segunda\", e o pager de plantão toca no bolso dele. Nunca diz não; diz \"deixa comigo\", pega o extintor e vai. Entrou na arena porque explosão, para ele, é rotina: \"já vi deploy pior\". Quando alguém solta uma bomba, ele chega antes do fogo."
+    },
     "LIA": {
       "NAME": "Dra. Lia",
       "JOB": "Médica",

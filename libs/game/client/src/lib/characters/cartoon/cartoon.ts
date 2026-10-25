@@ -7,9 +7,11 @@ import {
 import { paintBernardo } from './bernardo';
 import { paintByte } from './byte';
 import { paintCapivara } from './capivara';
+import { paintCeo } from './ceo';
 import { paintFaisca } from './faisca';
 import { paintGalinha } from './galinha';
 import { paintGestora } from './gestora';
+import { paintInfra } from './infra';
 import {
   CharacterPainter,
   circle,
@@ -22,6 +24,8 @@ import {
 import { paintLia } from './lia';
 import { paintMotoca } from './motoca';
 import { paintNovato } from './novato';
+import { paintStaff } from './staff';
+import { paintTester } from './tester';
 import { paintPato } from './pato';
 import { paintTatu } from './tatu';
 import { paintTiao } from './tiao';
@@ -36,6 +40,10 @@ export const CHARACTER_PAINTERS: Readonly<
   faisca: paintFaisca,
   byte: paintByte,
   gestora: paintGestora,
+  ceo: paintCeo,
+  tester: paintTester,
+  infra: paintInfra,
+  staff: paintStaff,
   lia: paintLia,
   motoca: paintMotoca,
   tiao: paintTiao,

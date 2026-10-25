@@ -103,6 +103,30 @@ config file. Ordinary app-level additions are minor.
   power-up orbits an open crate under a beam of light. Pointing at a card
   turns the ring until that power-up is at the front; the ring stands still
   with reduced motion and pauses off screen.
+- **O Staff do B.O. joins the crew** (`staff`), the staff engineer who puts
+  out every fire the others start: bald with a ring of grey, a white goatee
+  and crow's feet, a charcoal work jacket with a reflective band in the
+  team's colour, cargo trousers, boots, an on-call pager blinking on his
+  belt and a fire extinguisher he sprays at the floor when he places a bomb.
+- **O Tester do Contra joins the crew** (`tester`), the QA analyst who says
+  no before reading the ticket: a beanie in the team's colour, thick square
+  glasses, one brow up, an open flannel over a tee with a crossed-out bug, a
+  magnifying glass and a REJECTED stamp he brings down on the floor when he
+  places a bomb.
+- **O Cara da Infra joins the crew** (`infra`), who will look at it on
+  Monday: man-bun, full beard, half-closed eyes, a tee with a server rack on
+  it, yellow network cable coiled over the shoulder, keys on the belt, cargo
+  shorts, socks and sandals, and a cuia of chimarrão he sips every few
+  seconds.
+- **O CEO Nervosinho joins the crew.** A third IT character (`ceo`), the
+  founder who sold the feature that does not exist yet and has not slept
+  since the funding round: a navy fleece vest over a team-coloured shirt with
+  the sleeves rolled up, chinos, sneakers, a smartwatch, one earbud, a phone
+  showing the cash chart going down and an energy drink. Bloodshot eyes wide
+  open with one twitching, dark rings, a sweat drop, a clenched-teeth smile,
+  combed-back hair going grey and coming loose, and a tremble while he
+  stands. Drawn by the same cartoon painter as the rest of the cast, in every
+  facing and pose.
 - **A fourth arena: the Núcleo.** The datacenter where CIDA, the city's AI,
   lives — the arena of Área 3. A circuit-board floor, server racks for
   pillars, glass data cubes for crates, a barrier with a light strip and a

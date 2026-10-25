@@ -153,7 +153,7 @@ describe('Characters', () => {
     expect(groups[2]?.querySelector('[data-character="byte"]')).not.toBeNull();
 
     const cards = spectator.queryAll('[data-testid="characters-card"]');
-    expect(cards).toHaveLength(7);
+    expect(cards).toHaveLength(11);
     expect(cards[0]).toHaveText('Rookie');
     expect(cards[0]).toHaveText('First match');
     expect(cards[0]).toHaveText('Selected');
